@@ -1,0 +1,41 @@
+[
+  {
+    "id": "maint_001",
+    "maintenanceId": "MNT-2026-081",
+    "targetType": "lab",
+    "target": "lab_vr_04",
+    "affectedLab": "lab_vr_04",
+    "description": "Spatial tracking optical cameras realignment and floor vibration dampener replacement.",
+    "status": "in-progress",
+    "startDate": "2026-09-22T08:00:00.000Z",
+    "endDate": "2026-09-25T18:00:00.000Z",
+    "createdBy": "usr_admin_01",
+    "createdAt": "2026-09-20T11:00:00.000Z"
+  },
+  {
+    "id": "maint_002",
+    "maintenanceId": "MNT-2026-082",
+    "targetType": "resource",
+    "target": "res_cryo_01",
+    "affectedLab": "lab_quantum_08",
+    "description": "Routine liquid helium recharge and turbomolecular pump lubrication.",
+    "status": "scheduled",
+    "startDate": "2026-09-26T09:00:00.000Z",
+    "endDate": "2026-09-28T17:00:00.000Z",
+    "createdBy": "usr_admin_01",
+    "createdAt": "2026-09-21T15:00:00.000Z"
+  },
+  {
+    "id": "maint_003",
+    "maintenanceId": "MNT-2026-080",
+    "targetType": "resource",
+    "target": "res_cnc_01",
+    "affectedLab": "lab_fab_06",
+    "description": "Coolant system flushing and spindle runout tolerance check.",
+    "status": "completed",
+    "startDate": "2026-09-15T09:00:00.000Z",
+    "endDate": "2026-09-16T16:00:00.000Z",
+    "createdBy": "usr_admin_01",
+    "createdAt": "2026-09-14T10:00:00.000Z"
+  }
+]

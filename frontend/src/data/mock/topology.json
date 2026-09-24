@@ -1,0 +1,38 @@
+{
+  "sourceDefault": "node_gate",
+  "nodes": [
+    { "id": "node_gate", "name": "Campus Main Gate", "x": 100, "y": 450, "type": "entrance" },
+    { "id": "node_quad", "name": "Central Science Quad", "x": 280, "y": 380, "type": "junction" },
+    { "id": "node_turing", "name": "Alan Turing Hall (CSE)", "x": 450, "y": 280, "type": "building" },
+    { "id": "node_hopper", "name": "Grace Hopper Complex (AI)", "x": 620, "y": 210, "type": "building" },
+    { "id": "node_tesla", "name": "Nikola Tesla Building (IoT)", "x": 380, "y": 480, "type": "building" },
+    { "id": "node_lovelace", "name": "Ada Lovelace Hall (VR)", "x": 580, "y": 380, "type": "building" },
+    { "id": "node_shannon", "name": "Claude Shannon Hall (Sec)", "x": 750, "y": 340, "type": "building" },
+    { "id": "node_edison", "name": "Thomas Edison Workshop (Fab)", "x": 320, "y": 620, "type": "building" },
+    { "id": "node_franklin", "name": "Rosalind Franklin Center (Bio)", "x": 180, "y": 220, "type": "building" },
+    { "id": "node_bohr", "name": "Niels Bohr Institute (Quantum)", "x": 780, "y": 500, "type": "building" }
+  ],
+  "edges": [
+    { "from": "node_gate", "to": "node_quad", "weight": 180 },
+    { "from": "node_gate", "to": "node_franklin", "weight": 240 },
+    { "from": "node_quad", "to": "node_turing", "weight": 160 },
+    { "from": "node_quad", "to": "node_tesla", "weight": 140 },
+    { "from": "node_turing", "to": "node_hopper", "weight": 150 },
+    { "from": "node_turing", "to": "node_lovelace", "weight": 130 },
+    { "from": "node_hopper", "to": "node_shannon", "weight": 140 },
+    { "from": "node_tesla", "to": "node_edison", "weight": 160 },
+    { "from": "node_lovelace", "to": "node_shannon", "weight": 120 },
+    { "from": "node_lovelace", "to": "node_bohr", "weight": 190 },
+    { "from": "node_franklin", "to": "node_turing", "weight": 220 }
+  ],
+  "labNodeMap": {
+    "lab_cse_01": "node_turing",
+    "lab_ai_02": "node_hopper",
+    "lab_iot_03": "node_tesla",
+    "lab_vr_04": "node_lovelace",
+    "lab_cyber_05": "node_shannon",
+    "lab_fab_06": "node_edison",
+    "lab_bio_07": "node_franklin",
+    "lab_quantum_08": "node_bohr"
+  }
+}

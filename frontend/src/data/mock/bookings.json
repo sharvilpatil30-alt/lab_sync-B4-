@@ -1,0 +1,153 @@
+[
+  {
+    "id": "book_001",
+    "bookingId": "BK-2026-0923-01",
+    "user": "usr_student_01",
+    "userRole": "student",
+    "lab": "lab_cse_01",
+    "date": "2026-09-24",
+    "startTime": "10:00",
+    "endTime": "12:00",
+    "purpose": "Distributed Consensus & Raft Protocol Benchmarking Experiment",
+    "requiredResources": ["res_srv_01", "res_net_01"],
+    "allocatedResources": ["res_srv_01", "res_net_01"],
+    "status": "CONFIRMED",
+    "queuePosition": 0,
+    "requestsAhead": 0,
+    "estimatedStart": "2026-09-24T10:00:00.000Z",
+    "schedulingMetadata": {
+      "priorityScore": 88,
+      "conflictResolution": "direct_allocation",
+      "assignedSlot": "10:00 - 12:00"
+    },
+    "createdAt": "2026-09-22T14:20:00.000Z"
+  },
+  {
+    "id": "book_002",
+    "bookingId": "BK-2026-0923-02",
+    "user": "usr_student_01",
+    "userRole": "student",
+    "lab": "lab_ai_02",
+    "date": "2026-09-25",
+    "startTime": "14:00",
+    "endTime": "16:00",
+    "purpose": "Fine-tuning Vision Transformer on custom robotics dataset",
+    "requiredResources": ["res_gpu_01"],
+    "allocatedResources": [],
+    "status": "QUEUED",
+    "queuePosition": 2,
+    "requestsAhead": 1,
+    "estimatedStart": "2026-09-25T14:45:00.000Z",
+    "schedulingMetadata": {
+      "priorityScore": 72,
+      "conflictResolution": "fifo_queue",
+      "holdExpiresAt": "2026-09-25T14:15:00.000Z"
+    },
+    "createdAt": "2026-09-23T09:10:00.000Z"
+  },
+  {
+    "id": "book_003",
+    "bookingId": "BK-2026-0923-03",
+    "user": "usr_faculty_01",
+    "userRole": "faculty",
+    "lab": "lab_ai_02",
+    "date": "2026-09-23",
+    "startTime": "13:00",
+    "endTime": "17:00",
+    "purpose": "Sponsored Autonomous Navigation Research Session with Ph.D. Scholars",
+    "requiredResources": ["res_gpu_01", "res_robot_01"],
+    "allocatedResources": ["res_gpu_01", "res_robot_01"],
+    "status": "ACTIVE",
+    "queuePosition": 0,
+    "requestsAhead": 0,
+    "estimatedStart": "2026-09-23T13:00:00.000Z",
+    "schedulingMetadata": {
+      "priorityScore": 99,
+      "facultyPriority": true,
+      "leaseToken": "lease_token_active_908"
+    },
+    "createdAt": "2026-09-20T10:00:00.000Z"
+  },
+  {
+    "id": "book_004",
+    "bookingId": "BK-2026-0923-04",
+    "user": "usr_student_01",
+    "userRole": "student",
+    "lab": "lab_fab_06",
+    "date": "2026-09-26",
+    "startTime": "09:00",
+    "endTime": "11:00",
+    "purpose": "Drone chassis lightweight carbon composite additive manufacturing",
+    "requiredResources": ["res_3d_02"],
+    "allocatedResources": ["res_3d_02"],
+    "status": "CONFIRMED",
+    "queuePosition": 0,
+    "requestsAhead": 0,
+    "estimatedStart": "2026-09-26T09:00:00.000Z",
+    "schedulingMetadata": {
+      "priorityScore": 82,
+      "conflictResolution": "direct_allocation"
+    },
+    "createdAt": "2026-09-23T11:00:00.000Z"
+  },
+  {
+    "id": "book_005",
+    "bookingId": "BK-2026-0923-05",
+    "user": "usr_faculty_01",
+    "userRole": "faculty",
+    "lab": "lab_iot_03",
+    "date": "2026-09-27",
+    "startTime": "11:00",
+    "endTime": "13:00",
+    "purpose": "Hands-on Sensor Interfacing Lab for CS-440 Embedded Systems Course",
+    "requiredResources": ["res_osc_01", "res_proto_01"],
+    "allocatedResources": ["res_osc_01", "res_proto_01"],
+    "status": "CONFIRMED",
+    "queuePosition": 0,
+    "requestsAhead": 0,
+    "estimatedStart": "2026-09-27T11:00:00.000Z",
+    "schedulingMetadata": {
+      "priorityScore": 95,
+      "academicClassReservation": true
+    },
+    "createdAt": "2026-09-21T08:30:00.000Z"
+  },
+  {
+    "id": "book_006",
+    "bookingId": "BK-2026-0923-06",
+    "user": "usr_student_01",
+    "userRole": "student",
+    "lab": "lab_cyber_05",
+    "date": "2026-09-18",
+    "startTime": "15:00",
+    "endTime": "17:00",
+    "purpose": "Sandbox Reverse Engineering of Polymorphic Ransomware Sample",
+    "requiredResources": ["res_airgap_01"],
+    "allocatedResources": ["res_airgap_01"],
+    "status": "COMPLETED",
+    "queuePosition": 0,
+    "requestsAhead": 0,
+    "estimatedStart": "2026-09-18T15:00:00.000Z",
+    "schedulingMetadata": {
+      "completionStatus": "normal_exit",
+      "hoursLogged": 2.0
+    },
+    "createdAt": "2026-09-17T11:00:00.000Z"
+  },
+  {
+    "id": "book_007",
+    "bookingId": "BK-2026-0923-07",
+    "user": "usr_student_01",
+    "userRole": "student",
+    "lab": "lab_vr_04",
+    "date": "2026-09-21",
+    "startTime": "10:00",
+    "endTime": "12:00",
+    "purpose": "Spatial Audio and Hand Tracking Immersion Testing",
+    "requiredResources": ["res_vr_01"],
+    "allocatedResources": [],
+    "status": "CANCELLED",
+    "cancellationReason": "Lab taken offline for sensor recalibration by administration.",
+    "createdAt": "2026-09-19T13:00:00.000Z"
+  }
+]

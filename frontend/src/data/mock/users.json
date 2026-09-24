@@ -1,0 +1,38 @@
+[
+  {
+    "id": "usr_student_01",
+    "name": "Alex Chen",
+    "email": "student@campus.edu",
+    "role": "student",
+    "department": "Computer Science & Engineering",
+    "profile": {
+      "phone": "+1 (555) 234-5678",
+      "avatarUrl": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80"
+    },
+    "createdAt": "2026-01-15T08:00:00.000Z"
+  },
+  {
+    "id": "usr_faculty_01",
+    "name": "Dr. Sarah Jenkins",
+    "email": "faculty@campus.edu",
+    "role": "faculty",
+    "department": "Artificial Intelligence & Data Science",
+    "profile": {
+      "phone": "+1 (555) 345-6789",
+      "avatarUrl": "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80"
+    },
+    "createdAt": "2025-08-20T08:00:00.000Z"
+  },
+  {
+    "id": "usr_admin_01",
+    "name": "Marcus Vance",
+    "email": "admin@campus.edu",
+    "role": "admin",
+    "department": "Campus Resource Administration",
+    "profile": {
+      "phone": "+1 (555) 987-6543",
+      "avatarUrl": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80"
+    },
+    "createdAt": "2025-01-10T08:00:00.000Z"
+  }
+]

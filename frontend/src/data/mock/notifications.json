@@ -1,0 +1,57 @@
+[
+  {
+    "id": "notif_001",
+    "user": "usr_student_01",
+    "title": "Booking Confirmed",
+    "message": "Your booking for Advanced Systems & Networking Lab (LAB-CSE-101) on Sep 24 has been confirmed.",
+    "type": "success",
+    "read": false,
+    "relatedEntityType": "booking",
+    "relatedEntityId": "book_001",
+    "createdAt": "2026-09-23T08:15:00.000Z"
+  },
+  {
+    "id": "notif_002",
+    "user": "usr_student_01",
+    "title": "Queue Position Updated",
+    "message": "You moved to position #2 for Deep Learning & Robotics Hub on Sep 25.",
+    "type": "info",
+    "read": false,
+    "relatedEntityType": "booking",
+    "relatedEntityId": "book_002",
+    "createdAt": "2026-09-23T11:20:00.000Z"
+  },
+  {
+    "id": "notif_003",
+    "user": "usr_student_01",
+    "title": "Lab Maintenance Notice",
+    "message": "Virtual Reality Lab (LAB-VR-405) is currently offline for camera sensor recalibration.",
+    "type": "warning",
+    "read": true,
+    "relatedEntityType": "lab",
+    "relatedEntityId": "lab_vr_04",
+    "createdAt": "2026-09-22T09:00:00.000Z"
+  },
+  {
+    "id": "notif_004",
+    "user": "usr_faculty_01",
+    "title": "Active Session Live",
+    "message": "Your research booking in Grace Hopper Complex is currently in progress until 17:00.",
+    "type": "info",
+    "read": false,
+    "relatedEntityType": "booking",
+    "relatedEntityId": "book_003",
+    "createdAt": "2026-09-23T13:00:00.000Z"
+  },
+  {
+    "id": "notif_005",
+    "user": "usr_admin_01",
+    "title": "High GPU Allocation Demand",
+    "message": "AI Cluster demand exceeded 85% utilization across all available nodes today.",
+    "type": "warning",
+    "read": false,
+    "relatedEntityType": "monitoring",
+    "relatedEntityId": "lab_ai_02",
+    "createdAt": "2026-09-23T12:00:00.000Z"
+  }
+]
