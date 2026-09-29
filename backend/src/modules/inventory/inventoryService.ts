@@ -4,12 +4,16 @@ import {
   EquipmentCategoryRecord,
   LabInventorySummary,
   InventoryStats,
+  EquipmentItem,
+  EquipmentStatus,
+  InventoryDashboardPayload,
 } from './types.js';
 import { INITIAL_COMPUTER_BATCHES, INITIAL_EQUIPMENT_MODELS } from './inventoryData.js';
 
 export class InventoryService {
   private batchesMap: Map<string, ComputerBatchRecord> = new Map();
   private modelsMap: Map<string, NormalizedEquipmentModel> = new Map();
+  private equipmentMap: Map<string, EquipmentItem> = new Map();
 
   constructor() {
     this.seed();
@@ -28,6 +32,132 @@ export class InventoryService {
       this.modelsMap.set(m.model_id, {
         ...m,
         created_at: m.created_at || new Date().toISOString(),
+      });
+    });
+
+    // Seed individual equipment instances from purchase batches
+    let itemCounter = 1;
+    for (const b of this.batchesMap.values()) {
+      const count = Math.min(b.quantity_current, 25); // cap per batch for balanced dataset
+      for (let i = 0; i < count; i++) {
+        const itemIdx = i + 1;
+        const serial =
+          b.serial_numbers_list && b.serial_numbers_list[i]
+            ? b.serial_numbers_list[i]
+            : `${b.brand.slice(0, 3).toUpperCase()}-${b.batch_id.replace('BAT', '')}-${100 + itemIdx}`;
+
+        // Deterministic status assignment for realistic simulation
+        let status: EquipmentStatus = 'OPERATIONAL';
+        let healthScore = 95 - (i % 6) * 3;
+
+        if (b.status === 'PARTIALLY_WRITTEN_OFF' && i >= count - 2) {
+          status = 'PARTIALLY_WRITTEN_OFF';
+          healthScore = 42;
+        } else if ((itemCounter + i) % 17 === 0) {
+          status = 'MAINTENANCE';
+          healthScore = 68;
+        } else if ((itemCounter + i) % 23 === 0) {
+          status = 'OFFLINE';
+          healthScore = 52;
+        } else if ((itemCounter + i) % 7 === 0) {
+          status = 'IN_USE';
+          healthScore = 92;
+        }
+
+        const id = `EQ-${b.batch_id}-${String(itemIdx).padStart(2, '0')}`;
+        const assetTag = `ASSET-${b.lab_code}-${String(itemCounter).padStart(4, '0')}`;
+
+        this.equipmentMap.set(id, {
+          id,
+          batch_id: b.batch_id,
+          asset_tag: assetTag,
+          serial_number: serial,
+          equipment_name: `${b.brand} ${b.model_name}`,
+          category: 'Desktop Computers',
+          brand: b.brand,
+          model: b.model_name,
+          lab_code: b.lab_code,
+          lab_name: b.lab_name,
+          processor: b.processor,
+          ram: b.ram_gb ? `${b.ram_gb} GB DDR` : '8 GB DDR4',
+          storage: b.storage,
+          os: b.operating_system,
+          status,
+          health_score: healthScore,
+          purchase_date: b.purchase_date,
+          unit_cost: b.unit_rate,
+          unit_cost_formatted: b.unit_rate_formatted,
+          supplier_name: b.supplier_name,
+          last_maintenance: '2026-08-15',
+          next_maintenance: status === 'MAINTENANCE' ? '2026-09-30' : '2026-11-20',
+          assigned_to: status === 'IN_USE' ? `Workstation ${itemIdx}` : 'General Lab Pool',
+        });
+        itemCounter++;
+      }
+    }
+
+    // Seed peripheral equipment (Projectors, Printers, Smart Panels, UPS) for labs D-01 through D-11
+    const labCodes = ['D-01', 'D-02', 'D-03', 'D-04', 'D-05', 'D-06', 'D-07', 'D-08', 'D-09', 'D-10', 'D-11'];
+    const labNames: Record<string, string> = {
+      'D-01': 'Computing Lab 1',
+      'D-02': 'Software Engineering Lab',
+      'D-03': 'Data Science & AI Lab',
+      'D-04': 'Networks & Security Lab',
+      'D-05': 'Embedded Systems & IoT Lab',
+      'D-06': 'Cybersecurity Operations Center',
+      'D-07': 'Cloud Computing & DevOps Lab',
+      'D-08': 'Robotics & Automation Bench',
+      'D-09': 'Graphics & Multimedia Studio',
+      'D-10': 'Hardware Testing & Fabrication',
+      'D-11': 'High Performance Compute Cluster',
+    };
+
+    const peripherals = [
+      { name: 'Epson EB-E01 LCD Projector', cat: 'LCD Projector', brand: 'Epson', model: 'EB-E01', cost: 38500, costFmt: '₹38,500' },
+      { name: 'HP LaserJet Pro M404dn', cat: 'Printer', brand: 'HP', model: 'LaserJet Pro M404dn', cost: 29500, costFmt: '₹29,500' },
+      { name: 'APC Smart-UPS 5000VA Online', cat: 'UPS & Power', brand: 'APC', model: 'SURTD5000XLI', cost: 115000, costFmt: '₹1,15,000' },
+      { name: 'ViewSonic 75" ViewBoard 4K', cat: 'Interactive Panel', brand: 'ViewSonic', model: 'IFP7550-3', cost: 165000, costFmt: '₹1,65,000' },
+    ];
+
+    labCodes.forEach((code, idx) => {
+      peripherals.forEach((p, pIdx) => {
+        const id = `EQ-PERIPH-${code}-${pIdx + 1}`;
+        const tag = `ASSET-${code}-P${pIdx + 1}`;
+        let status: EquipmentStatus = 'OPERATIONAL';
+        let healthScore = 96;
+        if (pIdx === 0 && idx % 4 === 1) {
+          status = 'MAINTENANCE';
+          healthScore = 72;
+        } else if (pIdx === 2 && idx % 5 === 2) {
+          status = 'IN_USE';
+          healthScore = 90;
+        }
+
+        this.equipmentMap.set(id, {
+          id,
+          batch_id: `BAT-PERIPH-${code}`,
+          asset_tag: tag,
+          serial_number: `SN-${p.brand.slice(0, 3).toUpperCase()}-${code}-${100 + pIdx}`,
+          equipment_name: p.name,
+          category: p.cat,
+          brand: p.brand,
+          model: p.model,
+          lab_code: code,
+          lab_name: labNames[code] || `Laboratory ${code}`,
+          processor: 'N/A',
+          ram: 'N/A',
+          storage: 'N/A',
+          os: 'Firmware v4.2',
+          status,
+          health_score: healthScore,
+          purchase_date: '2023-04-10',
+          unit_cost: p.cost,
+          unit_cost_formatted: p.costFmt,
+          supplier_name: 'Campus IT Infrastructure Solutions',
+          last_maintenance: '2026-07-20',
+          next_maintenance: '2026-10-15',
+          assigned_to: `${labNames[code] || code} Core Equipment`,
+        });
       });
     });
   }
@@ -322,6 +452,141 @@ export class InventoryService {
       status_breakdown: statusCounts,
       os_breakdown: osCounts,
       brand_breakdown: brandCounts,
+    };
+  }
+
+  // ==========================================
+  // Equipment Level Operations & Queries
+  // ==========================================
+
+  public getAllEquipment(filters?: {
+    status?: string;
+    lab_code?: string;
+    category?: string;
+    search?: string;
+    brand?: string;
+  }): EquipmentItem[] {
+    let result = Array.from(this.equipmentMap.values());
+
+    if (!filters) return result;
+
+    if (filters.status && filters.status !== 'ALL') {
+      const targetStatus = filters.status.toUpperCase();
+      result = result.filter((e) => e.status.toUpperCase() === targetStatus);
+    }
+
+    if (filters.lab_code && filters.lab_code !== 'ALL') {
+      const code = filters.lab_code.toLowerCase();
+      result = result.filter(
+        (e) => e.lab_code.toLowerCase() === code || e.lab_name.toLowerCase().includes(code),
+      );
+    }
+
+    if (filters.category && filters.category !== 'ALL') {
+      const cat = filters.category.toLowerCase();
+      result = result.filter((e) => e.category.toLowerCase().includes(cat));
+    }
+
+    if (filters.brand && filters.brand !== 'ALL') {
+      const brand = filters.brand.toLowerCase();
+      result = result.filter((e) => e.brand.toLowerCase() === brand);
+    }
+
+    if (filters.search) {
+      const q = filters.search.toLowerCase();
+      result = result.filter(
+        (e) =>
+          e.equipment_name.toLowerCase().includes(q) ||
+          e.serial_number.toLowerCase().includes(q) ||
+          e.asset_tag.toLowerCase().includes(q) ||
+          e.lab_code.toLowerCase().includes(q) ||
+          e.lab_name.toLowerCase().includes(q) ||
+          e.brand.toLowerCase().includes(q) ||
+          e.model.toLowerCase().includes(q) ||
+          e.processor.toLowerCase().includes(q) ||
+          e.batch_id.toLowerCase().includes(q),
+      );
+    }
+
+    return result;
+  }
+
+  public getEquipmentById(id: string): EquipmentItem | null {
+    return this.equipmentMap.get(id) || null;
+  }
+
+  public updateEquipment(id: string, updates: Partial<EquipmentItem>): EquipmentItem | null {
+    const existing = this.equipmentMap.get(id);
+    if (!existing) return null;
+
+    const updated: EquipmentItem = {
+      ...existing,
+      ...updates,
+      id: existing.id, // Immutable ID
+    };
+
+    this.equipmentMap.set(id, updated);
+    return updated;
+  }
+
+  public getDashboardPayload(filters?: {
+    status?: string;
+    lab_code?: string;
+    category?: string;
+    search?: string;
+  }): InventoryDashboardPayload {
+    const allItems = Array.from(this.equipmentMap.values());
+    const filteredEquipment = this.getAllEquipment(filters);
+
+    let operationalCount = 0;
+    let inUseCount = 0;
+    let maintenanceCount = 0;
+    let offlineCount = 0;
+
+    const statusCounts: Record<string, number> = {};
+    const categoryCounts: Record<string, number> = {};
+    const labCounts: Record<string, number> = {};
+
+    let totalInvestment = 0;
+
+    allItems.forEach((item) => {
+      totalInvestment += item.unit_cost;
+      statusCounts[item.status] = (statusCounts[item.status] || 0) + 1;
+      categoryCounts[item.category] = (categoryCounts[item.category] || 0) + 1;
+      labCounts[item.lab_code] = (labCounts[item.lab_code] || 0) + 1;
+
+      if (item.status === 'OPERATIONAL') operationalCount++;
+      else if (item.status === 'IN_USE') inUseCount++;
+      else if (item.status === 'MAINTENANCE') maintenanceCount++;
+      else if (item.status === 'OFFLINE' || item.status === 'PARTIALLY_WRITTEN_OFF') offlineCount++;
+    });
+
+    const labs = this.getLabsSummary();
+    const batches = this.getAllBatches();
+    const models = this.getAllModels();
+
+    return {
+      success: true,
+      timestamp: new Date().toISOString(),
+      summary: {
+        total_equipment: allItems.length,
+        operational_count: operationalCount,
+        in_use_count: inUseCount,
+        maintenance_count: maintenanceCount,
+        offline_count: offlineCount,
+        total_batches: batches.length,
+        total_models: models.length,
+        total_labs: labs.length,
+        total_investment: totalInvestment,
+        total_investment_formatted: `₹${totalInvestment.toLocaleString('en-IN')}`,
+        status_breakdown: statusCounts,
+        category_breakdown: categoryCounts,
+        lab_breakdown: labCounts,
+      },
+      equipment: filteredEquipment,
+      batches,
+      models,
+      labs,
     };
   }
 }

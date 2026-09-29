@@ -17,6 +17,7 @@ import {
   ChevronRight,
   X,
   HardDrive,
+  Server,
 } from 'lucide-react';
 import { useAuth } from '../../hooks';
 import { DeadStockInventoryModal } from '../inventory/DeadStockInventoryModal';
@@ -80,6 +81,16 @@ export const ServicesLauncher: React.FC = () => {
       route: '/admin/bookings',
       roles: ['admin'],
       category: 'core',
+    },
+    {
+      id: 'equipment-dashboard',
+      name: 'Equipment Inventory Dashboard',
+      description: 'Real-time equipment status table, health metrics, and maintenance tracking from /api/v1/inventory',
+      icon: <Server className="w-5 h-5 text-indigo-400" />,
+      route: `${basePrefix}/inventory`,
+      roles: ['student', 'faculty', 'admin'],
+      badge: 'Live /api/v1',
+      category: 'hardware',
     },
     {
       id: 'dead-stock',

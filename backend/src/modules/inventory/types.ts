@@ -74,3 +74,55 @@ export interface InventoryStats {
   os_breakdown: Record<string, number>;
   brand_breakdown: Record<string, number>;
 }
+
+export type EquipmentStatus = 'OPERATIONAL' | 'IN_USE' | 'MAINTENANCE' | 'OFFLINE' | 'PARTIALLY_WRITTEN_OFF';
+
+export interface EquipmentItem {
+  id: string;
+  batch_id: string;
+  asset_tag: string;
+  serial_number: string;
+  equipment_name: string;
+  category: string;
+  brand: string;
+  model: string;
+  lab_code: string;
+  lab_name: string;
+  processor: string;
+  ram: string;
+  storage: string;
+  os: string;
+  status: EquipmentStatus;
+  health_score: number;
+  purchase_date: string;
+  unit_cost: number;
+  unit_cost_formatted: string;
+  supplier_name: string;
+  last_maintenance: string;
+  next_maintenance: string;
+  assigned_to?: string | null;
+}
+
+export interface InventoryDashboardPayload {
+  success: boolean;
+  timestamp: string;
+  summary: {
+    total_equipment: number;
+    operational_count: number;
+    in_use_count: number;
+    maintenance_count: number;
+    offline_count: number;
+    total_batches: number;
+    total_models: number;
+    total_labs: number;
+    total_investment_formatted: string;
+    total_investment: number;
+    status_breakdown: Record<string, number>;
+    category_breakdown: Record<string, number>;
+    lab_breakdown: Record<string, number>;
+  };
+  equipment: EquipmentItem[];
+  batches: ComputerBatchRecord[];
+  models: NormalizedEquipmentModel[];
+  labs: LabInventorySummary[];
+}

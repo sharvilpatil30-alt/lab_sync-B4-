@@ -11,6 +11,7 @@ import {
   BookOpenCheck,
   Activity,
   BarChart3,
+  Server,
   X,
 } from 'lucide-react';
 import { useAuth } from '../../hooks';
@@ -36,6 +37,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         return [
           { label: 'Dashboard Hub', href: '/student/dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
           { label: 'Labs & Booking', href: '/student/labs', icon: <Search className="w-4 h-4" /> },
+          { label: 'Inventory & Equipment', href: '/student/inventory', icon: <Server className="w-4 h-4" /> },
           { label: 'My Reservations', href: '/student/bookings', icon: <CalendarCheck className="w-4 h-4" /> },
           { label: 'Account Profile', href: '/student/profile', icon: <User className="w-4 h-4" /> },
         ];
@@ -43,12 +45,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         return [
           { label: 'Dashboard Hub', href: '/faculty/dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
           { label: 'Labs & Booking', href: '/faculty/labs', icon: <Search className="w-4 h-4" /> },
+          { label: 'Inventory & Equipment', href: '/faculty/inventory', icon: <Server className="w-4 h-4" /> },
           { label: 'My Reservations', href: '/faculty/bookings', icon: <CalendarCheck className="w-4 h-4" /> },
           { label: 'Account Profile', href: '/faculty/profile', icon: <User className="w-4 h-4" /> },
         ];
       case 'admin':
         return [
           { label: 'Overview & Services', href: '/admin/dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
+          { label: 'Inventory & Equipment', href: '/admin/inventory', icon: <Server className="w-4 h-4" /> },
           { label: 'Facilities & Labs', href: '/admin/labs', icon: <Sliders className="w-4 h-4" /> },
           { label: 'Bookings & Queue', href: '/admin/bookings', icon: <BookOpenCheck className="w-4 h-4" /> },
           { label: 'Telemetry & Reports', href: '/admin/monitoring', icon: <Activity className="w-4 h-4" /> },
