@@ -19,3 +19,4 @@ export * from './Card';
 export * from './Drawer';
 export * from './Tabs';
 export * from './Filters';
+export * from './ThemeToggle';

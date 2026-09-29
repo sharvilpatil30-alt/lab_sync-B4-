@@ -4,6 +4,7 @@ import { config } from './env.js';
 export async function connectDatabase(): Promise<void> {
   try {
     mongoose.set('strictQuery', false);
+    mongoose.set('bufferCommands', false);
     await mongoose.connect(config.mongoUri);
     console.log(`[Database] Connected successfully to MongoDB at ${config.mongoUri}`);
   } catch (error) {

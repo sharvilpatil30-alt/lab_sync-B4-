@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Wrench,
   Calendar,
@@ -10,6 +11,8 @@ import {
   AlertTriangle,
   Layers,
   Check,
+  DoorOpen,
+  Cpu,
 } from 'lucide-react';
 import {
   useMaintenance,
@@ -32,6 +35,7 @@ import {
 } from '../../../../components/common';
 
 export const AdminMaintenanceListPage: React.FC = () => {
+  const navigate = useNavigate();
   const { addToast } = useToast();
   const [statusFilter, setStatusFilter] = useState('all');
   const [showScheduleModal, setShowScheduleModal] = useState(false);
@@ -324,6 +328,33 @@ export const AdminMaintenanceListPage: React.FC = () => {
             Schedule Maintenance
           </Button>
         </div>
+      </div>
+
+      {/* Facilities Sub-Services Navigation Bar */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 border-b border-slate-800 text-xs scrollbar-none">
+        <button
+          type="button"
+          onClick={() => navigate('/admin/labs')}
+          className="flex items-center gap-2 px-3 py-2 text-slate-400 hover:text-slate-200 font-medium whitespace-nowrap transition-colors"
+        >
+          <DoorOpen className="w-3.5 h-3.5" />
+          <span>Laboratories & Occupancy</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => navigate('/admin/resources')}
+          className="flex items-center gap-2 px-3 py-2 text-slate-400 hover:text-slate-200 font-medium whitespace-nowrap transition-colors"
+        >
+          <Cpu className="w-3.5 h-3.5" />
+          <span>Hardware & Resource Inventory</span>
+        </button>
+        <button
+          type="button"
+          className="flex items-center gap-2 px-3 py-2 border-b-2 border-indigo-500 text-indigo-400 font-bold whitespace-nowrap"
+        >
+          <Wrench className="w-3.5 h-3.5" />
+          <span>Maintenance Console</span>
+        </button>
       </div>
 
       {/* Filter Toolbar */}
