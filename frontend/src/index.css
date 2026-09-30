@@ -279,7 +279,8 @@ body {
 
 /* Primary Action Buttons: Radiant Gold to Pink Gradient */
 .theme-gold-pink .bg-indigo-600,
-.theme-instagram .bg-indigo-600 {
+.theme-instagram .bg-indigo-600,
+[data-theme="gold-pink"] .bg-indigo-600 {
   background: linear-gradient(135deg, #f59e0b 0%, #ec4899 50%, #e11d48 100%) !important;
   color: #ffffff !important;
   border-color: transparent !important;
@@ -289,9 +290,157 @@ body {
 .theme-gold-pink .hover\:bg-indigo-500:hover,
 .theme-gold-pink .hover\:bg-indigo-700:hover,
 .theme-instagram .hover\:bg-indigo-500:hover,
-.theme-instagram .hover\:bg-indigo-700:hover {
+.theme-instagram .hover\:bg-indigo-700:hover,
+[data-theme="gold-pink"] .hover\:bg-indigo-500:hover,
+[data-theme="gold-pink"] .hover\:bg-indigo-700:hover {
   background: linear-gradient(135deg, #fbbf24 0%, #f43f5e 50%, #be185d 100%) !important;
   color: #ffffff !important;
+}
+
+/* ==========================================================
+   THEME-AWARE BUTTON SYSTEM (NEVER DARK IN LIGHT THEME)
+   ========================================================== */
+/* Secondary Buttons */
+.theme-gold-pink button.bg-slate-800,
+.theme-instagram button.bg-slate-800,
+[data-theme="gold-pink"] button.bg-slate-800,
+.theme-gold-pink .bg-slate-800,
+.theme-gold-pink .bg-slate-800\/80,
+.theme-gold-pink .bg-slate-800\/90,
+.theme-gold-pink .bg-slate-800\/60,
+.theme-instagram .bg-slate-800,
+[data-theme="gold-pink"] .bg-slate-800 {
+  background-color: #fdf2f8 !important;
+  color: #be185d !important;
+  border: 1px solid #fbcfe8 !important;
+  box-shadow: 0 1px 3px rgba(244, 114, 182, 0.1) !important;
+}
+
+.theme-gold-pink button.bg-slate-800:hover,
+.theme-gold-pink .hover\:bg-slate-700:hover,
+.theme-gold-pink .hover\:bg-slate-800:hover,
+.theme-gold-pink .hover\:bg-slate-800\/50:hover,
+.theme-gold-pink .hover\:bg-slate-900:hover,
+.theme-instagram button.bg-slate-800:hover,
+.theme-instagram .hover\:bg-slate-700:hover,
+.theme-instagram .hover\:bg-slate-800:hover,
+[data-theme="gold-pink"] button.bg-slate-800:hover,
+[data-theme="gold-pink"] .hover\:bg-slate-700:hover,
+[data-theme="gold-pink"] .hover\:bg-slate-800:hover {
+  background-color: #fce7f3 !important;
+  color: #9d174d !important;
+  border-color: #f472b6 !important;
+}
+
+/* Outline Buttons */
+.theme-gold-pink button.border-slate-700,
+.theme-gold-pink button.border-slate-800,
+.theme-instagram button.border-slate-700,
+[data-theme="gold-pink"] button.border-slate-700 {
+  background-color: #ffffff !important;
+  color: #334155 !important;
+  border: 1px solid #fbcfe8 !important;
+  box-shadow: 0 1px 2px rgba(244, 114, 182, 0.08) !important;
+}
+
+.theme-gold-pink button.border-slate-700:hover,
+.theme-gold-pink button.border-slate-800:hover,
+.theme-instagram button.border-slate-700:hover,
+[data-theme="gold-pink"] button.border-slate-700:hover {
+  background-color: #fdf2f8 !important;
+  color: #be185d !important;
+  border-color: #f472b6 !important;
+}
+
+/* Ghost Buttons */
+.theme-gold-pink button.text-slate-400,
+.theme-instagram button.text-slate-400,
+[data-theme="gold-pink"] button.text-slate-400 {
+  color: #475569 !important;
+}
+
+.theme-gold-pink button.text-slate-400:hover,
+.theme-instagram button.text-slate-400:hover,
+[data-theme="gold-pink"] button.text-slate-400:hover {
+  background-color: #fdf2f8 !important;
+  color: #be185d !important;
+}
+
+/* ==========================================================
+   QUEUE BUTTONS & QUEUE BADGES THEME SYSTEM
+   ========================================================== */
+.theme-gold-pink .bg-amber-950\/15,
+.theme-gold-pink .bg-amber-950\/20,
+.theme-gold-pink .bg-amber-950\/30,
+.theme-instagram .bg-amber-950\/15,
+.theme-instagram .bg-amber-950\/20,
+[data-theme="gold-pink"] .bg-amber-950\/15,
+[data-theme="gold-pink"] .bg-amber-950\/20 {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%) !important;
+  border: 1px solid #fcd34d !important;
+  color: #78350f !important;
+  box-shadow: 0 4px 14px -2px rgba(245, 158, 11, 0.15) !important;
+}
+
+.theme-gold-pink .bg-amber-500\/10,
+.theme-gold-pink .bg-amber-500\/20,
+.theme-instagram .bg-amber-500\/10,
+.theme-instagram .bg-amber-500\/20,
+[data-theme="gold-pink"] .bg-amber-500\/10,
+[data-theme="gold-pink"] .bg-amber-500\/20 {
+  background-color: #fef3c7 !important;
+  color: #92400e !important;
+  border-color: #fde68a !important;
+}
+
+.theme-gold-pink .text-amber-400,
+.theme-gold-pink .text-amber-300,
+.theme-instagram .text-amber-400,
+.theme-instagram .text-amber-300,
+[data-theme="gold-pink"] .text-amber-400,
+[data-theme="gold-pink"] .text-amber-300 {
+  color: #b45309 !important;
+}
+
+.theme-gold-pink .border-amber-500\/30,
+.theme-gold-pink .border-amber-500\/40,
+.theme-instagram .border-amber-500\/30,
+[data-theme="gold-pink"] .border-amber-500\/30 {
+  border-color: #f59e0b !important;
+}
+
+/* Emerald/Confirmed in Light Theme */
+.theme-gold-pink .bg-emerald-950\/15,
+.theme-gold-pink .bg-emerald-950\/20,
+.theme-instagram .bg-emerald-950\/15,
+[data-theme="gold-pink"] .bg-emerald-950\/15 {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%) !important;
+  border: 1px solid #86efac !important;
+  color: #14532d !important;
+}
+
+.theme-gold-pink .text-emerald-400,
+.theme-gold-pink .text-emerald-300,
+.theme-instagram .text-emerald-400,
+[data-theme="gold-pink"] .text-emerald-400 {
+  color: #15803d !important;
+}
+
+/* Rose/Rejected in Light Theme */
+.theme-gold-pink .bg-rose-950\/15,
+.theme-gold-pink .bg-rose-950\/20,
+.theme-instagram .bg-rose-950\/15,
+[data-theme="gold-pink"] .bg-rose-950\/15 {
+  background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%) !important;
+  border: 1px solid #fecdd3 !important;
+  color: #881337 !important;
+}
+
+.theme-gold-pink .text-rose-400,
+.theme-gold-pink .text-rose-300,
+.theme-instagram .text-rose-400,
+[data-theme="gold-pink"] .text-rose-400 {
+  color: #be123c !important;
 }
 
 /* Inputs, Selects, and Textareas */

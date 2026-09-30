@@ -9,7 +9,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
-import { useMyBookings, useCancelBooking, useAuth } from '../../../../hooks';
+import { useMyBookings, useCancelBooking, useAuth, useTheme } from '../../../../hooks';
 import { Booking } from '../../../../types';
 import { BookingCard } from '../../../../components/booking';
 import {
@@ -28,6 +28,7 @@ export const MyBookingsPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { role } = useAuth();
+  const { isGoldPink } = useTheme();
   const basePrefix = role === 'admin' ? '/admin' : role === 'faculty' ? '/faculty' : '/student';
   const { addToast } = useToast();
 
@@ -181,27 +182,63 @@ export const MyBookingsPage: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-800">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => handleTabChange(tab.id)}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
-              activeTab === tab.id
-                ? 'bg-indigo-600/15 text-indigo-400 border border-indigo-500/30'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900 border border-transparent'
-            }`}
-          >
-            <span>{tab.label}</span>
-            <span
-              className={`px-1.5 py-0.5 rounded-full text-[10px] ${
-                activeTab === tab.id ? 'bg-indigo-500/30 text-indigo-200' : 'bg-slate-800 text-slate-400'
-              }`}
+      <div className={`flex items-center gap-2 overflow-x-auto pb-2 border-b transition-colors ${
+        isGoldPink ? 'border-pink-200/80' : 'border-slate-800'
+      }`}>
+        {tabs.map((tab) => {
+          const isActive = activeTab === tab.id;
+          const isQueued = tab.id === 'queued';
+
+          let tabClasses = '';
+          let badgeClasses = '';
+
+          if (isActive) {
+            if (isQueued) {
+              tabClasses = isGoldPink
+                ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-white border border-amber-400 shadow-md shadow-amber-500/25 font-bold'
+                : 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm font-bold';
+              badgeClasses = isGoldPink
+                ? 'bg-amber-600 text-white'
+                : 'bg-amber-500/40 text-amber-200';
+            } else {
+              tabClasses = isGoldPink
+                ? 'bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 text-white border border-transparent shadow-md shadow-pink-500/25 font-bold'
+                : 'bg-indigo-600 text-white border border-indigo-500 shadow-md shadow-indigo-600/20 font-bold';
+              badgeClasses = isGoldPink
+                ? 'bg-white/25 text-white'
+                : 'bg-white/20 text-white';
+            }
+          } else {
+            if (isQueued) {
+              tabClasses = isGoldPink
+                ? 'text-amber-800 bg-amber-50/80 hover:bg-amber-100/90 border border-amber-200/80 font-semibold'
+                : 'text-amber-400 hover:text-amber-300 hover:bg-amber-950/20 border border-amber-500/20';
+              badgeClasses = isGoldPink
+                ? 'bg-amber-200 text-amber-900'
+                : 'bg-amber-950/40 text-amber-300';
+            } else {
+              tabClasses = isGoldPink
+                ? 'text-slate-600 hover:text-slate-900 hover:bg-pink-50/80 border border-transparent'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900 border border-transparent';
+              badgeClasses = isGoldPink
+                ? 'bg-pink-100 text-pink-700'
+                : 'bg-slate-800 text-slate-400';
+            }
+          }
+
+          return (
+            <button
+              key={tab.id}
+              onClick={() => handleTabChange(tab.id)}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs whitespace-nowrap transition-all ${tabClasses}`}
             >
-              {tab.count}
-            </span>
-          </button>
-        ))}
+              <span>{tab.label}</span>
+              <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${badgeClasses}`}>
+                {tab.count}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Search & Date Filter Bar */}
