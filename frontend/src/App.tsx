@@ -3,6 +3,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, ThemeProvider } from './hooks';
 import { ToastProvider } from './components/common/Toast';
+import { PandaGuideBot } from './components/common/PandaGuideBot';
 import { AppRoutes } from './routes/AppRoutes';
 
 const queryClient = new QueryClient({
@@ -23,6 +24,7 @@ export default function App() {
           <ThemeProvider>
             <ToastProvider>
               <AppRoutes />
+              <PandaGuideBot />
             </ToastProvider>
           </ThemeProvider>
         </AuthProvider>
