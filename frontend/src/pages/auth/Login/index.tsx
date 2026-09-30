@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, LogIn, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, LogIn, AlertTriangle } from 'lucide-react';
 import { Button, Input, ErrorMessage } from '../../../components/common';
 import { useAuth } from '../../../hooks';
 
@@ -40,7 +40,7 @@ export const LoginPage: React.FC = () => {
     const trimmedInput = emailOrUsername.trim().toLowerCase();
 
     if (!trimmedInput || !password) {
-      setError('Please provide both your @ritindia.edu email and password.');
+      setError('Please provide both your email and password.');
       return;
     }
 
@@ -52,7 +52,7 @@ export const LoginPage: React.FC = () => {
 
     const emailRegex = /^[a-zA-Z0-9._%+-]+@ritindia\.edu$/i;
     if (!emailRegex.test(trimmedInput)) {
-      setError('Please provide a valid prefix before @ritindia.edu (e.g. student@ritindia.edu).');
+      setError('Please provide a valid email address.');
       return;
     }
 
@@ -88,13 +88,9 @@ export const LoginPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold mb-2">
-          <ShieldCheck className="w-3.5 h-3.5" />
-          <span>Institutional Domain Enforcement</span>
-        </div>
         <h2 className="text-xl font-bold text-white">Sign In to Campus Portal</h2>
         <p className="text-xs text-slate-400 mt-1">
-          Restricted to authorized <strong className="text-indigo-300">@ritindia.edu</strong> accounts
+          Access laboratories, book resources, and track status
         </p>
       </div>
 
@@ -115,14 +111,13 @@ export const LoginPage: React.FC = () => {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
-          label="Institutional Email (@ritindia.edu)"
+          label="Campus Email"
           type="email"
-          placeholder="e.g. anyabandgar458@ritindia.edu or student@ritindia.edu"
+          placeholder="e.g. anyabandgar458@ritindia.edu"
           value={emailOrUsername}
           onChange={(e) => setEmailOrUsername(e.target.value)}
           leftIcon={<Mail className="w-4 h-4" />}
           autoComplete="email"
-          helperText="Only emails ending with @ritindia.edu are accepted"
           required
         />
 
@@ -159,7 +154,7 @@ export const LoginPage: React.FC = () => {
 
       <div className="pt-2 text-center border-t border-slate-800/80">
         <p className="text-[11px] text-slate-500">
-          Rajarambapu Institute of Technology &bull; Campus Portal
+          Smart Campus Resource Management System
         </p>
       </div>
     </div>

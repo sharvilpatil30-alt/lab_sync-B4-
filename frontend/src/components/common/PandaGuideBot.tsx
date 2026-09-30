@@ -336,19 +336,19 @@ export const PandaGuideBot: React.FC = () => {
     // 11. Login
     if (path.includes('/login')) {
       return {
-        pageTitle: 'Institutional Authentication',
-        category: 'Sign In',
-        greeting: 'Welcome to Rajarambapu Institute of Technology (RIT) Portal:',
+        pageTitle: 'Sign In to Portal',
+        category: 'Authentication',
+        greeting: 'Welcome to the Smart Campus Portal:',
         steps: [
           {
-            title: '1. Enter Official @ritindia.edu Email',
-            description: 'Enter your valid campus email ending strictly with @ritindia.edu (e.g. student@ritindia.edu, admin@ritindia.edu).',
-            actionHint: 'Must end with @ritindia.edu',
+            title: '1. Enter Campus Email',
+            description: 'Enter your registered campus email address and account credentials.',
+            actionHint: 'e.g. yourname@ritindia.edu',
           },
           {
-            title: '2. Provide Security Password',
-            description: 'Enter your account credentials (at least 6 characters) to access authorized departmental laboratory features.',
-            actionHint: 'Instant secure authentication.',
+            title: '2. Provide Password',
+            description: 'Enter your secure password (at least 6 characters) to access laboratory dashboards.',
+            actionHint: 'Instant secure sign in.',
           },
         ],
       };
