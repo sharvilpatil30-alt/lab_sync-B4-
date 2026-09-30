@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, LogIn, AlertTriangle, GraduationCap, BookOpen, Shield } from 'lucide-react';
 import { Button, Input, ErrorMessage } from '../../../components/common';
-import { useAuth } from '../../../hooks';
+import { useAuth, useTheme } from '../../../hooks';
 import { Role } from '../../../types';
 
 export const LoginPage: React.FC = () => {
   const { login, isAuthenticated, role } = useAuth();
+  const { isGoldPink } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -92,10 +93,20 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="text-center">
-        <h2 className="text-xl font-bold text-white">Sign In to Campus Portal</h2>
-        <p className="text-xs text-slate-400 mt-1">
+        <h2
+          className={`text-xl font-bold tracking-tight transition-colors ${
+            isGoldPink ? 'text-slate-900' : 'text-white'
+          }`}
+        >
+          Sign In to Campus Portal
+        </h2>
+        <p
+          className={`text-xs mt-1 transition-colors ${
+            isGoldPink ? 'text-slate-600' : 'text-slate-400'
+          }`}
+        >
           Access laboratories, book resources, and track status
         </p>
       </div>
@@ -115,67 +126,8 @@ export const LoginPage: React.FC = () => {
         />
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Role Selection (Select 1 among 3) */}
-        <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-2">
-            Select Your Role
-          </label>
-          <div className="grid grid-cols-3 gap-2">
-            {[
-              {
-                id: 'student' as Role,
-                label: 'Student',
-                desc: 'Workstations',
-                icon: GraduationCap,
-              },
-              {
-                id: 'faculty' as Role,
-                label: 'Faculty',
-                desc: 'Lab Sessions',
-                icon: BookOpen,
-              },
-              {
-                id: 'admin' as Role,
-                label: 'Admin',
-                desc: 'Management',
-                icon: Shield,
-              },
-            ].map((r) => {
-              const Icon = r.icon;
-              const isSelected = selectedRole === r.id;
-              return (
-                <button
-                  key={r.id}
-                  type="button"
-                  onClick={() => setSelectedRole(r.id)}
-                  className={`flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all ${
-                    isSelected
-                      ? 'bg-indigo-600/25 border-indigo-500 text-white shadow-lg shadow-indigo-500/20 ring-1 ring-indigo-500'
-                      : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 hover:border-slate-700'
-                  }`}
-                >
-                  <div
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center mb-1.5 transition-colors ${
-                      isSelected
-                        ? 'bg-indigo-600 text-white shadow-sm'
-                        : 'bg-slate-800 text-slate-400'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <span className={`text-xs font-bold leading-tight ${isSelected ? 'text-white' : 'text-slate-300'}`}>
-                    {r.label}
-                  </span>
-                  <span className="text-[10px] text-slate-500 leading-tight mt-0.5">
-                    {r.desc}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
+      <form onSubmit={handleSubmit} className="space-y-3.5">
+        {/* 1. Campus Email Input */}
         <Input
           label="Campus Email"
           type="email"
@@ -187,6 +139,7 @@ export const LoginPage: React.FC = () => {
           required
         />
 
+        {/* 2. Password Input */}
         <Input
           label="Password"
           type={showPassword ? 'text' : 'password'}
@@ -198,7 +151,11 @@ export const LoginPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="hover:text-slate-200 transition-colors focus:outline-none"
+              className={`transition-colors focus:outline-none ${
+                isGoldPink
+                  ? 'text-slate-400 hover:text-slate-700'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
               aria-label={showPassword ? 'Hide password' : 'Show password'}
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -208,9 +165,70 @@ export const LoginPage: React.FC = () => {
           required
         />
 
+        {/* 3. Minimized Compact Role Selector (Shown AFTER Password) */}
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <label
+              className={`block text-[11px] font-semibold uppercase tracking-wider ${
+                isGoldPink ? 'text-slate-700' : 'text-slate-300'
+              }`}
+            >
+              Sign In As Role
+            </label>
+            <span
+              className={`text-[10px] font-medium capitalize ${
+                isGoldPink ? 'text-pink-600' : 'text-indigo-400'
+              }`}
+            >
+              Active: {selectedRole}
+            </span>
+          </div>
+
+          <div
+            className={`grid grid-cols-3 gap-1.5 p-1 rounded-xl border transition-colors ${
+              isGoldPink
+                ? 'bg-rose-50/60 border-pink-200/80'
+                : 'bg-slate-900/80 border-slate-800'
+            }`}
+          >
+            {[
+              { id: 'student' as Role, label: 'Student', icon: GraduationCap },
+              { id: 'faculty' as Role, label: 'Faculty', icon: BookOpen },
+              { id: 'admin' as Role, label: 'Admin', icon: Shield },
+            ].map((r) => {
+              const Icon = r.icon;
+              const isSelected = selectedRole === r.id;
+              return (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => setSelectedRole(r.id)}
+                  className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all duration-150 ${
+                    isSelected
+                      ? isGoldPink
+                        ? 'bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 text-white shadow-sm shadow-pink-500/30'
+                        : 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30'
+                      : isGoldPink
+                      ? 'text-slate-600 hover:text-slate-900 hover:bg-pink-100/60'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/80'
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5 shrink-0" />
+                  <span>{r.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 4. Submit Button */}
         <Button
           type="submit"
-          className="w-full mt-2"
+          className={`w-full mt-2 transition-all ${
+            isGoldPink
+              ? 'bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 hover:from-pink-600 hover:to-amber-600 text-white shadow-md shadow-pink-500/25 border-transparent'
+              : ''
+          }`}
           isLoading={isLoading}
           leftIcon={<LogIn className="w-4 h-4" />}
         >
@@ -218,8 +236,12 @@ export const LoginPage: React.FC = () => {
         </Button>
       </form>
 
-      <div className="pt-2 text-center border-t border-slate-800/80">
-        <p className="text-[11px] text-slate-500">
+      <div
+        className={`pt-2 text-center border-t transition-colors ${
+          isGoldPink ? 'border-pink-100/90 text-slate-500' : 'border-slate-800/80 text-slate-500'
+        }`}
+      >
+        <p className="text-[11px]">
           Smart Campus Resource Management System
         </p>
       </div>
