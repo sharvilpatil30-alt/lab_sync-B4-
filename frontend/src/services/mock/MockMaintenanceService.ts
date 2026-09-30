@@ -2,13 +2,16 @@ import { IMaintenanceService } from '../types';
 import { MaintenanceRecord, MaintenanceFilters, ApiResponse } from '../../types';
 import { maintenanceData } from '../../data/mock';
 
-const MAINT_KEY = 'smart_campus_mock_maintenance';
+const MAINT_KEY = 'smart_campus_real_maintenance_v2';
 
 function getStoredMaintenance(): MaintenanceRecord[] {
   const stored = localStorage.getItem(MAINT_KEY);
   if (stored) {
     try {
-      return JSON.parse(stored);
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].target?.includes('d')) {
+        return parsed;
+      }
     } catch {
       // fallback
     }

@@ -4,7 +4,6 @@ import {
   Bell,
   LogOut,
   User as UserIcon,
-  Database,
   Menu,
   X,
   ChevronDown,
@@ -13,9 +12,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../hooks';
 import { useNotifications } from '../../hooks';
-import { getActiveDataMode, setActiveDataMode } from '../../services';
 import { Role } from '../../types';
-import { SystemHealthIndicator, ThemeToggle } from '../common';
+import { ThemeToggle } from '../common';
 import { ServicesLauncher } from './ServicesLauncher';
 
 interface NavbarProps {
@@ -34,7 +32,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, isSidebarOpen }
   const notifRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
-  const activeMode = getActiveDataMode();
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   const location = useLocation();
@@ -94,11 +91,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, isSidebarOpen }
     navigate('/login');
   };
 
-  const handleToggleMode = () => {
-    const nextMode = activeMode === 'mock' ? 'api' : 'mock';
-    setActiveDataMode(nextMode);
-  };
-
   const handleRoleChange = async (newRole: Role) => {
     await switchDemoRole(newRole);
     setShowUserMenu(false);
@@ -152,25 +144,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, isSidebarOpen }
 
           {/* Theme Switcher Icon */}
           <ThemeToggle />
-
-          {/* Backend API Health Status (hidden on mobile, visible on desktop/tablet) */}
-          <div className="hidden sm:block">
-            <SystemHealthIndicator />
-          </div>
-
-          {/* Data Mode Switcher Badge (compact on small screens) */}
-          <button
-            onClick={handleToggleMode}
-            title={`Click to switch to ${activeMode === 'mock' ? 'Real API' : 'Mock'} mode`}
-            className={`hidden md:flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-full text-xs font-medium border transition-all shrink-0 ${
-              activeMode === 'mock'
-                ? 'bg-amber-500/10 text-amber-400 border-amber-500/30 hover:bg-amber-500/20'
-                : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20'
-            }`}
-          >
-            <Database className="w-3.5 h-3.5 shrink-0" />
-            <span className="uppercase text-[10px] sm:text-[11px] font-semibold">{activeMode} MODE</span>
-          </button>
 
           {/* Notifications Popover */}
           <div className="relative" ref={notifRef}>

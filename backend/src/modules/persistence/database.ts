@@ -85,19 +85,20 @@ class CampusDatabase {
     ];
     edges.forEach((e) => this.campusEdges.set(e.id, e));
 
-    // 4. Labs (Populated from Department Laboratories D-01 through D-11)
+    // 4. Labs (Populated from Department Laboratories D-01 through D-12 from Official Inventory Master)
     const departmentalLabs: Lab[] = [
-      { id: 'lab-d01', name: 'Linux Laboratory', lab_code: 'D-01', node_id: 'node-lab-systems', capacity: 30, investment: 845866.0 },
-      { id: 'lab-d02', name: 'Database Laboratory', lab_code: 'D-02', node_id: 'node-lab-systems', capacity: 40, investment: 1873830.0 },
-      { id: 'lab-d03', name: 'Project Laboratory', lab_code: 'D-03', node_id: 'node-lab-systems', capacity: 45, investment: 1647575.0 },
-      { id: 'lab-d04', name: 'Application Development Tool Laboratory', lab_code: 'D-04', node_id: 'node-lab-ai', capacity: 30, investment: 395000.0 },
-      { id: 'lab-d05', name: 'Operating System Laboratory', lab_code: 'D-05', node_id: 'node-lab-systems', capacity: 35, investment: 1696230.0 },
-      { id: 'lab-d06', name: 'Web Development Tool Lab', lab_code: 'D-06', node_id: 'node-lab-ai', capacity: 30, investment: 1002799.0 },
-      { id: 'lab-d07', name: 'Network Laboratory', lab_code: 'D-07', node_id: 'node-lab-networks', capacity: 35, investment: 1921320.0 },
-      { id: 'lab-d08', name: 'Artificial Intelligence & Machine Learning Laboratory', lab_code: 'D-08', node_id: 'node-lab-ai', capacity: 40, investment: 1188000.0 },
-      { id: 'lab-d09', name: 'Apple Education Center Laboratory', lab_code: 'D-09', node_id: 'node-lab-ai', capacity: 60, investment: 4394705.0 },
-      { id: 'lab-d10', name: 'PG laboratory-1', lab_code: 'D-10', node_id: 'node-lab-systems', capacity: 25, investment: 1060000.0 },
-      { id: 'lab-d11', name: 'PG laboratory-2', lab_code: 'D-11', node_id: 'node-lab-systems', capacity: 25, investment: 1870000.0 },
+      { id: 'lab-d01', name: 'Linux Laboratory', lab_code: 'D-01', node_id: 'node-lab-systems', capacity: 42, investment: 1419544.04 },
+      { id: 'lab-d02', name: 'Database Laboratory', lab_code: 'D-02', node_id: 'node-lab-systems', capacity: 46, investment: 3601318.0 },
+      { id: 'lab-d03', name: 'Project Laboratory', lab_code: 'D-03', node_id: 'node-lab-systems', capacity: 49, investment: 2603775.0 },
+      { id: 'lab-d04', name: 'Application Development Tool Laboratory', lab_code: 'D-04', node_id: 'node-lab-ai', capacity: 17, investment: 1459513.0 },
+      { id: 'lab-d05', name: 'Operating System Laboratory', lab_code: 'D-05', node_id: 'node-lab-systems', capacity: 38, investment: 2664951.5 },
+      { id: 'lab-d06', name: 'Web Development Tool Lab', lab_code: 'D-06', node_id: 'node-lab-ai', capacity: 27, investment: 2025848.99 },
+      { id: 'lab-d07', name: 'Network Laboratory', lab_code: 'D-07', node_id: 'node-lab-networks', capacity: 40, investment: 2759191.89 },
+      { id: 'lab-d08', name: 'Artificial Intelligence & Machine Learning Laboratory', lab_code: 'D-08', node_id: 'node-lab-ai', capacity: 50, investment: 2572968.8 },
+      { id: 'lab-d09', name: 'Apple Education Center Laboratory', lab_code: 'D-09', node_id: 'node-lab-ai', capacity: 65, investment: 5470034.99 },
+      { id: 'lab-d10', name: 'PG laboratory-1', lab_code: 'D-10', node_id: 'node-lab-systems', capacity: 34, investment: 1492856.0 },
+      { id: 'lab-d11', name: 'PG laboratory-2', lab_code: 'D-11', node_id: 'node-lab-systems', capacity: 24, investment: 2083780.0 },
+      { id: 'lab-d12', name: 'Augmented Reality/ Virtual Reality Laboratory (ARVR LAB)', lab_code: 'D-12', node_id: 'node-lab-ai', capacity: 30, investment: 6046650.0 },
     ];
     departmentalLabs.forEach((l) => this.labs.set(l.id, l));
 

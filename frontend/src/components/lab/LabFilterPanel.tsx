@@ -31,14 +31,15 @@ export const LabFilterPanel: React.FC<LabFilterPanelProps> = ({
 
   const buildingOptions = [
     { value: 'all', label: 'All Buildings' },
-    { value: 'Alan Turing Hall', label: 'Alan Turing Hall (CSE)' },
-    { value: 'Grace Hopper Complex', label: 'Grace Hopper Complex (AI)' },
-    { value: 'Nikola Tesla Building', label: 'Nikola Tesla Building (IoT)' },
-    { value: 'Ada Lovelace Hall', label: 'Ada Lovelace Hall (VR)' },
-    { value: 'Claude Shannon Building', label: 'Claude Shannon Building (Sec)' },
-    { value: 'Thomas Edison Workshop', label: 'Thomas Edison Workshop (Fab)' },
-    { value: 'Rosalind Franklin Center', label: 'Rosalind Franklin Center (Bio)' },
-    { value: 'Niels Bohr Institute', label: 'Niels Bohr Institute (Physics)' },
+    { value: 'Systems & OS Building', label: 'Systems & OS Building (D-01, D-05)' },
+    { value: 'Data Center & Software Complex', label: 'Data Center & Software Complex (D-02, D-06)' },
+    { value: 'Project & Research Hub', label: 'Project & Research Hub (D-03)' },
+    { value: 'Software Engineering Block', label: 'Software Engineering Block (D-04)' },
+    { value: 'Networking & Infrastructure Hall', label: 'Networking & Infrastructure Hall (D-07)' },
+    { value: 'AI & Advanced Computing Center', label: 'AI & Advanced Computing Center (D-08)' },
+    { value: 'Computing & Digital Innovation Complex', label: 'Computing & Digital Innovation Complex (D-09)' },
+    { value: 'Research & PG Complex', label: 'Research & PG Complex (D-10, D-11)' },
+    { value: 'AR/VR Innovation Center', label: 'AR/VR Innovation Center (D-12)' },
   ];
 
   return (
