@@ -96,7 +96,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const switchDemoRole = useCallback(async (newRole: Role) => {
     setIsLoading(true);
     try {
-      const email = `${newRole}@campus.edu`;
+      const email = `${newRole}@ritindia.edu`;
       const res = await authService.login({ email, password: 'password123' });
       setUser(res.data.user);
       setToken(res.data.token);
