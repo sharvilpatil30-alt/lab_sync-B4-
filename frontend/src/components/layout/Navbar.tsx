@@ -238,12 +238,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, isSidebarOpen }
               className="flex items-center gap-1.5 sm:gap-2.5 p-1 sm:p-1.5 sm:pl-2 rounded-xl border border-slate-800 bg-slate-900/60 hover:bg-slate-800 transition-all text-left"
               aria-label="User Profile"
             >
-              <div className="w-7 h-7 rounded-lg overflow-hidden bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0">
-                {user?.profile?.avatarUrl ? (
-                  <img src={user.profile.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
-                ) : (
-                  <UserIcon className="w-4 h-4 text-slate-400" />
-                )}
+              <div className="w-7 h-7 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0">
+                <UserIcon className="w-4 h-4 text-indigo-400" />
               </div>
               <div className="hidden md:block">
                 <p className="text-xs font-medium text-slate-200 leading-tight">{user?.name || 'Guest'}</p>

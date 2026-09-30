@@ -157,12 +157,8 @@ export const ProfilePage: React.FC = () => {
       <div className="glass-panel p-6 sm:p-8 rounded-2xl border border-slate-800 space-y-6 shadow-2xl">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl overflow-hidden bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0">
-              {user?.profile?.avatarUrl ? (
-                <img src={user.profile.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
-              ) : (
-                <User className="w-8 h-8 text-slate-400" />
-              )}
+            <div className="w-16 h-16 rounded-2xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center shrink-0">
+              <User className="w-8 h-8 text-indigo-400" />
             </div>
             <div>
               <div className="flex items-center gap-2">

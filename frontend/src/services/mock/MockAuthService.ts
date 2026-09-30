@@ -69,7 +69,6 @@ export class MockAuthService implements IAuthService {
         department: 'Computer Science & Engineering',
         profile: {
           phone: '+91 98765 43210',
-          avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
         },
         createdAt: new Date().toISOString(),
       };
@@ -129,9 +128,7 @@ export class MockAuthService implements IAuthService {
       email: trimmedEmail,
       role: data.role as any,
       department: data.department || 'Computer Science & Engineering',
-      profile: {
-        avatarUrl: `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80`,
-      },
+      profile: {},
       createdAt: new Date().toISOString(),
     };
 
