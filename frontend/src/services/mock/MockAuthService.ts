@@ -53,10 +53,13 @@ export class MockAuthService implements IAuthService {
     // If user is not yet seeded, dynamically provision for any valid @ritindia.edu account
     if (!user) {
       const prefix = trimmedEmail.split('@')[0];
-      const capitalizedName = prefix
-        .split(/[._-]/)
-        .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
-        .join(' ');
+      const isNumeric = /^\d+$/.test(prefix);
+      const capitalizedName = isNumeric
+        ? `Student (${prefix})`
+        : prefix
+            .split(/[._-]/)
+            .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
+            .join(' ');
 
       user = {
         id: `usr_${Date.now()}`,

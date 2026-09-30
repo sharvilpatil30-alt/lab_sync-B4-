@@ -348,7 +348,7 @@ export const PandaGuideBot: React.FC = () => {
           {
             title: '2. Enter Campus Email',
             description: 'Enter your institutional email address ending with @ritindia.edu.',
-            actionHint: 'e.g. anyabandgar458@ritindia.edu',
+            actionHint: 'e.g. 2553018@ritindia.edu',
           },
           {
             title: '3. Provide Password',

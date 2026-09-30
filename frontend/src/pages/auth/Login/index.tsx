@@ -131,7 +131,7 @@ export const LoginPage: React.FC = () => {
         <Input
           label="Campus Email"
           type="email"
-          placeholder="e.g. anyabandgar458@ritindia.edu"
+          placeholder="e.g. 2553018@ritindia.edu"
           value={emailOrUsername}
           onChange={(e) => setEmailOrUsername(e.target.value)}
           leftIcon={<Mail className="w-4 h-4" />}
