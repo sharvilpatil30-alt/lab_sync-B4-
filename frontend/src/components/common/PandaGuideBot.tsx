@@ -325,9 +325,9 @@ export const PandaGuideBot: React.FC = () => {
             actionUrl: `/${role || 'student'}/labs`,
           },
           {
-            title: '3. Role Switcher in Navbar',
-            description: 'You can test the system as Student, Faculty, or Admin anytime by clicking the user profile menu in the top right.',
-            actionHint: 'Click your avatar to switch demo roles.',
+            title: '3. User Profile & Active Session',
+            description: 'View your profile details and active role session by clicking on your avatar in the top right.',
+            actionHint: 'Click your avatar to inspect account details.',
           },
         ],
       };
@@ -341,13 +341,18 @@ export const PandaGuideBot: React.FC = () => {
         greeting: 'Welcome to the Smart Campus Portal:',
         steps: [
           {
-            title: '1. Enter Campus Email',
-            description: 'Enter your registered campus email address and account credentials.',
-            actionHint: 'e.g. yourname@ritindia.edu',
+            title: '1. Select Your Role',
+            description: 'Choose whether you are signing in as Student, Faculty, or Administrator.',
+            actionHint: 'Click one of the three role cards.',
           },
           {
-            title: '2. Provide Password',
-            description: 'Enter your secure password (at least 6 characters) to access laboratory dashboards.',
+            title: '2. Enter Campus Email',
+            description: 'Enter your institutional email address ending with @ritindia.edu.',
+            actionHint: 'e.g. anyabandgar458@ritindia.edu',
+          },
+          {
+            title: '3. Provide Password',
+            description: 'Enter your account password (at least 6 characters) to access your authorized workspace.',
             actionHint: 'Instant secure sign in.',
           },
         ],

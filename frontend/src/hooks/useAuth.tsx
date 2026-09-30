@@ -8,7 +8,7 @@ interface AuthContextType {
   role: Role | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (credentials: { email: string; password: string }) => Promise<User>;
+  login: (credentials: { email: string; password: string; role?: Role }) => Promise<User>;
   register: (data: { name: string; email: string; password: string; role: string; department?: string }) => Promise<User>;
   logout: () => Promise<void>;
   switchDemoRole: (role: Role) => Promise<void>;
@@ -54,7 +54,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => window.removeEventListener('auth:session-expired', handleExpired);
   }, []);
 
-  const login = useCallback(async (credentials: { email: string; password: string }): Promise<User> => {
+  const login = useCallback(async (credentials: { email: string; password: string; role?: Role }): Promise<User> => {
     setIsLoading(true);
     try {
       const res = await authService.login(credentials);

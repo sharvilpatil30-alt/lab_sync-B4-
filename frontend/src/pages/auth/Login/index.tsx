@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, LogIn, AlertTriangle } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, LogIn, AlertTriangle, GraduationCap, BookOpen, Shield } from 'lucide-react';
 import { Button, Input, ErrorMessage } from '../../../components/common';
 import { useAuth } from '../../../hooks';
+import { Role } from '../../../types';
 
 export const LoginPage: React.FC = () => {
   const { login, isAuthenticated, role } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
+  const [selectedRole, setSelectedRole] = useState<Role>('student');
   const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -65,8 +67,12 @@ export const LoginPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const authenticatedUser = await login({ email: trimmedInput, password });
-      const targetRole = authenticatedUser?.role;
+      const authenticatedUser = await login({
+        email: trimmedInput,
+        password,
+        role: selectedRole,
+      });
+      const targetRole = selectedRole || authenticatedUser?.role;
 
       if (from && !from.includes('/login') && !from.includes('/unauthorized')) {
         navigate(from, { replace: true });
@@ -110,6 +116,66 @@ export const LoginPage: React.FC = () => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Role Selection (Select 1 among 3) */}
+        <div>
+          <label className="block text-xs font-semibold text-slate-300 mb-2">
+            Select Your Role
+          </label>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              {
+                id: 'student' as Role,
+                label: 'Student',
+                desc: 'Workstations',
+                icon: GraduationCap,
+              },
+              {
+                id: 'faculty' as Role,
+                label: 'Faculty',
+                desc: 'Lab Sessions',
+                icon: BookOpen,
+              },
+              {
+                id: 'admin' as Role,
+                label: 'Admin',
+                desc: 'Management',
+                icon: Shield,
+              },
+            ].map((r) => {
+              const Icon = r.icon;
+              const isSelected = selectedRole === r.id;
+              return (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => setSelectedRole(r.id)}
+                  className={`flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all ${
+                    isSelected
+                      ? 'bg-indigo-600/25 border-indigo-500 text-white shadow-lg shadow-indigo-500/20 ring-1 ring-indigo-500'
+                      : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 hover:border-slate-700'
+                  }`}
+                >
+                  <div
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center mb-1.5 transition-colors ${
+                      isSelected
+                        ? 'bg-indigo-600 text-white shadow-sm'
+                        : 'bg-slate-800 text-slate-400'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  <span className={`text-xs font-bold leading-tight ${isSelected ? 'text-white' : 'text-slate-300'}`}>
+                    {r.label}
+                  </span>
+                  <span className="text-[10px] text-slate-500 leading-tight mt-0.5">
+                    {r.desc}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         <Input
           label="Campus Email"
           type="email"
@@ -148,7 +214,7 @@ export const LoginPage: React.FC = () => {
           isLoading={isLoading}
           leftIcon={<LogIn className="w-4 h-4" />}
         >
-          Sign In
+          Sign In as {selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1)}
         </Button>
       </form>
 

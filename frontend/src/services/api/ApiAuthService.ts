@@ -3,7 +3,7 @@ import { User, ApiResponse } from '../../types';
 import { apiClient } from './client';
 
 export class ApiAuthService implements IAuthService {
-  async login(credentials: { email: string; password: string }): Promise<ApiResponse<{ token: string; user: User }>> {
+  async login(credentials: { email: string; password: string; role?: any }): Promise<ApiResponse<{ token: string; user: User }>> {
     const res = await apiClient.post('/auth/login', credentials);
     if (res.data?.data?.token) {
       localStorage.setItem('smart_campus_auth_token', res.data.data.token);
