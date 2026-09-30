@@ -14,7 +14,7 @@ import {
   ArrowRight,
   RotateCcw,
 } from 'lucide-react';
-import { useAuth } from '../../hooks';
+import { useAuth, useTheme } from '../../hooks';
 
 interface PageGuideStep {
   title: string;
@@ -35,6 +35,7 @@ export const PandaGuideBot: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { role, user } = useAuth();
+  const { isGoldPink, theme } = useTheme();
 
   const [isOpen, setIsOpen] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -400,21 +401,53 @@ export const PandaGuideBot: React.FC = () => {
     <aside aria-label="Panda Campus Guide" className="fixed bottom-4 sm:bottom-6 right-4 sm:right-6 z-50 flex flex-col items-end select-none pointer-events-none">
       {/* Speech Bubble / Step Guide Modal */}
       {isOpen && (
-        <div className="pointer-events-auto mb-3 w-[calc(100vw-2rem)] sm:w-96 max-w-sm rounded-2xl bg-slate-900/95 dark:bg-slate-950/95 backdrop-blur-xl border border-indigo-500/30 dark:border-indigo-400/20 shadow-2xl shadow-indigo-950/50 p-4 animate-in fade-in slide-in-from-bottom-3 duration-200 text-slate-100">
+        <div
+          className={`pointer-events-auto mb-3 w-[calc(100vw-2rem)] sm:w-96 max-w-sm rounded-2xl backdrop-blur-xl p-4 animate-in fade-in slide-in-from-bottom-3 duration-200 transition-colors ${
+            isGoldPink
+              ? 'bg-white/95 border border-pink-200/90 shadow-2xl shadow-rose-900/15 text-slate-800 ring-1 ring-pink-100/80'
+              : 'bg-slate-900/95 dark:bg-slate-950/95 border border-indigo-500/30 dark:border-indigo-400/20 shadow-2xl shadow-indigo-950/50 text-slate-100'
+          }`}
+        >
           {/* Header */}
-          <div className="flex items-start justify-between gap-2 pb-2.5 border-b border-slate-800">
+          <div
+            className={`flex items-start justify-between gap-2 pb-2.5 border-b ${
+              isGoldPink ? 'border-pink-100' : 'border-slate-800'
+            }`}
+          >
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-base shadow-md shadow-indigo-500/25">
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-base shadow-md ${
+                  isGoldPink
+                    ? 'bg-gradient-to-tr from-amber-400 via-pink-400 to-rose-500 shadow-pink-400/30'
+                    : 'bg-gradient-to-tr from-indigo-600 to-purple-600 shadow-indigo-500/25'
+                }`}
+              >
                 🐼
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-bold text-white tracking-tight">Panda Guide</span>
-                  <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                  <span
+                    className={`text-xs font-bold tracking-tight ${
+                      isGoldPink ? 'text-slate-900' : 'text-white'
+                    }`}
+                  >
+                    Panda Guide
+                  </span>
+                  <span
+                    className={`text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.2 rounded border ${
+                      isGoldPink
+                        ? 'bg-pink-50 text-pink-700 border-pink-200'
+                        : 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30'
+                    }`}
+                  >
                     Step {currentStepIndex + 1} of {totalSteps}
                   </span>
                 </div>
-                <p className="text-[10px] text-slate-400 font-medium truncate max-w-[190px]">
+                <p
+                  className={`text-[10px] font-medium truncate max-w-[190px] ${
+                    isGoldPink ? 'text-slate-500' : 'text-slate-400'
+                  }`}
+                >
                   {guide.pageTitle}
                 </p>
               </div>
@@ -424,14 +457,22 @@ export const PandaGuideBot: React.FC = () => {
               <button
                 onClick={() => setCurrentStepIndex(0)}
                 title="Restart Steps"
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                className={`p-1 rounded-lg transition-colors ${
+                  isGoldPink
+                    ? 'text-slate-400 hover:text-slate-700 hover:bg-pink-50'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                }`}
               >
                 <RotateCcw className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={() => setIsOpen(false)}
                 title="Minimize Panda"
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                className={`p-1 rounded-lg transition-colors ${
+                  isGoldPink
+                    ? 'text-slate-400 hover:text-slate-700 hover:bg-pink-50'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                }`}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -446,9 +487,15 @@ export const PandaGuideBot: React.FC = () => {
                 onClick={() => setCurrentStepIndex(idx)}
                 className={`h-1.5 rounded-full transition-all duration-300 ${
                   idx === currentStepIndex
-                    ? 'w-7 bg-indigo-500 shadow-sm shadow-indigo-500/50'
+                    ? isGoldPink
+                      ? 'w-7 bg-gradient-to-r from-pink-500 to-amber-500 shadow-sm shadow-pink-400/40'
+                      : 'w-7 bg-indigo-500 shadow-sm shadow-indigo-500/50'
                     : idx < currentStepIndex
-                    ? 'w-3 bg-indigo-400/40'
+                    ? isGoldPink
+                      ? 'w-3 bg-pink-300'
+                      : 'w-3 bg-indigo-400/40'
+                    : isGoldPink
+                    ? 'w-3 bg-slate-200'
                     : 'w-3 bg-slate-800'
                 }`}
                 aria-label={`Jump to step ${idx + 1}`}
@@ -459,19 +506,41 @@ export const PandaGuideBot: React.FC = () => {
           {/* Step Content */}
           <div className="space-y-2 py-1">
             <div className="flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
-              <h4 className="text-xs font-bold text-white leading-snug">
+              <Sparkles
+                className={`w-3.5 h-3.5 shrink-0 ${
+                  isGoldPink ? 'text-pink-500' : 'text-indigo-400'
+                }`}
+              />
+              <h4
+                className={`text-xs font-bold leading-snug ${
+                  isGoldPink ? 'text-slate-900' : 'text-white'
+                }`}
+              >
                 {currentStep.title}
               </h4>
             </div>
 
-            <p className="text-xs text-slate-300 leading-relaxed font-normal pl-5">
+            <p
+              className={`text-xs leading-relaxed font-normal pl-5 ${
+                isGoldPink ? 'text-slate-600' : 'text-slate-300'
+              }`}
+            >
               {currentStep.description}
             </p>
 
             {currentStep.actionHint && (
-              <div className="flex items-center gap-1.5 text-[11px] text-amber-300/90 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1.5 rounded-lg mt-2 font-medium">
-                <Lightbulb className="w-3.5 h-3.5 shrink-0 text-amber-400" />
+              <div
+                className={`flex items-center gap-1.5 text-[11px] px-2.5 py-1.5 rounded-lg mt-2 font-medium border ${
+                  isGoldPink
+                    ? 'text-amber-900 bg-amber-50/90 border-amber-200/80'
+                    : 'text-amber-300/90 bg-amber-500/10 border-amber-500/20'
+                }`}
+              >
+                <Lightbulb
+                  className={`w-3.5 h-3.5 shrink-0 ${
+                    isGoldPink ? 'text-amber-600' : 'text-amber-400'
+                  }`}
+                />
                 <span>Tip: {currentStep.actionHint}</span>
               </div>
             )}
@@ -483,7 +552,11 @@ export const PandaGuideBot: React.FC = () => {
                     navigate(currentStep.actionUrl!);
                     setIsOpen(false);
                   }}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/30 transition-all hover:scale-[1.01] active:scale-[0.99]"
+                  className={`w-full flex items-center justify-center gap-2 px-3 py-1.5 rounded-xl text-white text-xs font-semibold shadow-lg transition-all hover:scale-[1.01] active:scale-[0.99] ${
+                    isGoldPink
+                      ? 'bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 hover:from-pink-600 hover:to-amber-600 shadow-pink-500/25'
+                      : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 shadow-indigo-600/30'
+                  }`}
                 >
                   <span>{currentStep.actionLabel || 'Go to Page'}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -493,13 +566,21 @@ export const PandaGuideBot: React.FC = () => {
           </div>
 
           {/* Navigation Controls */}
-          <div className="flex items-center justify-between pt-3 mt-2 border-t border-slate-800 text-xs">
+          <div
+            className={`flex items-center justify-between pt-3 mt-2 border-t text-xs ${
+              isGoldPink ? 'border-pink-100' : 'border-slate-800'
+            }`}
+          >
             <button
               onClick={handlePrev}
               disabled={currentStepIndex === 0}
               className={`flex items-center gap-1 px-2.5 py-1 rounded-lg font-medium transition-all ${
                 currentStepIndex === 0
-                  ? 'text-slate-600 cursor-not-allowed opacity-50'
+                  ? isGoldPink
+                    ? 'text-slate-300 cursor-not-allowed opacity-50'
+                    : 'text-slate-600 cursor-not-allowed opacity-50'
+                  : isGoldPink
+                  ? 'text-slate-600 hover:text-slate-900 hover:bg-pink-50'
                   : 'text-slate-300 hover:text-white hover:bg-slate-800'
               }`}
             >
@@ -507,14 +588,22 @@ export const PandaGuideBot: React.FC = () => {
               <span>Back</span>
             </button>
 
-            <span className="text-[10px] text-slate-500 font-mono">
+            <span
+              className={`text-[10px] font-mono ${
+                isGoldPink ? 'text-slate-400' : 'text-slate-500'
+              }`}
+            >
               {currentStepIndex + 1}/{totalSteps}
             </span>
 
             {currentStepIndex < totalSteps - 1 ? (
               <button
                 onClick={handleNext}
-                className="flex items-center gap-1 px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-all shadow-md shadow-indigo-600/30"
+                className={`flex items-center gap-1 px-3 py-1 rounded-lg text-white font-semibold transition-all shadow-md ${
+                  isGoldPink
+                    ? 'bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 shadow-pink-600/25'
+                    : 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-600/30'
+                }`}
               >
                 <span>Next</span>
                 <ChevronRight className="w-3.5 h-3.5" />
@@ -522,7 +611,11 @@ export const PandaGuideBot: React.FC = () => {
             ) : (
               <button
                 onClick={() => setIsOpen(false)}
-                className="flex items-center gap-1 px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition-all shadow-md shadow-emerald-600/30"
+                className={`flex items-center gap-1 px-3 py-1 rounded-lg text-white font-semibold transition-all shadow-md ${
+                  isGoldPink
+                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-emerald-600/25'
+                    : 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/30'
+                }`}
               >
                 <CheckCircle2 className="w-3.5 h-3.5" />
                 <span>Got it!</span>
@@ -541,13 +634,29 @@ export const PandaGuideBot: React.FC = () => {
               setIsOpen(true);
               setHasNewTip(false);
             }}
-            className="cursor-pointer hidden sm:flex items-center gap-2 bg-slate-900/90 dark:bg-slate-950/90 text-white text-xs px-3 py-1.5 rounded-full border border-indigo-500/30 shadow-lg shadow-indigo-950/40 hover:border-indigo-400 transition-all hover:scale-105 animate-bounce duration-1000"
+            className={`cursor-pointer hidden sm:flex items-center gap-2 text-xs px-3 py-1.5 rounded-full border shadow-lg transition-all hover:scale-105 animate-bounce duration-1000 ${
+              isGoldPink
+                ? 'bg-white/95 text-slate-800 border-pink-200/90 shadow-pink-900/10 hover:border-pink-300'
+                : 'bg-slate-900/90 dark:bg-slate-950/90 text-white border-indigo-500/30 shadow-indigo-950/40 hover:border-indigo-400'
+            }`}
           >
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              <span
+                className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                  isGoldPink ? 'bg-pink-400' : 'bg-emerald-400'
+                }`}
+              />
+              <span
+                className={`relative inline-flex rounded-full h-2 w-2 ${
+                  isGoldPink ? 'bg-pink-500' : 'bg-emerald-500'
+                }`}
+              />
             </span>
-            <span className="font-medium text-[11px]">
+            <span
+              className={`font-medium text-[11px] ${
+                isGoldPink ? 'text-slate-800' : 'text-slate-100'
+              }`}
+            >
               Need help here? Click me! 🐼
             </span>
           </div>
@@ -560,12 +669,20 @@ export const PandaGuideBot: React.FC = () => {
           }}
           aria-label="Toggle Panda Campus Guide"
           title={isOpen ? 'Close Panda Guide' : 'Open Page Steps Guide'}
-          className={`group relative flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-tr from-slate-900 via-slate-800 to-indigo-950 text-white border-2 border-indigo-500/40 hover:border-indigo-400 shadow-2xl shadow-indigo-900/50 hover:shadow-indigo-500/30 transition-all transform hover:-translate-y-1 active:translate-y-0 ${
-            isWaving ? 'scale-110' : ''
-          }`}
+          className={`group relative flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl border-2 transition-all transform hover:-translate-y-1 active:translate-y-0 ${
+            isGoldPink
+              ? 'bg-gradient-to-tr from-white via-rose-50 to-amber-50 text-slate-800 border-pink-300 hover:border-amber-400 shadow-2xl shadow-pink-300/30 hover:shadow-pink-400/40'
+              : 'bg-gradient-to-tr from-slate-900 via-slate-800 to-indigo-950 text-white border-indigo-500/40 hover:border-indigo-400 shadow-2xl shadow-indigo-900/50 hover:shadow-indigo-500/30'
+          } ${isWaving ? 'scale-110' : ''}`}
         >
           {/* Glowing Aura Ring */}
-          <span className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 opacity-30 group-hover:opacity-60 blur-xs transition duration-300 -z-10" />
+          <span
+            className={`absolute -inset-1 rounded-2xl blur-xs transition duration-300 -z-10 ${
+              isGoldPink
+                ? 'bg-gradient-to-r from-amber-400 via-rose-400 to-pink-500 opacity-40 group-hover:opacity-75'
+                : 'bg-gradient-to-r from-indigo-500 to-purple-600 opacity-30 group-hover:opacity-60'
+            }`}
+          />
 
           {/* Custom Stylized Panda Face Illustration */}
           <div className="relative w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center">
@@ -577,17 +694,38 @@ export const PandaGuideBot: React.FC = () => {
               }`}
             >
               {/* Ears */}
-              <circle cx="24" cy="24" r="14" fill="#1e293b" />
-              <circle cx="24" cy="24" r="7" fill="#64748b" />
-              <circle cx="76" cy="24" r="14" fill="#1e293b" />
-              <circle cx="76" cy="24" r="7" fill="#64748b" />
+              <circle cx="24" cy="24" r="14" fill={isGoldPink ? '#3d332a' : '#1e293b'} />
+              <circle cx="24" cy="24" r="7" fill={isGoldPink ? '#fbcfe8' : '#64748b'} />
+              <circle cx="76" cy="24" r="14" fill={isGoldPink ? '#3d332a' : '#1e293b'} />
+              <circle cx="76" cy="24" r="7" fill={isGoldPink ? '#fbcfe8' : '#64748b'} />
 
               {/* Head */}
-              <circle cx="50" cy="54" r="38" fill="#ffffff" stroke="#0f172a" strokeWidth="2.5" />
+              <circle
+                cx="50"
+                cy="54"
+                r="38"
+                fill="#ffffff"
+                stroke={isGoldPink ? '#f472b6' : '#0f172a'}
+                strokeWidth="2.5"
+              />
 
               {/* Eye Patches */}
-              <ellipse cx="36" cy="48" rx="10" ry="13" fill="#1e293b" transform="rotate(-15 36 48)" />
-              <ellipse cx="64" cy="48" rx="10" ry="13" fill="#1e293b" transform="rotate(15 64 48)" />
+              <ellipse
+                cx="36"
+                cy="48"
+                rx="10"
+                ry="13"
+                fill={isGoldPink ? '#3d332a' : '#1e293b'}
+                transform="rotate(-15 36 48)"
+              />
+              <ellipse
+                cx="64"
+                cy="48"
+                rx="10"
+                ry="13"
+                fill={isGoldPink ? '#3d332a' : '#1e293b'}
+                transform="rotate(15 64 48)"
+              />
 
               {/* Eyes */}
               <circle cx="37" cy="47" r="4.5" fill="#ffffff" />
@@ -596,8 +734,20 @@ export const PandaGuideBot: React.FC = () => {
               <circle cx="62" cy="46" r="2.5" fill="#0f172a" />
 
               {/* Cute Cheeks */}
-              <circle cx="28" cy="59" r="4.5" fill="#f472b6" opacity="0.6" />
-              <circle cx="72" cy="59" r="4.5" fill="#f472b6" opacity="0.6" />
+              <circle
+                cx="28"
+                cy="59"
+                r="4.5"
+                fill={isGoldPink ? '#fb7185' : '#f472b6'}
+                opacity={isGoldPink ? '0.85' : '0.6'}
+              />
+              <circle
+                cx="72"
+                cy="59"
+                r="4.5"
+                fill={isGoldPink ? '#fb7185' : '#f472b6'}
+                opacity={isGoldPink ? '0.85' : '0.6'}
+              />
 
               {/* Nose */}
               <polygon points="50,56 46,51 54,51" fill="#0f172a" />
@@ -611,18 +761,43 @@ export const PandaGuideBot: React.FC = () => {
                 strokeLinecap="round"
               />
 
-              {/* Cute Graduation Cap or Bamboo sprout */}
-              <path
-                d="M 50 16 L 36 22 L 50 28 L 64 22 Z"
-                fill="#6366f1"
-              />
-              <line x1="50" y1="28" x2="50" y2="34" stroke="#6366f1" strokeWidth="2" />
-              <circle cx="64" cy="26" r="2.5" fill="#fbbf24" />
+              {/* Head accessory: Golden Crown in Gold-Pink Mode, Academic Cap in Dark Mode */}
+              {isGoldPink ? (
+                <>
+                  {/* Royal Gold Crown */}
+                  <polygon
+                    points="34,26 34,14 42,20 50,11 58,20 66,14 66,26"
+                    fill="#f59e0b"
+                    stroke="#d97706"
+                    strokeWidth="1.5"
+                  />
+                  <line x1="34" y1="26" x2="66" y2="26" stroke="#b45309" strokeWidth="2" />
+                  {/* Crown Jewels */}
+                  <circle cx="50" cy="19" r="2.5" fill="#f43f5e" />
+                  <circle cx="42" cy="22" r="1.5" fill="#fef08a" />
+                  <circle cx="58" cy="22" r="1.5" fill="#fef08a" />
+                  <circle cx="35" cy="15" r="1.5" fill="#fbbf24" />
+                  <circle cx="65" cy="15" r="1.5" fill="#fbbf24" />
+                </>
+              ) : (
+                <>
+                  {/* Academic Graduation Cap */}
+                  <path d="M 50 16 L 36 22 L 50 28 L 64 22 Z" fill="#6366f1" />
+                  <line x1="50" y1="28" x2="50" y2="34" stroke="#6366f1" strokeWidth="2" />
+                  <circle cx="64" cy="26" r="2.5" fill="#fbbf24" />
+                </>
+              )}
             </svg>
           </div>
 
           {/* Notification Dot */}
-          <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-gradient-to-r from-pink-500 to-rose-500 text-[9px] font-bold text-white shadow-md">
+          <span
+            className={`absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold text-white shadow-md ${
+              isGoldPink
+                ? 'bg-gradient-to-r from-amber-500 to-pink-500'
+                : 'bg-gradient-to-r from-pink-500 to-rose-500'
+            }`}
+          >
             ?
           </span>
         </button>
