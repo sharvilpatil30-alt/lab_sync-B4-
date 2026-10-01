@@ -54,8 +54,11 @@ export class MockAuthService implements IAuthService {
     if (!user) {
       const prefix = trimmedEmail.split('@')[0];
       const isNumeric = /^\d+$/.test(prefix);
+      const rolePrefix = targetRole === 'faculty' ? 'Prof.' : targetRole === 'admin' ? 'Admin' : 'Student';
       const capitalizedName = isNumeric
-        ? `Student (${prefix})`
+        ? `${rolePrefix} (${prefix})`
+        : targetRole === 'faculty' && !prefix.toLowerCase().startsWith('prof') && !prefix.toLowerCase().startsWith('dr')
+        ? `Prof. ${prefix.split(/[._-]/).map((s) => s.charAt(0).toUpperCase() + s.slice(1)).join(' ')}`
         : prefix
             .split(/[._-]/)
             .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
@@ -74,9 +77,25 @@ export class MockAuthService implements IAuthService {
       };
       users.push(user);
       localStorage.setItem(USERS_KEY, JSON.stringify(users));
-    } else if (credentials.role && user.role !== credentials.role) {
-      // Apply the user's selected role
-      user = { ...user, role: credentials.role };
+    } else {
+      let updatedName = user.name;
+      const effectiveRole = credentials.role || user.role || targetRole;
+
+      // Fix stale "Student (xxx)" name if role is faculty or admin
+      if (effectiveRole === 'faculty' && updatedName.startsWith('Student (')) {
+        updatedName = updatedName.replace(/^Student \(/, 'Prof. (');
+      } else if (effectiveRole === 'admin' && updatedName.startsWith('Student (')) {
+        updatedName = updatedName.replace(/^Student \(/, 'Admin (');
+      } else if (effectiveRole === 'student' && (updatedName.startsWith('Prof. (') || updatedName.startsWith('Admin ('))) {
+        updatedName = updatedName.replace(/^(Prof\.|Admin) \(/, 'Student (');
+      }
+
+      if (credentials.role && user.role !== credentials.role) {
+        user = { ...user, role: credentials.role, name: updatedName };
+      } else if (updatedName !== user.name) {
+        user = { ...user, name: updatedName };
+      }
+
       const idx = users.findIndex((u) => u.email.toLowerCase() === trimmedEmail);
       if (idx !== -1) {
         users[idx] = user;

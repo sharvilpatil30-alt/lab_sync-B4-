@@ -34,6 +34,12 @@ export const FacultyDashboard: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  const facultyDisplayName = user?.name
+    ? user.name.startsWith('Student (')
+      ? user.name.replace(/^Student \(/, 'Prof. (')
+      : user.name
+    : 'Professor';
+
   const [quickSearch, setQuickSearch] = useState('');
   const [lastUpdated, setLastUpdated] = useState<string>(() => new Date().toLocaleTimeString());
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -96,7 +102,7 @@ export const FacultyDashboard: React.FC = () => {
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-              Welcome, {user?.name || 'Professor'}
+              Welcome, {facultyDisplayName}
             </h1>
             <p className="text-xs sm:text-sm text-slate-400 max-w-xl leading-relaxed">
               Prioritized laboratory booking for departmental coursework, research sessions, and compute cluster allocations with automated pre-emption rules.

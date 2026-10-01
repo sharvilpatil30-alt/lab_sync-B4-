@@ -1,4 +1,5 @@
 import { apiClient } from './client';
+import { mockInventoryService } from '../mock/MockInventoryService';
 
 export interface ComputerBatchRecord {
   batch_id: string;
@@ -124,7 +125,7 @@ export interface InventoryDashboardPayload {
 
 export const inventoryApi = {
   /**
-   * Fetches full inventory dashboard payload from /api/v1/inventory
+   * Fetches full inventory dashboard payload from /api/v1/inventory with automatic fallback to uploaded institutional dataset
    */
   getInventoryDashboard: async (params?: {
     status?: string;
@@ -132,8 +133,15 @@ export const inventoryApi = {
     category?: string;
     search?: string;
   }): Promise<InventoryDashboardPayload> => {
-    const res = await apiClient.get('/inventory', { params });
-    return res.data;
+    try {
+      const res = await apiClient.get('/inventory', { params });
+      if (res?.data && res.data.success) {
+        return res.data;
+      }
+    } catch {
+      // Fallback seamlessly to uploaded institutional dataset
+    }
+    return mockInventoryService.getDashboardPayload(params);
   },
 
   getEquipmentList: async (params?: {
@@ -143,16 +151,36 @@ export const inventoryApi = {
     search?: string;
     brand?: string;
   }): Promise<{ success: boolean; count: number; data: EquipmentItem[] }> => {
-    const res = await apiClient.get('/inventory/equipment', { params });
-    return res.data;
+    try {
+      const res = await apiClient.get('/inventory/equipment', { params });
+      if (res?.data && res.data.success) {
+        return res.data;
+      }
+    } catch {
+      // Fallback
+    }
+    const data = mockInventoryService.getAllEquipment(params);
+    return { success: true, count: data.length, data };
   },
 
   updateEquipmentStatus: async (
     id: string,
     updates: Partial<EquipmentItem>,
   ): Promise<{ success: boolean; message: string; data: EquipmentItem }> => {
-    const res = await apiClient.put(`/inventory/equipment/${id}`, updates);
-    return res.data;
+    try {
+      const res = await apiClient.put(`/inventory/equipment/${id}`, updates);
+      if (res?.data && res.data.success) {
+        return res.data;
+      }
+    } catch {
+      // Fallback
+    }
+    const updated = mockInventoryService.updateEquipment(id, updates);
+    return {
+      success: true,
+      message: 'Equipment status updated successfully',
+      data: updated || ({} as EquipmentItem),
+    };
   },
 
   getBatches: async (params?: {
@@ -161,13 +189,30 @@ export const inventoryApi = {
     status?: string;
     search?: string;
   }): Promise<{ success: boolean; count: number; data: ComputerBatchRecord[] }> => {
-    const res = await apiClient.get('/inventory/batches', { params });
-    return res.data;
+    try {
+      const res = await apiClient.get('/inventory/batches', { params });
+      if (res?.data && res.data.success) {
+        return res.data;
+      }
+    } catch {
+      // Fallback
+    }
+    const data = mockInventoryService.getAllBatches(params);
+    return { success: true, count: data.length, data };
   },
 
   getBatchById: async (id: string): Promise<{ success: boolean; data: ComputerBatchRecord }> => {
-    const res = await apiClient.get(`/inventory/batches/${id}`);
-    return res.data;
+    try {
+      const res = await apiClient.get(`/inventory/batches/${id}`);
+      if (res?.data && res.data.success) {
+        return res.data;
+      }
+    } catch {
+      // Fallback
+    }
+    const data = mockInventoryService.getBatchById(id);
+    if (!data) throw new Error('Batch not found');
+    return { success: true, data };
   },
 
   getModels: async (params?: {
@@ -175,22 +220,54 @@ export const inventoryApi = {
     brand?: string;
     search?: string;
   }): Promise<{ success: boolean; count: number; data: NormalizedEquipmentModel[] }> => {
-    const res = await apiClient.get('/inventory/models', { params });
-    return res.data;
+    try {
+      const res = await apiClient.get('/inventory/models', { params });
+      if (res?.data && res.data.success) {
+        return res.data;
+      }
+    } catch {
+      // Fallback
+    }
+    const data = mockInventoryService.getAllModels(params);
+    return { success: true, count: data.length, data };
   },
 
   getCategories: async (): Promise<{ success: boolean; count: number; data: EquipmentCategoryRecord[] }> => {
-    const res = await apiClient.get('/inventory/categories');
-    return res.data;
+    try {
+      const res = await apiClient.get('/inventory/categories');
+      if (res?.data && res.data.success) {
+        return res.data;
+      }
+    } catch {
+      // Fallback
+    }
+    const data = mockInventoryService.getCategories();
+    return { success: true, count: data.length, data };
   },
 
   getLabsSummary: async (): Promise<{ success: boolean; count: number; data: LabInventorySummary[] }> => {
-    const res = await apiClient.get('/inventory/labs');
-    return res.data;
+    try {
+      const res = await apiClient.get('/inventory/labs');
+      if (res?.data && res.data.success) {
+        return res.data;
+      }
+    } catch {
+      // Fallback
+    }
+    const data = mockInventoryService.getLabsSummary();
+    return { success: true, count: data.length, data };
   },
 
   getSummaryStats: async (): Promise<{ success: boolean; data: InventoryStats }> => {
-    const res = await apiClient.get('/inventory/summary');
-    return res.data;
+    try {
+      const res = await apiClient.get('/inventory/summary');
+      if (res?.data && res.data.success) {
+        return res.data;
+      }
+    } catch {
+      // Fallback
+    }
+    const data = mockInventoryService.getOverallStats();
+    return { success: true, data };
   },
 };

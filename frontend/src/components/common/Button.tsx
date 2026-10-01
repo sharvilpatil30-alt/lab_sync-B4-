@@ -21,15 +21,23 @@ export const Button: React.FC<ButtonProps> = ({
   className = '',
   ...props
 }) => {
-  const { isGoldPink } = useTheme();
+  const { isGoldPink, isEmeraldMint } = useTheme();
 
   const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-150 focus:outline-none focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer';
 
-  const defaultVariants = {
-    primary: 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20 active:scale-[0.98] focus:ring-indigo-500/50',
-    secondary: 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 active:scale-[0.98] focus:ring-slate-500/50',
-    outline: 'border border-slate-700 hover:border-slate-600 bg-transparent text-slate-300 hover:text-white hover:bg-slate-800/50 focus:ring-slate-500/50',
-    ghost: 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 focus:ring-slate-500/50',
+  const oceanCyanVariants = {
+    primary: 'bg-gradient-to-r from-cyan-600 via-cyan-500 to-teal-500 hover:from-cyan-500 hover:to-teal-400 text-white shadow-lg shadow-cyan-600/30 active:scale-[0.98] focus:ring-cyan-500/50',
+    secondary: 'bg-slate-900/90 hover:bg-slate-800 text-cyan-200 border border-cyan-800/60 active:scale-[0.98] focus:ring-cyan-500/40',
+    outline: 'border border-cyan-700/60 hover:border-cyan-400 bg-transparent text-cyan-300 hover:text-white hover:bg-cyan-950/40 focus:ring-cyan-500/40',
+    ghost: 'text-cyan-400 hover:text-cyan-200 hover:bg-cyan-950/40 focus:ring-cyan-500/30',
+    danger: 'bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/20 active:scale-[0.98] focus:ring-rose-500/50',
+  };
+
+  const emeraldMintVariants = {
+    primary: 'bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white shadow-lg shadow-emerald-600/30 active:scale-[0.98] focus:ring-emerald-500/50',
+    secondary: 'bg-slate-900/90 hover:bg-slate-800 text-emerald-200 border border-emerald-800/60 active:scale-[0.98] focus:ring-emerald-500/40',
+    outline: 'border border-emerald-700/60 hover:border-emerald-400 bg-transparent text-emerald-300 hover:text-white hover:bg-emerald-950/40 focus:ring-emerald-500/40',
+    ghost: 'text-emerald-400 hover:text-emerald-200 hover:bg-emerald-950/40 focus:ring-emerald-500/30',
     danger: 'bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/20 active:scale-[0.98] focus:ring-rose-500/50',
   };
 
@@ -41,7 +49,7 @@ export const Button: React.FC<ButtonProps> = ({
     danger: 'bg-rose-500 hover:bg-rose-600 text-white shadow-md shadow-rose-500/25 active:scale-[0.98] focus:ring-rose-400/50',
   };
 
-  const variants = isGoldPink ? goldPinkVariants : defaultVariants;
+  const variants = isGoldPink ? goldPinkVariants : isEmeraldMint ? emeraldMintVariants : oceanCyanVariants;
 
   const sizes = {
     sm: 'text-xs px-2.5 py-1.5 gap-1.5',

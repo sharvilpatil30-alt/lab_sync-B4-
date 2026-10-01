@@ -775,5 +775,151 @@ body {
   animation: wiggle 0.6s ease-in-out infinite;
 }
 
+/* ==========================================================
+   MIDNIGHT OCEAN & ELECTRIC CYAN THEME
+   Replaces the old Cyber Slate & Dark Indigo theme.
+   Deep marine obsidian with glowing electric cyan & teal accents.
+   ========================================================== */
+:root:not(.theme-gold-pink):not(.theme-emerald-mint) {
+  --primary: 189 94% 43%;
+  --ring: 189 94% 43%;
+}
+
+:root:not(.theme-gold-pink):not(.theme-emerald-mint) .text-indigo-400,
+.theme-ocean-cyan .text-indigo-400 {
+  color: #22d3ee !important; /* Luminous cyan */
+}
+
+:root:not(.theme-gold-pink):not(.theme-emerald-mint) .text-indigo-300,
+.theme-ocean-cyan .text-indigo-300 {
+  color: #67e8f9 !important; /* Bright soft cyan */
+}
+
+:root:not(.theme-gold-pink):not(.theme-emerald-mint) .text-indigo-500,
+.theme-ocean-cyan .text-indigo-500 {
+  color: #06b6d4 !important; /* Electric cyan */
+}
+
+:root:not(.theme-gold-pink):not(.theme-emerald-mint) .text-indigo-200,
+.theme-ocean-cyan .text-indigo-200 {
+  color: #a5f3fc !important;
+}
+
+:root:not(.theme-gold-pink):not(.theme-emerald-mint) .bg-indigo-600,
+.theme-ocean-cyan .bg-indigo-600 {
+  background: linear-gradient(135deg, #0284c7 0%, #06b6d4 50%, #0d9488 100%) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 16px rgba(6, 182, 212, 0.3) !important;
+}
+
+:root:not(.theme-gold-pink):not(.theme-emerald-mint) .hover\:bg-indigo-500:hover,
+:root:not(.theme-gold-pink):not(.theme-emerald-mint) .hover\:bg-indigo-700:hover,
+.theme-ocean-cyan .hover\:bg-indigo-500:hover,
+.theme-ocean-cyan .hover\:bg-indigo-700:hover {
+  background: linear-gradient(135deg, #0369a1 0%, #0891b2 50%, #0f766e 100%) !important;
+  color: #ffffff !important;
+}
+
+:root:not(.theme-gold-pink):not(.theme-emerald-mint) .bg-indigo-500\/10,
+.theme-ocean-cyan .bg-indigo-500\/10 {
+  background-color: rgba(6, 182, 212, 0.12) !important;
+  color: #22d3ee !important;
+  border-color: rgba(6, 182, 212, 0.25) !important;
+}
+
+:root:not(.theme-gold-pink):not(.theme-emerald-mint) .bg-indigo-500\/20,
+.theme-ocean-cyan .bg-indigo-500\/20 {
+  background-color: rgba(6, 182, 212, 0.2) !important;
+  color: #67e8f9 !important;
+  border-color: rgba(6, 182, 212, 0.35) !important;
+}
+
+:root:not(.theme-gold-pink):not(.theme-emerald-mint) .bg-indigo-950\/20,
+:root:not(.theme-gold-pink):not(.theme-emerald-mint) .bg-indigo-950\/30,
+:root:not(.theme-gold-pink):not(.theme-emerald-mint) .bg-indigo-950\/40,
+:root:not(.theme-gold-pink):not(.theme-emerald-mint) .bg-indigo-950\/50,
+.theme-ocean-cyan .bg-indigo-950\/20,
+.theme-ocean-cyan .bg-indigo-950\/30,
+.theme-ocean-cyan .bg-indigo-950\/40,
+.theme-ocean-cyan .bg-indigo-950\/50 {
+  background-color: rgba(8, 51, 68, 0.35) !important;
+}
+
+:root:not(.theme-gold-pink):not(.theme-emerald-mint) .border-indigo-500,
+:root:not(.theme-gold-pink):not(.theme-emerald-mint) .border-indigo-500\/20,
+:root:not(.theme-gold-pink):not(.theme-emerald-mint) .border-indigo-500\/30,
+:root:not(.theme-gold-pink):not(.theme-emerald-mint) .border-indigo-500\/40,
+:root:not(.theme-gold-pink):not(.theme-emerald-mint) .border-indigo-500\/50,
+.theme-ocean-cyan .border-indigo-500,
+.theme-ocean-cyan .border-indigo-500\/20,
+.theme-ocean-cyan .border-indigo-500\/30,
+.theme-ocean-cyan .border-indigo-500\/40,
+.theme-ocean-cyan .border-indigo-500\/50 {
+  border-color: rgba(6, 182, 212, 0.35) !important;
+}
+
+/* ==========================================================
+   EMERALD MATRIX & MINT THEME
+   Deep obsidian forest with crisp neon mint & emerald accents.
+   ========================================================== */
+.theme-emerald-mint {
+  --primary: 158 64% 52%;
+  --ring: 158 64% 52%;
+}
+
+.theme-emerald-mint .text-indigo-400 {
+  color: #34d399 !important; /* Crisp mint */
+}
+.theme-emerald-mint .text-indigo-300 {
+  color: #6ee7b7 !important;
+}
+.theme-emerald-mint .text-indigo-500 {
+  color: #10b981 !important;
+}
+.theme-emerald-mint .text-indigo-200 {
+  color: #a7f3d0 !important;
+}
+
+.theme-emerald-mint .bg-indigo-600 {
+  background: linear-gradient(135deg, #059669 0%, #10b981 50%, #14b8a6 100%) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3) !important;
+}
+
+.theme-emerald-mint .hover\:bg-indigo-500:hover,
+.theme-emerald-mint .hover\:bg-indigo-700:hover {
+  background: linear-gradient(135deg, #047857 0%, #059669 50%, #0f766e 100%) !important;
+  color: #ffffff !important;
+}
+
+.theme-emerald-mint .bg-indigo-500\/10 {
+  background-color: rgba(16, 185, 129, 0.12) !important;
+  color: #34d399 !important;
+  border-color: rgba(16, 185, 129, 0.25) !important;
+}
+
+.theme-emerald-mint .bg-indigo-500\/20 {
+  background-color: rgba(16, 185, 129, 0.2) !important;
+  color: #6ee7b7 !important;
+  border-color: rgba(16, 185, 129, 0.35) !important;
+}
+
+.theme-emerald-mint .bg-indigo-950\/20,
+.theme-emerald-mint .bg-indigo-950\/30,
+.theme-emerald-mint .bg-indigo-950\/40,
+.theme-emerald-mint .bg-indigo-950\/50 {
+  background-color: rgba(6, 78, 59, 0.35) !important;
+}
+
+.theme-emerald-mint .border-indigo-500,
+.theme-emerald-mint .border-indigo-500\/20,
+.theme-emerald-mint .border-indigo-500\/30,
+.theme-emerald-mint .border-indigo-500\/40,
+.theme-emerald-mint .border-indigo-500\/50 {
+  border-color: rgba(16, 185, 129, 0.35) !important;
+}
+
 
 

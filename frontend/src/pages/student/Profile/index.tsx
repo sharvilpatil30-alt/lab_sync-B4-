@@ -21,7 +21,7 @@ export const ProfilePage: React.FC = () => {
   const { user, role, logout, updateUser } = useAuth();
   const { updateProfile } = useUserProfile();
   const { addToast } = useToast();
-  const { isGoldPink } = useTheme();
+  const { isGoldPink, isEmeraldMint } = useTheme();
   const navigate = useNavigate();
 
   const userProfileName = user?.name
@@ -167,6 +167,8 @@ export const ProfilePage: React.FC = () => {
         className={`p-6 sm:p-8 rounded-2xl border transition-colors shadow-2xl backdrop-blur-xl space-y-6 ${
           isGoldPink
             ? 'bg-white/98 border-pink-200/90 shadow-pink-900/5 text-slate-800 ring-1 ring-pink-100/80'
+            : isEmeraldMint
+            ? 'bg-slate-900/98 border-emerald-500/30 shadow-emerald-950/40 text-slate-100'
             : 'bg-slate-900/98 border-slate-800/90 shadow-slate-950/60 text-slate-100'
         }`}
       >
@@ -180,6 +182,8 @@ export const ProfilePage: React.FC = () => {
               className={`w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 shadow-md ${
                 isGoldPink
                   ? 'bg-gradient-to-tr from-amber-100 via-pink-100 to-rose-100 border-2 border-pink-300 text-rose-600'
+                  : isEmeraldMint
+                  ? 'bg-emerald-500/15 border-2 border-emerald-500/30 text-emerald-400'
                   : 'bg-indigo-600/20 border-2 border-indigo-500/30 text-indigo-400'
               }`}
             >
@@ -220,6 +224,8 @@ export const ProfilePage: React.FC = () => {
                   className={`text-[10px] font-mono font-semibold px-1.5 py-0.2 rounded border ${
                     isGoldPink
                       ? 'bg-pink-50 border-pink-200 text-pink-700'
+                      : isEmeraldMint
+                      ? 'bg-slate-950 border-emerald-500/30 text-emerald-400'
                       : 'bg-slate-950 border-slate-800 text-indigo-400'
                   }`}
                 >
@@ -234,6 +240,8 @@ export const ProfilePage: React.FC = () => {
           className={`text-xs p-3.5 rounded-xl border ${
             isGoldPink
               ? 'bg-pink-50/90 border-pink-100 text-slate-700'
+              : isEmeraldMint
+              ? 'bg-emerald-950/40 border-emerald-500/20 text-emerald-200'
               : 'bg-slate-800/90 border-slate-700/80 text-slate-200'
           }`}
         >

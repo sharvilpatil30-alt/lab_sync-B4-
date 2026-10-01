@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../hooks';
 import { Role } from '../../types';
+import { RITLogo } from '../common';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -83,7 +84,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       >
         {/* Mobile Header with Close button */}
         <div className="flex items-center justify-between p-4 border-b border-slate-800 lg:hidden">
-          <span className="font-bold text-sm text-slate-200">Navigation</span>
+          <div className="flex items-center gap-2">
+            <RITLogo className="w-7 h-7" variant="mark" rounded="lg" />
+            <span className="font-bold text-sm text-slate-100">RIT SmartCampus</span>
+          </div>
           <button
             onClick={onClose}
             className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
@@ -124,9 +128,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
         {/* Footer info badge */}
         <div className="p-3 border-t border-slate-800/80">
-          <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 text-[11px] text-slate-400">
-            <p className="font-medium text-slate-300">Phase 1 Monorepo</p>
-            <p className="text-[10px] text-slate-500 mt-0.5">Campus Resource Optimization Engine</p>
+          <div className="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center gap-2.5 text-[11px] text-slate-400">
+            <RITLogo className="w-7 h-7 shrink-0" variant="mark" rounded="lg" />
+            <div className="min-w-0">
+              <p className="font-semibold text-slate-200 text-xs truncate">RIT Rajarambapu</p>
+              <p className="text-[10px] text-slate-400 truncate">Institute of Technology</p>
+            </div>
           </div>
         </div>
       </aside>

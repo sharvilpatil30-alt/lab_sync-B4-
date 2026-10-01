@@ -26,7 +26,7 @@ import {
   useReportsDashboard,
 } from '../../../hooks';
 import { MonitoringCard, StatusOverview, AlertList } from '../../../components/monitoring';
-import { Button, StatusBadge, Skeleton } from '../../../components/common';
+import { Button, StatusBadge, Skeleton, RITLogo } from '../../../components/common';
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -78,9 +78,10 @@ export const AdminDashboard: React.FC = () => {
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
-            <span className="inline-block text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-              System Administration
-            </span>
+            <div className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/25">
+              <RITLogo className="w-3.5 h-3.5" variant="mark" rounded="sm" />
+              <span>RIT System Administration</span>
+            </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
               Operational Command Center
             </h1>

@@ -16,6 +16,7 @@ import {
   Move,
 } from 'lucide-react';
 import { useAuth, useTheme } from '../../hooks';
+import { RITLogo } from './RITLogo';
 
 interface PageGuideStep {
   title: string;
@@ -622,7 +623,7 @@ export const PandaGuideBot: React.FC = () => {
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <RITLogo className="w-3.5 h-3.5" variant="mark" rounded="sm" />
                   <span
                     className={`text-xs font-bold tracking-tight ${
                       isGoldPink ? 'text-slate-900' : 'text-white'

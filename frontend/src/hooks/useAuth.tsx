@@ -31,7 +31,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (storedToken && storedUser) {
         try {
           setToken(storedToken);
-          setUser(JSON.parse(storedUser));
+          const parsed: User = JSON.parse(storedUser);
+          if (parsed.role === 'faculty' && parsed.name?.startsWith('Student (')) {
+            parsed.name = parsed.name.replace(/^Student \(/, 'Prof. (');
+            localStorage.setItem('smart_campus_auth_user', JSON.stringify(parsed));
+          } else if (parsed.role === 'admin' && parsed.name?.startsWith('Student (')) {
+            parsed.name = parsed.name.replace(/^Student \(/, 'Admin (');
+            localStorage.setItem('smart_campus_auth_user', JSON.stringify(parsed));
+          }
+          setUser(parsed);
         } catch {
           localStorage.removeItem('smart_campus_auth_user');
           localStorage.removeItem('smart_campus_auth_token');
@@ -103,7 +111,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch {
       // If user not found, manually update active user role
       if (user) {
-        const updated: User = { ...user, role: newRole };
+        let updatedName = user.name;
+        if (newRole === 'faculty' && updatedName.startsWith('Student (')) {
+          updatedName = updatedName.replace(/^Student \(/, 'Prof. (');
+        } else if (newRole === 'admin' && updatedName.startsWith('Student (')) {
+          updatedName = updatedName.replace(/^Student \(/, 'Admin (');
+        } else if (newRole === 'student' && (updatedName.startsWith('Prof. (') || updatedName.startsWith('Admin ('))) {
+          updatedName = updatedName.replace(/^(Prof\.|Admin) \(/, 'Student (');
+        }
+        const updated: User = { ...user, role: newRole, name: updatedName };
         setUser(updated);
         localStorage.setItem('smart_campus_auth_user', JSON.stringify(updated));
       }

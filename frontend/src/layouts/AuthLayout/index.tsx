@@ -1,11 +1,10 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import { Layers } from 'lucide-react';
 import { useTheme } from '../../hooks';
-import { ThemeToggle } from '../../components/common';
+import { ThemeToggle, RITLogo } from '../../components/common';
 
 export const AuthLayout: React.FC = () => {
-  const { isGoldPink } = useTheme();
+  const { isGoldPink, isEmeraldMint } = useTheme();
 
   return (
     <div
@@ -23,40 +22,38 @@ export const AuthLayout: React.FC = () => {
       {/* Background glow ambiance */}
       <div
         className={`absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full blur-3xl pointer-events-none transition-colors duration-300 ${
-          isGoldPink ? 'bg-amber-300/25' : 'bg-indigo-600/15'
+          isGoldPink ? 'bg-amber-300/25' : isEmeraldMint ? 'bg-emerald-500/15' : 'bg-cyan-500/15'
         }`}
       />
       <div
         className={`absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full blur-3xl pointer-events-none transition-colors duration-300 ${
-          isGoldPink ? 'bg-pink-300/25' : 'bg-purple-600/10'
+          isGoldPink ? 'bg-pink-300/25' : isEmeraldMint ? 'bg-teal-500/10' : 'bg-teal-500/10'
         }`}
       />
 
       {/* Main container */}
       <div className="w-full max-w-md relative z-10 space-y-5">
         <div className="flex flex-col items-center text-center space-y-2">
-          <div
-            className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-xl transition-all duration-300 mb-1 ${
-              isGoldPink
-                ? 'bg-gradient-to-tr from-amber-400 via-pink-400 to-rose-500 shadow-pink-400/25 ring-1 ring-pink-200'
-                : 'bg-gradient-to-tr from-indigo-600 to-purple-600 shadow-indigo-600/20'
-            }`}
-          >
-            <Layers className="w-6 h-6 text-white" />
+          <div className="relative group">
+            <RITLogo
+              className="w-16 h-16 shadow-2xl transition-transform duration-300 group-hover:scale-105 ring-2 ring-amber-400/40"
+              variant="full"
+              rounded="2xl"
+            />
           </div>
           <h1
             className={`text-2xl font-bold tracking-tight transition-colors ${
               isGoldPink ? 'text-slate-900' : 'text-white'
             }`}
           >
-            Smart Campus Optimizer
+            RIT Smart Campus Optimizer
           </h1>
           <p
             className={`text-xs transition-colors ${
               isGoldPink ? 'text-slate-500' : 'text-slate-400'
             }`}
           >
-            Intelligent Laboratory & Resource Management
+            Rajarambapu Institute of Technology • Resource & Lab Portal
           </p>
         </div>
 

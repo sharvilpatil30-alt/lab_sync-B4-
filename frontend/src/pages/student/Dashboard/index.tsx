@@ -19,7 +19,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { useAuth, useLabs, useMyBookings, useNotifications, useAlerts } from '../../../hooks';
-import { Button, StatusBadge, Skeleton } from '../../../components/common';
+import { Button, StatusBadge, Skeleton, RITLogo } from '../../../components/common';
 import { LabCard } from '../../../components/lab';
 import { BookingStatusTracker, QueueStatus } from '../../../components/booking';
 
@@ -83,9 +83,9 @@ export const StudentDashboard: React.FC = () => {
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-xs font-semibold text-indigo-400">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Student Workspace</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-xs font-semibold text-amber-400">
+              <RITLogo className="w-4 h-4" variant="mark" rounded="sm" />
+              <span>RIT Student Workspace</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
               Welcome back, {user?.name || 'Student'}

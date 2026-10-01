@@ -13,7 +13,7 @@ import {
 import { useAuth } from '../../hooks';
 import { useNotifications } from '../../hooks';
 import { Role } from '../../types';
-import { ThemeToggle } from '../common';
+import { ThemeToggle, RITLogo } from '../common';
 import { ServicesLauncher } from './ServicesLauncher';
 
 interface NavbarProps {
@@ -31,6 +31,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, isSidebarOpen }
 
   const notifRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
+
+  const userDisplayName = user?.name
+    ? user.role === 'faculty' && user.name.startsWith('Student (')
+      ? user.name.replace(/^Student \(/, 'Prof. (')
+      : user.role === 'admin' && user.name.startsWith('Student (')
+      ? user.name.replace(/^Student \(/, 'Admin (')
+      : user.name
+    : 'Guest';
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -106,20 +114,22 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, isSidebarOpen }
             </button>
           )}
 
-          <Link to="/" className="flex items-center gap-2 group min-w-0 shrink">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-500/25 group-hover:scale-105 transition-transform shrink-0">
-              <Layers className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-            </div>
+          <Link to="/" className="flex items-center gap-2.5 group min-w-0 shrink">
+            <RITLogo
+              className="w-8 h-8 sm:w-9 sm:h-9 group-hover:scale-105 transition-transform shrink-0"
+              variant="mark"
+              rounded="xl"
+            />
             <div className="min-w-0 truncate">
               <div className="flex items-center gap-1.5 sm:gap-2">
-                <span className="font-bold text-xs sm:text-sm tracking-tight text-white group-hover:text-indigo-300 transition-colors truncate">
-                  SmartCampus
+                <span className="font-bold text-xs sm:text-sm tracking-tight text-white group-hover:text-amber-400 transition-colors truncate">
+                  RIT SmartCampus
                 </span>
-                <span className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider px-1 sm:px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 hidden xs:inline-block shrink-0">
-                  Optimizer
+                <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 hidden xs:inline-block shrink-0">
+                  RIT
                 </span>
               </div>
-              <p className="text-[10px] text-slate-400 hidden sm:block truncate">Lab & Resource Management</p>
+              <p className="text-[10px] text-slate-400 hidden sm:block truncate">Rajarambapu Institute of Technology</p>
             </div>
           </Link>
 
@@ -242,7 +252,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, isSidebarOpen }
                 <UserIcon className="w-4 h-4 text-indigo-400" />
               </div>
               <div className="hidden md:block">
-                <p className="text-xs font-medium text-slate-200 leading-tight">{user?.name || 'Guest'}</p>
+                <p className="text-xs font-medium text-slate-200 leading-tight">{userDisplayName}</p>
                 <p className="text-[10px] text-slate-400 capitalize">{role || 'User'}</p>
               </div>
               <ChevronDown className="w-3.5 h-3.5 text-slate-500 hidden sm:block" />
@@ -256,7 +266,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, isSidebarOpen }
                 />
                 <div className="fixed sm:absolute inset-x-3 top-16 sm:inset-x-auto sm:right-0 sm:top-full mt-1.5 w-auto sm:w-64 max-w-sm rounded-xl bg-slate-900/98 backdrop-blur-xl border border-slate-800 shadow-2xl p-2 z-50 animate-in fade-in slide-in-from-top-2">
                   <div className="px-3 py-2 border-b border-slate-800">
-                    <p className="text-xs font-bold text-slate-200">{user?.name}</p>
+                    <p className="text-xs font-bold text-slate-200">{userDisplayName}</p>
                     <p className="text-[11px] text-slate-400 truncate">{user?.email}</p>
                     <span className="inline-block mt-1 text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
                       Role: {role}

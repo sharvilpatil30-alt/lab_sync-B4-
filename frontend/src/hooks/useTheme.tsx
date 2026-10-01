@@ -1,12 +1,14 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-export type AppTheme = 'default' | 'gold-pink';
+export type AppTheme = 'default' | 'gold-pink' | 'emerald-mint';
 
 interface ThemeContextType {
   theme: AppTheme;
   setTheme: (theme: AppTheme) => void;
   toggleTheme: () => void;
   isGoldPink: boolean;
+  isEmeraldMint: boolean;
+  isOceanCyan: boolean;
   isInstagram: boolean; // alias for backwards compatibility
 }
 
@@ -21,7 +23,10 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (saved === 'gold-pink' || saved === 'instagram') {
         return 'gold-pink';
       }
-      if (saved === 'default') {
+      if (saved === 'emerald-mint') {
+        return 'emerald-mint';
+      }
+      if (saved === 'default' || saved === 'ocean-cyan') {
         return 'default';
       }
     } catch {
@@ -36,16 +41,19 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     root.setAttribute('data-theme', t);
 
+    root.classList.remove('theme-gold-pink', 'theme-instagram', 'theme-emerald-mint', 'theme-ocean-cyan');
+    body.classList.remove('theme-gold-pink', 'theme-instagram', 'theme-emerald-mint', 'theme-ocean-cyan');
+
     if (t === 'gold-pink') {
       root.classList.add('theme-gold-pink');
       body.classList.add('theme-gold-pink');
-      root.classList.remove('theme-instagram');
-      body.classList.remove('theme-instagram');
+    } else if (t === 'emerald-mint') {
+      root.classList.add('theme-emerald-mint');
+      body.classList.add('theme-emerald-mint');
     } else {
-      root.classList.remove('theme-gold-pink');
-      body.classList.remove('theme-gold-pink');
-      root.classList.remove('theme-instagram');
-      body.classList.remove('theme-instagram');
+      // Default: Midnight Ocean & Electric Cyan
+      root.classList.add('theme-ocean-cyan');
+      body.classList.add('theme-ocean-cyan');
     }
   };
 
@@ -63,10 +71,16 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const toggleTheme = () => {
-    setThemeState((prev) => (prev === 'default' ? 'gold-pink' : 'default'));
+    setThemeState((prev) => {
+      if (prev === 'default') return 'gold-pink';
+      if (prev === 'gold-pink') return 'emerald-mint';
+      return 'default';
+    });
   };
 
   const isGoldPink = theme === 'gold-pink';
+  const isEmeraldMint = theme === 'emerald-mint';
+  const isOceanCyan = theme === 'default';
 
   return (
     <ThemeContext.Provider
@@ -75,6 +89,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setTheme,
         toggleTheme,
         isGoldPink,
+        isEmeraldMint,
+        isOceanCyan,
         isInstagram: isGoldPink,
       }}
     >
