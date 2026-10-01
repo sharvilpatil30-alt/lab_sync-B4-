@@ -14,16 +14,25 @@ import {
   CheckCircle2,
   Lock,
 } from 'lucide-react';
-import { useAuth, useUserProfile } from '../../../hooks';
+import { useAuth, useUserProfile, useTheme } from '../../../hooks';
 import { Button, Input, Breadcrumbs, useToast, ErrorMessage, ConfirmDialog } from '../../../components/common';
 
 export const ProfilePage: React.FC = () => {
   const { user, role, logout, updateUser } = useAuth();
   const { updateProfile } = useUserProfile();
   const { addToast } = useToast();
+  const { isGoldPink } = useTheme();
   const navigate = useNavigate();
 
-  const [name, setName] = useState(user?.name || '');
+  const userProfileName = user?.name
+    ? user.role === 'faculty' && user.name.startsWith('Student (')
+      ? user.name.replace(/^Student \(/, 'Prof. (')
+      : user.role === 'admin' && user.name.startsWith('Student (')
+      ? user.name.replace(/^Student \(/, 'Admin (')
+      : user.name
+    : '';
+
+  const [name, setName] = useState(userProfileName);
   const [department, setDepartment] = useState(user?.department || '');
   const [phone, setPhone] = useState(user?.profile?.phone || '');
   const [isSaving, setIsSaving] = useState(false);
@@ -154,24 +163,66 @@ export const ProfilePage: React.FC = () => {
       )}
 
       {/* Profile Overview Card */}
-      <div className="glass-panel p-6 sm:p-8 rounded-2xl border border-slate-800 space-y-6 shadow-2xl">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+      <div
+        className={`p-6 sm:p-8 rounded-2xl border transition-colors shadow-2xl backdrop-blur-xl space-y-6 ${
+          isGoldPink
+            ? 'bg-white/98 border-pink-200/90 shadow-pink-900/5 text-slate-800 ring-1 ring-pink-100/80'
+            : 'bg-slate-900/98 border-slate-800/90 shadow-slate-950/60 text-slate-100'
+        }`}
+      >
+        <div
+          className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b ${
+            isGoldPink ? 'border-pink-100' : 'border-slate-800'
+          }`}
+        >
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center shrink-0">
-              <User className="w-8 h-8 text-indigo-400" />
+            <div
+              className={`w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 shadow-md ${
+                isGoldPink
+                  ? 'bg-gradient-to-tr from-amber-100 via-pink-100 to-rose-100 border-2 border-pink-300 text-rose-600'
+                  : 'bg-indigo-600/20 border-2 border-indigo-500/30 text-indigo-400'
+              }`}
+            >
+              <User className="w-8 h-8" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-lg font-bold text-white">{user?.name}</h3>
-                <span className={`inline-flex items-center gap-1 text-[10px] uppercase font-mono font-bold px-2 py-0.5 rounded-full border ${roleInfo.badgeColor}`}>
+                <h3
+                  className={`text-lg font-bold ${
+                    isGoldPink ? 'text-slate-900' : 'text-white'
+                  }`}
+                >
+                  {userProfileName || user?.name}
+                </h3>
+                <span
+                  className={`inline-flex items-center gap-1 text-[10px] uppercase font-mono font-bold px-2 py-0.5 rounded-full border ${roleInfo.badgeColor}`}
+                >
                   {roleInfo.icon}
                   <span>{user?.role}</span>
                 </span>
               </div>
-              <p className="text-xs text-slate-400">{user?.email}</p>
+              <p
+                className={`text-xs ${
+                  isGoldPink ? 'text-slate-600' : 'text-slate-400'
+                }`}
+              >
+                {user?.email}
+              </p>
               <div className="flex items-center gap-2 mt-1.5">
-                <span className="text-[10px] text-slate-500 font-mono">User ID:</span>
-                <span className="text-[10px] font-mono text-indigo-400 font-semibold px-1.5 py-0.2 rounded bg-slate-900 border border-slate-800">
+                <span
+                  className={`text-[10px] font-mono ${
+                    isGoldPink ? 'text-slate-500' : 'text-slate-400'
+                  }`}
+                >
+                  User ID:
+                </span>
+                <span
+                  className={`text-[10px] font-mono font-semibold px-1.5 py-0.2 rounded border ${
+                    isGoldPink
+                      ? 'bg-pink-50 border-pink-200 text-pink-700'
+                      : 'bg-slate-950 border-slate-800 text-indigo-400'
+                  }`}
+                >
                   {user?.id || 'usr_campus_01'}
                 </span>
               </div>
@@ -179,7 +230,13 @@ export const ProfilePage: React.FC = () => {
           </div>
         </div>
 
-        <p className="text-xs text-slate-400 bg-slate-900/60 p-3.5 rounded-xl border border-slate-800/80">
+        <p
+          className={`text-xs p-3.5 rounded-xl border ${
+            isGoldPink
+              ? 'bg-pink-50/90 border-pink-100 text-slate-700'
+              : 'bg-slate-800/90 border-slate-700/80 text-slate-200'
+          }`}
+        >
           {roleInfo.sub}
         </p>
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   ChevronRight,
@@ -13,6 +13,7 @@ import {
   Lightbulb,
   ArrowRight,
   RotateCcw,
+  Move,
 } from 'lucide-react';
 import { useAuth, useTheme } from '../../hooks';
 
@@ -41,6 +42,161 @@ export const PandaGuideBot: React.FC = () => {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [isWaving, setIsWaving] = useState(false);
   const [hasNewTip, setHasNewTip] = useState(true);
+
+  // Draggable position state (supports mobile touch & desktop dragging anywhere)
+  const [position, setPosition] = useState<{ x: number; y: number }>({ x: 20, y: 100 });
+  const [isMounted, setIsMounted] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const dragRef = useRef<{
+    startX: number;
+    startY: number;
+    startPosX: number;
+    startPosY: number;
+    hasMoved: boolean;
+  }>({
+    startX: 0,
+    startY: 0,
+    startPosX: 0,
+    startPosY: 0,
+    hasMoved: false,
+  });
+
+  const getDefaultPos = () => {
+    if (typeof window === 'undefined') return { x: 20, y: 100 };
+    const isMobile = window.innerWidth < 640;
+    const btnSize = isMobile ? 56 : 64;
+    return {
+      x: Math.max(12, window.innerWidth - btnSize - 16),
+      y: Math.max(12, window.innerHeight - btnSize - (isMobile ? 84 : 24)),
+    };
+  };
+
+  useEffect(() => {
+    setIsMounted(true);
+    try {
+      const saved = localStorage.getItem('smart_campus_panda_pos');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const isMobile = window.innerWidth < 640;
+        const btnSize = isMobile ? 56 : 64;
+        const margin = 8;
+        const maxX = Math.max(margin, window.innerWidth - btnSize - margin);
+        const maxY = Math.max(margin, window.innerHeight - btnSize - margin);
+        if (typeof parsed.x === 'number' && typeof parsed.y === 'number') {
+          setPosition({
+            x: Math.min(Math.max(margin, parsed.x), maxX),
+            y: Math.min(Math.max(margin, parsed.y), maxY),
+          });
+          return;
+        }
+      }
+    } catch {}
+
+    setPosition(getDefaultPos());
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setPosition((prev) => {
+        const isMobile = window.innerWidth < 640;
+        const btnSize = isMobile ? 56 : 64;
+        const margin = 8;
+        const maxX = Math.max(margin, window.innerWidth - btnSize - margin);
+        const maxY = Math.max(margin, window.innerHeight - btnSize - margin);
+        return {
+          x: Math.min(Math.max(margin, prev.x), maxX),
+          y: Math.min(Math.max(margin, prev.y), maxY),
+        };
+      });
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const handlePointerDown = (e: React.TouchEvent | React.MouseEvent) => {
+    if ('button' in e && e.button !== 0) return;
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+
+    dragRef.current = {
+      startX: clientX,
+      startY: clientY,
+      startPosX: position.x,
+      startPosY: position.y,
+      hasMoved: false,
+    };
+    setIsDragging(true);
+  };
+
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handlePointerMove = (e: TouchEvent | MouseEvent) => {
+      const clientX = 'touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX;
+      const clientY = 'touches' in e ? e.touches[0].clientY : (e as MouseEvent).clientY;
+
+      const deltaX = clientX - dragRef.current.startX;
+      const deltaY = clientY - dragRef.current.startY;
+
+      if (!dragRef.current.hasMoved && Math.hypot(deltaX, deltaY) > 5) {
+        dragRef.current.hasMoved = true;
+      }
+
+      if (dragRef.current.hasMoved) {
+        if ('touches' in e && e.cancelable) {
+          e.preventDefault();
+        }
+        const isMobile = window.innerWidth < 640;
+        const btnSize = isMobile ? 56 : 64;
+        const margin = 8;
+        const maxX = Math.max(margin, window.innerWidth - btnSize - margin);
+        const maxY = Math.max(margin, window.innerHeight - btnSize - margin);
+
+        const newX = Math.min(Math.max(margin, dragRef.current.startPosX + deltaX), maxX);
+        const newY = Math.min(Math.max(margin, dragRef.current.startPosY + deltaY), maxY);
+
+        setPosition({ x: newX, y: newY });
+      }
+    };
+
+    const handlePointerUp = () => {
+      setIsDragging(false);
+      if (dragRef.current.hasMoved) {
+        try {
+          localStorage.setItem('smart_campus_panda_pos', JSON.stringify(position));
+        } catch {}
+      }
+    };
+
+    window.addEventListener('mousemove', handlePointerMove);
+    window.addEventListener('mouseup', handlePointerUp);
+    window.addEventListener('touchmove', handlePointerMove, { passive: false });
+    window.addEventListener('touchend', handlePointerUp);
+    window.addEventListener('touchcancel', handlePointerUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handlePointerMove);
+      window.removeEventListener('mouseup', handlePointerUp);
+      window.removeEventListener('touchmove', handlePointerMove);
+      window.removeEventListener('touchend', handlePointerUp);
+      window.removeEventListener('touchcancel', handlePointerUp);
+    };
+  }, [isDragging, position]);
+
+  const handleButtonClick = () => {
+    if (dragRef.current.hasMoved) return;
+    setIsOpen((prev) => !prev);
+    setHasNewTip(false);
+  };
+
+  const handleResetPosition = () => {
+    const defaultPos = getDefaultPos();
+    setPosition(defaultPos);
+    try {
+      localStorage.removeItem('smart_campus_panda_pos');
+    } catch {}
+  };
 
   // Trigger playful wave whenever location changes
   useEffect(() => {
@@ -402,15 +558,50 @@ export const PandaGuideBot: React.FC = () => {
     }
   };
 
+  if (!isMounted) return null;
+
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+  const btnSize = isMobile ? 56 : 64;
+  const showAbove = position.y > 340;
+  const modalWidth = isMobile
+    ? Math.min((typeof window !== 'undefined' ? window.innerWidth : 360) - 24, 360)
+    : 384;
+
+  let modalLeft = 16;
+  if (typeof window !== 'undefined') {
+    if (isMobile) {
+      modalLeft = Math.max(12, Math.min(position.x + btnSize / 2 - modalWidth / 2, window.innerWidth - modalWidth - 12));
+    } else {
+      if (position.x > window.innerWidth / 2) {
+        modalLeft = Math.max(16, position.x + btnSize - modalWidth);
+      } else {
+        modalLeft = Math.min(window.innerWidth - modalWidth - 16, Math.max(16, position.x));
+      }
+    }
+  }
+
+  const modalStyle: React.CSSProperties = {
+    position: 'fixed',
+    left: `${modalLeft}px`,
+    width: `${modalWidth}px`,
+    zIndex: 60,
+    ...(showAbove
+      ? { bottom: `${typeof window !== 'undefined' ? window.innerHeight - position.y + 10 : 80}px` }
+      : { top: `${position.y + btnSize + 10}px` }),
+  };
+
+  const isRightSide = typeof window !== 'undefined' && position.x > window.innerWidth / 2;
+
   return (
-    <aside aria-label="Panda Campus Guide" className="fixed bottom-4 sm:bottom-6 right-4 sm:right-6 z-50 flex flex-col items-end select-none pointer-events-none">
+    <aside aria-label="Panda Campus Guide" className="select-none pointer-events-none">
       {/* Speech Bubble / Step Guide Modal */}
       {isOpen && (
         <div
-          className={`pointer-events-auto mb-3 w-[calc(100vw-2rem)] sm:w-96 max-w-sm rounded-2xl backdrop-blur-xl p-4 animate-in fade-in slide-in-from-bottom-3 duration-200 transition-colors ${
+          style={modalStyle}
+          className={`pointer-events-auto max-w-sm rounded-2xl backdrop-blur-xl p-4 animate-in fade-in zoom-in-95 duration-200 transition-colors shadow-2xl ${
             isGoldPink
-              ? 'bg-white/95 border border-pink-200/90 shadow-2xl shadow-rose-900/15 text-slate-800 ring-1 ring-pink-100/80'
-              : 'bg-slate-900/95 dark:bg-slate-950/95 border border-indigo-500/30 dark:border-indigo-400/20 shadow-2xl shadow-indigo-950/50 text-slate-100'
+              ? 'bg-white/98 border border-pink-200/90 shadow-2xl shadow-rose-900/15 text-slate-800 ring-1 ring-pink-100/80'
+              : 'bg-slate-900/98 dark:bg-slate-950/98 border border-indigo-500/40 dark:border-indigo-400/30 shadow-2xl shadow-indigo-950/60 text-slate-100'
           }`}
         >
           {/* Header */}
@@ -431,12 +622,13 @@ export const PandaGuideBot: React.FC = () => {
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                   <span
                     className={`text-xs font-bold tracking-tight ${
                       isGoldPink ? 'text-slate-900' : 'text-white'
                     }`}
                   >
-                    Panda Guide
+                    RIT Guide
                   </span>
                   <span
                     className={`text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.2 rounded border ${
@@ -459,6 +651,17 @@ export const PandaGuideBot: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-1">
+              <button
+                onClick={handleResetPosition}
+                title="Reset Panda to default position"
+                className={`p-1 rounded-lg transition-colors ${
+                  isGoldPink
+                    ? 'text-slate-400 hover:text-slate-700 hover:bg-pink-50'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                }`}
+              >
+                <Move className="w-3.5 h-3.5" />
+              </button>
               <button
                 onClick={() => setCurrentStepIndex(0)}
                 title="Restart Steps"
@@ -630,8 +833,16 @@ export const PandaGuideBot: React.FC = () => {
         </div>
       )}
 
-      {/* Floating Animated Panda Button */}
-      <div className="pointer-events-auto flex items-center gap-2">
+      {/* Floating Draggable Panda Button */}
+      <div
+        style={{
+          position: 'fixed',
+          left: `${position.x}px`,
+          top: `${position.y}px`,
+          zIndex: 55,
+        }}
+        className="pointer-events-auto flex items-center gap-2"
+      >
         {/* Helper preview bubble when minimized */}
         {!isOpen && hasNewTip && (
           <div
@@ -639,10 +850,12 @@ export const PandaGuideBot: React.FC = () => {
               setIsOpen(true);
               setHasNewTip(false);
             }}
-            className={`cursor-pointer hidden sm:flex items-center gap-2 text-xs px-3 py-1.5 rounded-full border shadow-lg transition-all hover:scale-105 animate-bounce duration-1000 ${
+            className={`cursor-pointer absolute top-1/2 -translate-y-1/2 flex items-center gap-2 text-xs px-3 py-1.5 rounded-full border shadow-lg transition-all hover:scale-105 duration-300 whitespace-nowrap z-10 ${
+              isRightSide ? 'right-full mr-2' : 'left-full ml-2'
+            } ${
               isGoldPink
                 ? 'bg-white/95 text-slate-800 border-pink-200/90 shadow-pink-900/10 hover:border-pink-300'
-                : 'bg-slate-900/90 dark:bg-slate-950/90 text-white border-indigo-500/30 shadow-indigo-950/40 hover:border-indigo-400'
+                : 'bg-slate-900/95 dark:bg-slate-950/95 text-white border-indigo-500/30 shadow-indigo-950/40 hover:border-indigo-400'
             }`}
           >
             <span className="relative flex h-2 w-2">
@@ -662,24 +875,40 @@ export const PandaGuideBot: React.FC = () => {
                 isGoldPink ? 'text-slate-800' : 'text-slate-100'
               }`}
             >
-              Need help here? Click me! 🐼
+              Need help? Tap me! 🐼
             </span>
           </div>
         )}
 
         <button
-          onClick={() => {
-            setIsOpen((prev) => !prev);
-            setHasNewTip(false);
-          }}
+          onTouchStart={handlePointerDown}
+          onMouseDown={handlePointerDown}
+          onClick={handleButtonClick}
           aria-label="Toggle Panda Campus Guide"
-          title={isOpen ? 'Close Panda Guide' : 'Open Page Steps Guide'}
-          className={`group relative flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl border-2 transition-all transform hover:-translate-y-1 active:translate-y-0 ${
+          title="Drag to move anywhere • Tap to open steps guide"
+          style={{ touchAction: 'none' }}
+          className={`group relative flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl border-2 transition-transform transform select-none ${
+            isDragging
+              ? 'cursor-grabbing scale-105 shadow-2xl ring-2 ring-indigo-400 ring-offset-2 ring-offset-slate-900'
+              : 'cursor-grab hover:-translate-y-1 active:translate-y-0'
+          } ${
             isGoldPink
               ? 'bg-gradient-to-tr from-white via-rose-50 to-amber-50 text-slate-800 border-pink-300 hover:border-amber-400 shadow-2xl shadow-pink-300/30 hover:shadow-pink-400/40'
               : 'bg-gradient-to-tr from-slate-900 via-slate-800 to-indigo-950 text-white border-indigo-500/40 hover:border-indigo-400 shadow-2xl shadow-indigo-900/50 hover:shadow-indigo-500/30'
           } ${isWaving ? 'scale-110' : ''}`}
         >
+          {/* Draggable grip indicator */}
+          <span
+            className={`absolute -top-1 -left-1 flex h-4 w-4 items-center justify-center rounded-full text-[8px] font-bold shadow-md transition-colors ${
+              isGoldPink
+                ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                : 'bg-slate-800 text-slate-300 border border-slate-700'
+            }`}
+            title="Draggable - move me anywhere on screen"
+          >
+            <Move className="w-2.5 h-2.5" />
+          </span>
+
           {/* Glowing Aura Ring */}
           <span
             className={`absolute -inset-1 rounded-2xl blur-xs transition duration-300 -z-10 ${
