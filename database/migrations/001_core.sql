@@ -266,3 +266,27 @@ begin
   );
 end;
 $$;
+
+-- Booking integrity and concurrent allocation protection
+CREATE EXTENSION IF NOT EXISTS btree_gist;
+
+ALTER TABLE public.bookings
+ADD CONSTRAINT valid_booking_time
+CHECK (end_at > start_at);
+
+ALTER TABLE public.bookings
+ADD CONSTRAINT prevent_double_booking
+EXCLUDE USING gist (
+  resource_id WITH =,
+  tstzrange(start_at, end_at, '[)') WITH &&
+)
+WHERE (
+  resource_id IS NOT NULL
+  AND state IN ('LEASED', 'CONFIRMED', 'ACTIVE')
+);
+
+ALTER TABLE public.bookings
+ADD COLUMN version integer NOT NULL DEFAULT 0;
+
+CREATE INDEX idx_bookings_resource_time
+ON public.bookings(resource_id, start_at, end_at);
