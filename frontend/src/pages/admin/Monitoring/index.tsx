@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Activity,
   RefreshCw,
@@ -16,6 +17,7 @@ import {
   HelpCircle,
   DoorOpen,
   Users,
+  BarChart3,
 } from 'lucide-react';
 import {
   useLiveMonitoring,
@@ -29,10 +31,13 @@ import {
 import { MonitoringCard, StatusOverview, AlertList } from '../../../components/monitoring';
 import { Button, StatusBadge, Skeleton, Breadcrumbs } from '../../../components/common';
 import { Lab } from '../../../types';
+import { DFDConstraintConsole } from '../../../components/dfd/DFDConstraintConsole';
 
 type MonitoringState = 'connected' | 'updating' | 'stale' | 'retrieval error' | 'disconnected' | 'no data';
 
 export const AdminMonitoringPage: React.FC = () => {
+  const navigate = useNavigate();
+  const [activeSubTab, setActiveSubTab] = useState<'telemetry' | 'dfd'>('telemetry');
   // Controlled polling interval: 20s via TanStack Query
   const {
     data: overview,
@@ -186,6 +191,42 @@ export const AdminMonitoringPage: React.FC = () => {
         </Button>
       </div>
 
+      {/* Telemetry & Analytics Sub-Services Bar */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 border-b border-slate-800 text-xs scrollbar-none">
+        <button
+          type="button"
+          onClick={() => setActiveSubTab('telemetry')}
+          className={`flex items-center gap-2 px-3 py-2 font-medium whitespace-nowrap transition-colors ${
+            activeSubTab === 'telemetry'
+              ? 'border-b-2 border-indigo-500 text-indigo-400 font-bold'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Activity className="w-3.5 h-3.5" />
+          <span>Live Operational Telemetry</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveSubTab('dfd')}
+          className={`flex items-center gap-2 px-3 py-2 font-medium whitespace-nowrap transition-colors ${
+            activeSubTab === 'dfd'
+              ? 'border-b-2 border-indigo-500 text-indigo-400 font-bold'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+          <span>DFD Constraints & Architecture</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => navigate('/admin/reports')}
+          className="flex items-center gap-2 px-3 py-2 text-slate-400 hover:text-slate-200 font-medium whitespace-nowrap transition-colors"
+        >
+          <BarChart3 className="w-3.5 h-3.5" />
+          <span>Campus Reports & Analytics</span>
+        </button>
+      </div>
+
       {/* Backend Core Health Probe Telemetry */}
       <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
         <div className="flex items-center gap-2.5">
@@ -222,8 +263,12 @@ export const AdminMonitoringPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Primary KPI Strip */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {activeSubTab === 'dfd' ? (
+        <DFDConstraintConsole />
+      ) : (
+        <>
+          {/* Primary KPI Strip */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MonitoringCard
           title="Active Facility Sessions"
           value={activeBookings.length}
@@ -379,6 +424,8 @@ export const AdminMonitoringPage: React.FC = () => {
           )}
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 };

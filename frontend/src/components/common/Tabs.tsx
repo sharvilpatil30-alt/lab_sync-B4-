@@ -45,7 +45,7 @@ export const TabsList: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
   ...props
 }) => (
   <div
-    className={`inline-flex items-center gap-1 p-1 rounded-xl bg-slate-900 border border-slate-800 ${className}`}
+    className={`inline-flex items-center gap-1.5 p-1 rounded-xl bg-slate-900 border border-slate-800 overflow-x-auto scrollbar-none max-w-full ${className}`}
     role="tablist"
     {...props}
   >
@@ -77,9 +77,9 @@ export const TabsTrigger: React.FC<TabsTriggerProps> = ({
       role="tab"
       aria-selected={isActive}
       onClick={() => context.setActiveTab(value)}
-      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
+      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer whitespace-nowrap shrink-0 ${
         isActive
-          ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
+          ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/25 font-bold'
           : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
       } ${className}`}
       {...props}

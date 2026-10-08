@@ -2,13 +2,16 @@ import { IResourceService } from '../types';
 import { Resource, ResourceFilters, ApiResponse } from '../../types';
 import { resourcesData } from '../../data/mock';
 
-const RESOURCES_KEY = 'smart_campus_mock_resources';
+const RESOURCES_KEY = 'smart_campus_real_resources_v2';
 
 function getStoredResources(): Resource[] {
   const stored = localStorage.getItem(RESOURCES_KEY);
   if (stored) {
     try {
-      return JSON.parse(stored);
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].resourceId?.startsWith('BAT')) {
+        return parsed;
+      }
     } catch {
       // fallback
     }
