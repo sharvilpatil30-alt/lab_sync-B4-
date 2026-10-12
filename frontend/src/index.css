@@ -4,93 +4,113 @@
 
 @layer base {
   :root {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 0 0% 100%;
+    --foreground: 209 61% 16%; /* #102A43 */
 
-    --card: 222.2 84% 6.5%;
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 100%;
+    --card-foreground: 209 61% 16%;
 
-    --popover: 222.2 84% 6.5%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 209 61% 16%;
 
-    --primary: 238.9 83.5% 66.7%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 215 68% 14%; /* #0B1F3A Primary Navy */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 214 100% 97%; /* #EFF6FF Light Blue */
+    --secondary-foreground: 212 64% 24%; /* #163A63 Secondary Navy */
 
-    --muted: 217.2 32.6% 14.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 210 40% 96%; /* #F0F4F8 */
+    --muted-foreground: 210 24% 49%; /* #627D98 Secondary Text */
 
-    --accent: 217.2 32.6% 20%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 221 83% 53%; /* #2563EB Accent Blue */
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 72% 51%; /* #DC2626 Error */
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217.2 32.6% 18.5%;
-    --input: 217.2 32.6% 18.5%;
-    --ring: 238.9 83.5% 66.7%;
+    --border: 212 28% 86%; /* #D9E2EC Border */
+    --input: 212 28% 86%;
+    --ring: 221 83% 53%; /* #2563EB */
 
-    --radius: 0.625rem;
+    --radius: 0.5rem;
   }
 }
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background-color: #FFFFFF;
+  color: #102A43;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom scrollbars */
+/* Typography Hierarchy */
+h1, h2, h3, h4, h5, h6 {
+  color: #0B1F3A;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+
+h1.text-white,
+h2.text-white,
+h3.text-white,
+h4.text-white,
+h5.text-white,
+h6.text-white {
+  color: #0B1F3A !important;
+}
+
+/* Prevent white-on-white invisible text in light academic cards and panels */
+.glass-panel .text-white:not(button):not([class*="bg-"]):not([role="button"]):not([class*="badge"]),
+.glass-card .text-white:not(button):not([class*="bg-"]):not([role="button"]):not([class*="badge"]) {
+  color: #0B1F3A !important;
+}
+
+/* Light & Clean Scrollbars */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: hsl(var(--background));
+  background: #F8FAFC;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted));
-  border-radius: 4px;
+  background: #D9E2EC;
+  border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--secondary));
+  background: #BCCCDC;
 }
 
-/* Glassmorphism utility */
+/* Clean Panels & Cards for White + Navy Theme */
 .glass-panel {
-  background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #FFFFFF;
+  border: 1px solid #D9E2EC;
+  box-shadow: 0 1px 3px 0 rgba(11, 31, 58, 0.05), 0 1px 2px -1px rgba(11, 31, 58, 0.05);
 }
 
 .glass-card {
-  background: rgba(30, 41, 59, 0.55);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: #FFFFFF;
+  border: 1px solid #D9E2EC;
+  box-shadow: 0 1px 2px 0 rgba(11, 31, 58, 0.04);
 }
 
-/* Animations */
-@keyframes pulseSlow {
-  0%, 100% {
-    opacity: 0.2;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.4;
-    transform: scale(1.05);
-  }
+.glass-card:hover {
+  border-color: #BCCCDC;
+  box-shadow: 0 4px 6px -1px rgba(11, 31, 58, 0.06), 0 2px 4px -2px rgba(11, 31, 58, 0.06);
 }
 
-.animate-pulse-slow {
-  animation: pulseSlow 6s ease-in-out infinite;
+/* Subtle Ambient Utilities */
+.academic-badge {
+  background: #EFF6FF;
+  color: #163A63;
+  border: 1px solid #D9E2EC;
+}
+
+.navy-gradient {
+  background: linear-gradient(135deg, #0B1F3A 0%, #163A63 100%);
 }

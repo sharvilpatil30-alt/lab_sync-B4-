@@ -15,9 +15,9 @@ export const RoleRoute: React.FC<RoleRouteProps> = ({ allowedRoles, children }) 
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center space-y-4">
-        <Spinner size="lg" />
-        <p className="text-xs text-slate-400">Checking permissions...</p>
+      <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center space-y-4">
+        <Spinner size="lg" className="text-[#0B1F3A]" />
+        <p className="text-xs text-[#627D98]">Checking permissions...</p>
       </div>
     );
   }

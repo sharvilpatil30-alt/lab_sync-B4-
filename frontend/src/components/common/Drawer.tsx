@@ -56,22 +56,26 @@ export const Drawer: React.FC<DrawerProps> = ({
     <div className="fixed inset-0 z-50 overflow-hidden" role="dialog" aria-modal="true">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-[#0B1F3A]/40 backdrop-blur-xs transition-opacity"
         onClick={onClose}
         aria-hidden="true"
       />
 
       <div className={`fixed inset-y-0 ${position === 'right' ? 'right-0' : 'left-0'} flex max-w-full`}>
-        <div className={`w-screen ${sizeClasses[size]} ${slideClasses[position]} bg-slate-900 border-${position === 'right' ? 'l' : 'r'} border-slate-800 shadow-2xl flex flex-col`}>
+        <div
+          className={`w-screen ${sizeClasses[size]} ${slideClasses[position]} bg-white border-${
+            position === 'right' ? 'l' : 'r'
+          } border-[#D9E2EC] shadow-2xl flex flex-col text-[#102A43]`}
+        >
           {/* Header */}
-          <div className="flex items-center justify-between p-5 border-b border-slate-800">
+          <div className="flex items-center justify-between p-5 border-b border-[#D9E2EC]">
             <div>
-              {title && <h2 className="text-base font-bold text-white tracking-tight">{title}</h2>}
-              {description && <p className="text-xs text-slate-400 mt-0.5">{description}</p>}
+              {title && <h2 className="text-base font-bold text-[#0B1F3A] tracking-tight">{title}</h2>}
+              {description && <p className="text-xs text-[#627D98] mt-0.5">{description}</p>}
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              className="p-1.5 rounded-lg text-[#627D98] hover:text-[#0B1F3A] hover:bg-[#F0F4F8] transition-colors"
               aria-label="Close drawer"
             >
               <X className="w-5 h-5" />
@@ -79,13 +83,11 @@ export const Drawer: React.FC<DrawerProps> = ({
           </div>
 
           {/* Content Body */}
-          <div className="flex-1 overflow-y-auto p-5 space-y-4">
-            {children}
-          </div>
+          <div className="flex-1 overflow-y-auto p-5 space-y-4">{children}</div>
 
           {/* Optional Footer */}
           {footer && (
-            <div className="p-4 border-t border-slate-800 bg-slate-950/40 flex items-center justify-end gap-3">
+            <div className="p-4 border-t border-[#D9E2EC] bg-[#F8FAFC] flex items-center justify-end gap-3">
               {footer}
             </div>
           )}

@@ -12,7 +12,7 @@ import {
   Wrench,
   AlertTriangle,
 } from 'lucide-react';
-import { useLabs, useResources, useUpdateLab } from '../../../../hooks';
+import { useLabs, useResources, useUpdateLab, useSetMaintenance } from '../../../../hooks';
 import { Lab, LabOperationalStatus } from '../../../../types';
 import {
   Table,
@@ -39,6 +39,7 @@ export const AdminLabListPage: React.FC = () => {
 
   const { data: allResources = [] } = useResources();
   const updateLabMutation = useUpdateLab();
+  const setMaintenanceMutation = useSetMaintenance();
 
   // Status transition state
   const [statusAction, setStatusAction] = useState<{
@@ -51,10 +52,24 @@ export const AdminLabListPage: React.FC = () => {
   const handleApplyStatusChange = async () => {
     if (!statusAction) return;
     try {
-      await updateLabMutation.mutateAsync({
-        labId: statusAction.lab.id || statusAction.lab.labId,
-        data: { operationalStatus: statusAction.targetStatus },
-      });
+      const labKey = statusAction.lab.id || statusAction.lab.labId;
+      if (statusAction.targetStatus === 'maintenance') {
+        await setMaintenanceMutation.mutateAsync({
+          labId: labKey,
+          enabled: true,
+          reason: 'Facility calibration and scheduled maintenance inspection',
+        });
+      } else if (statusAction.lab.operationalStatus === 'maintenance' && statusAction.targetStatus === 'available') {
+        await setMaintenanceMutation.mutateAsync({
+          labId: labKey,
+          enabled: false,
+        });
+      } else {
+        await updateLabMutation.mutateAsync({
+          labId: labKey,
+          data: { operationalStatus: statusAction.targetStatus },
+        });
+      }
 
       addToast({
         type: 'success',

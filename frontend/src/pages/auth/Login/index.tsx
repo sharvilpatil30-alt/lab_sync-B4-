@@ -1,9 +1,19 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, LogIn, Sparkles, AlertTriangle } from 'lucide-react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import {
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  LogIn,
+  AlertTriangle,
+  ShieldCheck,
+  CalendarCheck,
+  Cpu,
+  Building,
+} from 'lucide-react';
 import { Button, Input, ErrorMessage } from '../../../components/common';
 import { useAuth } from '../../../hooks';
-import { Role } from '../../../types';
 
 export const LoginPage: React.FC = () => {
   const { login, isAuthenticated, role } = useAuth();
@@ -39,7 +49,7 @@ export const LoginPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!emailOrUsername.trim() || !password) {
-      setError('Please provide both username/email and password.');
+      setError('Please provide both email/username and password.');
       return;
     }
 
@@ -54,7 +64,7 @@ export const LoginPage: React.FC = () => {
     // Normalize username to campus email format if entered without domain
     const normalizedEmail = emailOrUsername.includes('@')
       ? emailOrUsername.trim().toLowerCase()
-      : `${emailOrUsername.trim().toLowerCase()}@campus.edu`;
+      : `${emailOrUsername.trim().toLowerCase()}@ritindia.edu`;
 
     try {
       const authenticatedUser = await login({ email: normalizedEmail, password });
@@ -70,26 +80,10 @@ export const LoginPage: React.FC = () => {
         navigate('/student/dashboard', { replace: true });
       }
     } catch (err: any) {
-      const msg = err.response?.data?.message || err.message || 'Invalid credentials. Please verify and retry.';
-      setError(msg);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleQuickDemo = async (role: Role) => {
-    const demoEmail = `${role}@campus.edu`;
-    const demoPassword = 'password123';
-    setEmailOrUsername(demoEmail);
-    setPassword(demoPassword);
-    setError(null);
-    setIsLoading(true);
-
-    try {
-      await login({ email: demoEmail, password: demoPassword });
-      navigate(`/${role}/dashboard`, { replace: true });
-    } catch (err: any) {
-      const msg = err.response?.data?.message || err.message || 'Demo login failed.';
+      const msg =
+        err.response?.data?.message ||
+        err.message ||
+        'Invalid credentials. Please verify your email and password.';
       setError(msg);
     } finally {
       setIsLoading(false);
@@ -97,104 +91,144 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="text-center">
-        <h2 className="text-xl font-bold text-white">Sign In to Campus Portal</h2>
-        <p className="text-xs text-slate-400 mt-1">Access laboratories, book resources, and track status</p>
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+      {/* LEFT COLUMN: Academic Branding & Info */}
+      <div className="lg:col-span-5 space-y-6 text-left">
+        <div>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-xs font-semibold text-[#2563EB]">
+            <ShieldCheck className="w-3.5 h-3.5" />
+            <span>Academic Portal Sign In</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0B1F3A] tracking-tight mt-3">
+            Smart Campus Resource Management
+          </h1>
+          <p className="text-sm text-[#627D98] mt-2 leading-relaxed">
+            Sign in to access your laboratory schedules, reserve high-performance compute benches, and review booking telemetry.
+          </p>
+        </div>
+
+        {/* Feature Highlights */}
+        <div className="space-y-3.5 pt-2">
+          <div className="flex items-start gap-3 p-3.5 rounded-xl bg-white border border-[#D9E2EC] shadow-2xs">
+            <div className="p-2 rounded-lg bg-[#EFF6FF] text-[#2563EB] shrink-0">
+              <CalendarCheck className="w-4 h-4" />
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-[#0B1F3A]">Resource Scheduling</h4>
+              <p className="text-[11px] text-[#627D98] mt-0.5">
+                Book workstations and check real-time availability.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3 p-3.5 rounded-xl bg-white border border-[#D9E2EC] shadow-2xs">
+            <div className="p-2 rounded-lg bg-[#EFF6FF] text-[#2563EB] shrink-0">
+              <Cpu className="w-4 h-4" />
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-[#0B1F3A]">Compute Infrastructure</h4>
+              <p className="text-[11px] text-[#627D98] mt-0.5">
+                Access specialized GPU nodes and engineering testbeds.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3 p-3.5 rounded-xl bg-white border border-[#D9E2EC] shadow-2xs">
+            <div className="p-2 rounded-lg bg-[#EFF6FF] text-[#2563EB] shrink-0">
+              <Building className="w-4 h-4" />
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-[#0B1F3A]">Campus Directory</h4>
+              <p className="text-[11px] text-[#627D98] mt-0.5">
+                Integrated indoor wayfinding and hardware inventory.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {isSessionExpired && (
-        <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 flex items-center gap-2.5 text-xs animate-in fade-in">
-          <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
-          <span>Your session has expired. Please sign in again with your credentials.</span>
-        </div>
-      )}
+      {/* RIGHT COLUMN: Sign In Card */}
+      <div className="lg:col-span-7">
+        <div className="bg-white rounded-2xl border border-[#D9E2EC] shadow-xl p-6 sm:p-8 space-y-6">
+          <div className="text-left border-b border-[#D9E2EC] pb-4">
+            <h2 className="text-xl font-bold text-[#0B1F3A] tracking-tight">Welcome Back</h2>
+            <p className="text-xs text-[#627D98] mt-1">Sign in with your RIT academic credentials</p>
+          </div>
 
-      {error && (
-        <ErrorMessage
-          title="Authentication Failed"
-          message={error}
-          onRetry={() => setError(null)}
-        />
-      )}
+          {isSessionExpired && (
+            <div className="p-3.5 rounded-xl bg-[#FFFBEB] border border-[#FDE68A] text-[#B45309] flex items-center gap-2.5 text-xs animate-in fade-in">
+              <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
+              <span>Your session has expired. Please sign in again with your credentials.</span>
+            </div>
+          )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <Input
-          label="Campus Email / Username"
-          type="text"
-          placeholder="e.g. student@campus.edu or student"
-          value={emailOrUsername}
-          onChange={(e) => setEmailOrUsername(e.target.value)}
-          leftIcon={<Mail className="w-4 h-4" />}
-          autoComplete="username"
-          required
-        />
+          {error && (
+            <ErrorMessage
+              title="Authentication Failed"
+              message={error}
+              onRetry={() => setError(null)}
+            />
+          )}
 
-        <Input
-          label="Password"
-          type={showPassword ? 'text' : 'password'}
-          placeholder="••••••••"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          leftIcon={<Lock className="w-4 h-4" />}
-          rightIcon={
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="hover:text-slate-200 transition-colors focus:outline-none"
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
-            >
-              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
-          }
-          autoComplete="current-password"
-          required
-        />
+          <form onSubmit={handleSubmit} className="space-y-4 text-left">
+            <Input
+              label="Campus Email or Username"
+              type="text"
+              placeholder="e.g. 2553018@ritindia.edu or student"
+              value={emailOrUsername}
+              onChange={(e) => setEmailOrUsername(e.target.value)}
+              leftIcon={<Mail className="w-4 h-4" />}
+              autoComplete="username"
+              required
+            />
 
-        <Button
-          type="submit"
-          className="w-full mt-2"
-          isLoading={isLoading}
-          leftIcon={<LogIn className="w-4 h-4" />}
-        >
-          Sign In
-        </Button>
-      </form>
+            <Input
+              label="Password"
+              type={showPassword ? 'text' : 'password'}
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              leftIcon={<Lock className="w-4 h-4" />}
+              rightIcon={
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="hover:text-[#0B1F3A] transition-colors focus:outline-none"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              }
+              autoComplete="current-password"
+              required
+            />
 
-      {/* Quick Demo Switcher */}
-      <div className="pt-4 border-t border-slate-800">
-        <div className="flex items-center gap-1.5 text-xs text-slate-400 font-semibold mb-2.5">
-          <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-          <span>Quick Demo Access (1-Click)</span>
-        </div>
-        <div className="grid grid-cols-3 gap-2">
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            onClick={() => handleQuickDemo('student')}
-            disabled={isLoading}
-          >
-            Student
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            onClick={() => handleQuickDemo('faculty')}
-            disabled={isLoading}
-          >
-            Faculty
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            onClick={() => handleQuickDemo('admin')}
-            disabled={isLoading}
-          >
-            Admin
-          </Button>
+            <div className="pt-2">
+              <Button
+                type="submit"
+                variant="primary"
+                className="w-full h-11 text-sm font-semibold"
+                isLoading={isLoading}
+                loadingText="Signing In..."
+                leftIcon={<LogIn className="w-4 h-4" />}
+              >
+                Sign In
+              </Button>
+            </div>
+          </form>
+
+          {/* Registration Link */}
+          <div className="pt-4 border-t border-[#D9E2EC] text-center">
+            <p className="text-xs text-[#627D98]">
+              Don&apos;t have an account?{' '}
+              <Link
+                to="/signup"
+                className="font-semibold text-[#2563EB] hover:text-[#0B1F3A] hover:underline transition-colors"
+              >
+                Create an account / Sign Up
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>

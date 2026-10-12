@@ -123,11 +123,11 @@ export const LabDetailsPage: React.FC = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => navigate(`${basePrefix}/route/${lab.id || lab.labId}`)}
-            leftIcon={<Compass className="w-3.5 h-3.5 text-indigo-400" />}
-            className="text-xs"
+            onClick={() => navigate(`${basePrefix}/route?labId=${lab.id || lab.labId}`)}
+            leftIcon={<Compass className="w-3.5 h-3.5 text-[#2563EB]" />}
+            className="text-xs text-[#2563EB] border-[#BFDBFE] hover:bg-[#EFF6FF]"
           >
-            View Route
+            Get Directions
           </Button>
           <Button
             variant="ghost"

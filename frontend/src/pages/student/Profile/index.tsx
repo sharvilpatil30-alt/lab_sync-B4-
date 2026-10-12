@@ -10,7 +10,6 @@ import {
   KeyRound,
   LogOut,
   GraduationCap,
-  Sparkles,
   CheckCircle2,
   Lock,
 } from 'lucide-react';

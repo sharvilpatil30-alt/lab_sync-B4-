@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import {
-  Calendar,
   Clock,
   Cpu,
   FileText,
@@ -17,13 +16,13 @@ import {
   Layers,
   RotateCcw,
   XCircle,
-  Hourglass,
   Building,
   Users,
+  Check,
 } from 'lucide-react';
 import { Lab, Resource, BookingStatus } from '../../types';
 import { Button, Input, Select, ErrorMessage, StatusBadge } from '../common';
-import { useCreateBooking, useLabs, useResources, useAuth } from '../../hooks';
+import { useCreateBooking, useLabs, useResources, useAvailableResources, useAuth } from '../../hooks';
 
 // Validation Schema with Zod
 const bookingSchema = z
@@ -38,6 +37,7 @@ const bookingSchema = z
     }, 'Date must be today or in the future.'),
     startTime: z.string().min(1, 'Start time is required.'),
     endTime: z.string().min(1, 'End time is required.'),
+    selectedResourceId: z.string().optional(),
     requiredResources: z.array(z.string()),
     purpose: z.string().min(10, 'Purpose description must be at least 10 characters long.'),
   })
@@ -84,7 +84,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
   // Wizard Step: 1 to 6
   // STEP 1: Select lab
   // STEP 2: Select date/time
-  // STEP 3: Select resources
+  // STEP 3: Select individual seat/workstation
   // STEP 4: Enter purpose
   // STEP 5: Review
   // STEP 6: Confirm / Submission Result
@@ -98,6 +98,9 @@ export const BookingForm: React.FC<BookingFormProps> = ({
     queuePosition?: number;
     estimatedStart?: string;
   }>({ status: 'idle' });
+
+  // Conflict warning state for 409
+  const [conflictMessage, setConflictMessage] = useState<string | null>(null);
 
   // Default date = tomorrow
   const defaultDate =
@@ -122,6 +125,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
       date: defaultDate,
       startTime: initialStartTime || '10:00',
       endTime: initialEndTime || '12:00',
+      selectedResourceId: initialResources?.[0] || '',
       requiredResources: initialResources || [],
       purpose: '',
     },
@@ -132,28 +136,55 @@ export const BookingForm: React.FC<BookingFormProps> = ({
   const selectedDate = watch('date');
   const selectedStartTime = watch('startTime');
   const selectedEndTime = watch('endTime');
-  const selectedResources = watch('requiredResources') || [];
+  const selectedResourceId = watch('selectedResourceId');
   const enteredPurpose = watch('purpose');
 
-  // Set default lab if available
+  // Pre-populate lab if passed via props or URL
   useEffect(() => {
-    if (!selectedLabId && labs.length > 0) {
-      setValue('labId', initialLabId || labs[0].id || labs[0].labId);
+    if (initialLabId) {
+      setValue('labId', initialLabId);
+    } else if (!selectedLabId && labs.length > 0) {
+      setValue('labId', labs[0].id || labs[0].labId);
     }
   }, [labs, selectedLabId, setValue, initialLabId]);
 
-  const selectedLab = labs.find((l) => l.id === selectedLabId || l.labId === selectedLabId);
+  const selectedLab = useMemo(() => {
+    return labs.find((l) => l.id === selectedLabId || l.labId === selectedLabId);
+  }, [labs, selectedLabId]);
 
-  // Available resources for selected lab
-  const availableLabResources = allResources.filter((r) => {
-    const rLab = typeof r.lab === 'object' && r.lab !== null ? (r.lab as any).id : r.lab;
-    return rLab === selectedLab?.id || rLab === selectedLab?.labId;
-  });
+  // Compute ISO time range for live availability probe
+  const { startIso, endIso } = useMemo(() => {
+    if (!selectedDate || !selectedStartTime || !selectedEndTime) {
+      return { startIso: '', endIso: '' };
+    }
+    try {
+      const s = new Date(`${selectedDate}T${selectedStartTime}:00`).toISOString();
+      const e = new Date(`${selectedDate}T${selectedEndTime}:00`).toISOString();
+      return { startIso: s, endIso: e };
+    } catch {
+      return { startIso: '', endIso: '' };
+    }
+  }, [selectedDate, selectedStartTime, selectedEndTime]);
 
-  const toggleResource = (id: string) => {
-    const current = selectedResources || [];
-    const updated = current.includes(id) ? current.filter((r) => r !== id) : [...current, id];
-    setValue('requiredResources', updated);
+  // Real availability hook
+  const {
+    data: availableSeats = [],
+    isLoading: isAvailabilityLoading,
+    refetch: refetchAvailability,
+  } = useAvailableResources(selectedLab?.id || selectedLabId, startIso, endIso);
+
+  // Fallback resources for lab if live availability returned empty
+  const labEquipmentList = useMemo(() => {
+    return allResources.filter((r) => {
+      const rLab = typeof r.lab === 'object' && r.lab !== null ? (r.lab as any).id : r.lab;
+      return rLab === selectedLab?.id || rLab === selectedLab?.labId || rLab === selectedLab?.name;
+    });
+  }, [allResources, selectedLab]);
+
+  const handleSelectSeat = (resourceId: string) => {
+    setValue('selectedResourceId', resourceId);
+    setValue('requiredResources', [resourceId]);
+    setConflictMessage(null);
   };
 
   // Step Validation logic
@@ -165,9 +196,11 @@ export const BookingForm: React.FC<BookingFormProps> = ({
       const validDate = await trigger('date');
       const validStart = await trigger('startTime');
       const validEnd = await trigger('endTime');
-      if (validDate && validStart && validEnd) setStep(3);
+      if (validDate && validStart && validEnd) {
+        refetchAvailability();
+        setStep(3);
+      }
     } else if (currentStep === 3) {
-      // Resources selection is optional or validated
       setStep(4);
     } else if (currentStep === 4) {
       const validPurpose = await trigger('purpose');
@@ -189,14 +222,23 @@ export const BookingForm: React.FC<BookingFormProps> = ({
     if (submissionOutcome.status === 'submitting') return;
 
     setSubmissionOutcome({ status: 'submitting' });
+    setConflictMessage(null);
+
+    const resourceIdToBook =
+      selectedResourceId ||
+      (availableSeats.length > 0 ? availableSeats[0].resourceId : undefined) ||
+      (labEquipmentList.length > 0 ? labEquipmentList[0].id : undefined) ||
+      selectedLab?.id ||
+      selectedLabId;
+
     try {
       const res = await createBookingMutation.mutateAsync({
+        resourceId: resourceIdToBook,
+        startTime: startIso,
+        endTime: endIso,
         labId: selectedLab?.id || selectedLabId,
         date: selectedDate,
-        startTime: selectedStartTime,
-        endTime: selectedEndTime,
         purpose: enteredPurpose,
-        requiredResources: selectedResources,
       });
 
       const newBookingId = res.bookingId || res.id;
@@ -206,7 +248,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
         setSubmissionOutcome({
           status: 'queued',
           bookingId: newBookingId,
-          message: 'The requested time slot is in high demand. Your request has been queued.',
+          message: 'The requested time slot has been queued for scheduling.',
           queuePosition: res.queuePosition || 1,
           estimatedStart: res.estimatedStart || `${selectedDate} ${selectedStartTime}`,
         });
@@ -223,12 +265,27 @@ export const BookingForm: React.FC<BookingFormProps> = ({
         setSubmissionOutcome({
           status: 'accepted',
           bookingId: newBookingId,
-          message: 'Reservation approved and workstation bench assigned.',
+          message: 'Workstation seat reservation confirmed by campus backend.',
         });
+        if (onSuccess && newBookingId) {
+          onSuccess(newBookingId);
+        }
       }
     } catch (err: any) {
+      // Handle 409 Conflict: resource is no longer available
+      if (err.statusCode === 409 || err.code === 'CONFLICT' || err.message?.includes('conflict')) {
+        const conflictText =
+          'Scheduling Conflict: This workstation seat is no longer available for the chosen time window. Live availability has been refreshed.';
+        setConflictMessage(conflictText);
+        setSubmissionOutcome({
+          status: 'error',
+          message: conflictText,
+        });
+        refetchAvailability();
+        return;
+      }
+
       const errorMsg =
-        err.response?.data?.message ||
         err.message ||
         'An unexpected server error occurred during reservation submission.';
       setSubmissionOutcome({
@@ -250,7 +307,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
   const stepTitles = [
     'Select Lab',
     'Date & Time',
-    'Resources',
+    'Seat Selection',
     'Purpose',
     'Review',
     'Confirmation',
@@ -258,89 +315,90 @@ export const BookingForm: React.FC<BookingFormProps> = ({
 
   return (
     <div className="glass-panel p-6 sm:p-8 rounded-2xl border border-slate-800 space-y-6 max-w-3xl mx-auto shadow-2xl">
-      {/* 6-Step Workflow Progress Indicator */}
-      <div className="border-b border-slate-800 pb-4">
-        <div className="grid grid-cols-6 gap-2">
-          {stepTitles.map((title, idx) => {
-            const stepNumber = idx + 1;
-            const isCompleted = step > stepNumber;
-            const isCurrent = step === stepNumber;
-            return (
-              <div key={title} className="flex flex-col items-center text-center">
-                <div
-                  className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                    isCompleted
-                      ? 'bg-emerald-500 text-slate-950 font-bold'
-                      : isCurrent
-                      ? 'bg-indigo-600 text-white ring-4 ring-indigo-500/20'
-                      : 'bg-slate-800 text-slate-500'
-                  }`}
-                >
-                  {isCompleted ? '✓' : stepNumber}
-                </div>
-                <span
-                  className={`text-[10px] mt-1 hidden sm:block truncate ${
-                    isCurrent ? 'text-indigo-400 font-semibold' : 'text-slate-500'
-                  }`}
-                >
-                  {title}
-                </span>
-              </div>
-            );
-          })}
+      {/* Wizard Progress Stepper */}
+      <div className="border-b border-slate-800 pb-5">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-xs font-mono uppercase tracking-wider text-indigo-400 font-semibold">
+            Reservation Wizard • Step {step} of 6
+          </span>
+          <span className="text-xs text-slate-400 font-medium">{stepTitles[step - 1]}</span>
+        </div>
+        <div className="grid grid-cols-6 gap-1.5">
+          {[1, 2, 3, 4, 5, 6].map((s) => (
+            <div
+              key={s}
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                s < step
+                  ? 'bg-emerald-500'
+                  : s === step
+                  ? 'bg-indigo-500 ring-2 ring-indigo-500/30'
+                  : 'bg-slate-800'
+              }`}
+            />
+          ))}
         </div>
       </div>
 
-      {/* STEP 1: Select Lab */}
+      {conflictMessage && (
+        <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs flex items-start gap-2.5">
+          <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="font-semibold">{conflictMessage}</p>
+            <button
+              type="button"
+              onClick={() => {
+                setConflictMessage(null);
+                setStep(3);
+              }}
+              className="mt-1 text-[11px] underline text-indigo-300 hover:text-white"
+            >
+              Return to Step 3 and select another seat
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* STEP 1: Select Laboratory Facility */}
       {step === 1 && (
         <div className="space-y-4 animate-in fade-in duration-150">
           <div>
             <h3 className="text-base font-bold text-white flex items-center gap-2">
               <Building className="w-4 h-4 text-indigo-400" />
-              <span>STEP 1: Select Facility Laboratory</span>
+              <span>STEP 1: Choose Laboratory Facility</span>
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">
-              Choose the laboratory workstation room matching your research domain
+              Select the Department of Computer Science & Engineering lab room
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-96 overflow-y-auto pr-1">
-            {labs.map((lab) => {
-              const isSelected = selectedLabId === (lab.id || lab.labId);
-              return (
-                <div
-                  key={lab.id || lab.labId}
-                  onClick={() => setValue('labId', lab.id || lab.labId, { shouldValidate: true })}
-                  className={`p-4 rounded-xl border cursor-pointer transition-all ${
-                    isSelected
-                      ? 'bg-indigo-600/15 border-indigo-500 shadow-md ring-1 ring-indigo-500/30'
-                      : 'glass-card border-slate-800 hover:border-slate-700'
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <span className="text-[10px] font-mono font-bold text-indigo-400 uppercase">
-                        {lab.labId}
-                      </span>
-                      <h4 className="text-sm font-bold text-slate-100">{lab.name}</h4>
-                    </div>
-                    <StatusBadge status={lab.operationalStatus} size="sm" />
-                  </div>
-                  <p className="text-xs text-slate-400 mt-1 line-clamp-2">{lab.description}</p>
-                  <div className="flex items-center justify-between text-[11px] text-slate-400 mt-3 pt-2 border-t border-slate-800/80">
-                    <span>{lab.building}</span>
-                    <span>Cap: {lab.capacity} seats</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <Controller
+            name="labId"
+            control={control}
+            render={({ field }) => (
+              <Select
+                label="Laboratory Facility *"
+                options={labs.map((l) => ({
+                  value: l.id || l.labId,
+                  label: `${l.labId} — ${l.name} (${l.capacity} Workstations)`,
+                }))}
+                error={errors.labId?.message}
+                {...field}
+              />
+            )}
+          />
 
-          {errors.labId && (
-            <p className="text-xs text-rose-400 flex items-center gap-1">
-              <AlertTriangle className="w-3.5 h-3.5" />
-              {errors.labId.message}
-            </p>
+          {selectedLab && (
+            <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2 text-xs">
+              <div className="flex justify-between items-center text-slate-300 font-medium">
+                <span>Facility Code: <strong className="text-indigo-400 font-mono">{selectedLab.labId}</strong></span>
+                <span>Workstation Capacity: <strong className="text-white">{selectedLab.capacity}</strong></span>
+              </div>
+              <p className="text-slate-400 text-[11px] leading-relaxed">{selectedLab.description}</p>
+              <div className="text-[11px] text-slate-400 flex items-center gap-1.5 pt-1">
+                <Compass className="w-3.5 h-3.5 text-indigo-400" />
+                <span>{selectedLab.location || `Wing D, Room ${selectedLab.labId}`} • {selectedLab.building}</span>
+              </div>
+            </div>
           )}
 
           <div className="flex justify-end pt-4 border-t border-slate-800">
@@ -364,7 +422,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
               <span>STEP 2: Select Date & Time Slot</span>
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">
-              Specify your arrival date and expected duration window
+              Specify your arrival date and expected duration window (Indian Standard Time • IST)
             </p>
           </div>
 
@@ -387,7 +445,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
               control={control}
               render={({ field }) => (
                 <Input
-                  label="Start Time *"
+                  label="Start Time (IST) *"
                   type="time"
                   error={errors.startTime?.message}
                   {...field}
@@ -400,13 +458,18 @@ export const BookingForm: React.FC<BookingFormProps> = ({
               control={control}
               render={({ field }) => (
                 <Input
-                  label="End Time *"
+                  label="End Time (IST) *"
                   type="time"
                   error={errors.endTime?.message}
                   {...field}
                 />
               )}
             />
+          </div>
+
+          <div className="p-2.5 rounded-lg bg-indigo-500/5 border border-indigo-500/10 text-[11px] text-indigo-300 flex items-center gap-2">
+            <Clock className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+            <span>Timezone: <strong>Asia/Kolkata (IST, UTC+05:30)</strong>. Timestamps will be transmitted in ISO 8601 with offset.</span>
           </div>
 
           {selectedStartTime && selectedEndTime && selectedEndTime <= selectedStartTime && (
@@ -425,76 +488,104 @@ export const BookingForm: React.FC<BookingFormProps> = ({
               onClick={() => handleNextFromStep(2)}
               rightIcon={<ArrowRight className="w-4 h-4" />}
             >
-              Next: Select Resources
+              Next: Select Seat
             </Button>
           </div>
         </div>
       )}
 
-      {/* STEP 3: Select Resources */}
+      {/* STEP 3: Individual Seat / Workstation Selection */}
       {step === 3 && (
         <div className="space-y-4 animate-in fade-in duration-150">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-base font-bold text-white flex items-center gap-2">
                 <Cpu className="w-4 h-4 text-indigo-400" />
-                <span>STEP 3: Select Hardware Resources</span>
+                <span>STEP 3: Select Workstation / Seat</span>
               </h3>
               <p className="text-xs text-slate-400 mt-0.5">
-                Reserve dedicated GPU nodes, oscilloscopes, or FPGA kits hosted in {selectedLab?.name}
+                Choose your specific workstation bench in {selectedLab?.name}
               </p>
             </div>
-            <span className="text-xs px-2.5 py-1 rounded-lg bg-indigo-500/10 text-indigo-300 font-mono">
-              {selectedResources.length} Selected
-            </span>
+            {isAvailabilityLoading && (
+              <span className="text-[11px] text-indigo-400 flex items-center gap-1 animate-pulse">
+                <RotateCcw className="w-3 h-3 animate-spin" /> Checking live seats...
+              </span>
+            )}
           </div>
 
-          {availableLabResources.length === 0 ? (
-            <div className="p-8 rounded-xl border border-dashed border-slate-800 text-center text-xs text-slate-500">
-              No specialized accessory units cataloged for this room. Standard PC workstations and network connectivity will be allocated automatically.
+          {/* Seat Grid */}
+          {availableSeats.length > 0 ? (
+            <div className="space-y-2">
+              <p className="text-[11px] text-slate-400 font-medium">Available bookable workstations for this slot:</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-72 overflow-y-auto p-1">
+                {availableSeats.map((seat) => {
+                  const isSelected = selectedResourceId === seat.resourceId;
+                  const isAvailable = seat.available;
+
+                  return (
+                    <button
+                      key={seat.resourceId}
+                      type="button"
+                      disabled={!isAvailable}
+                      onClick={() => handleSelectSeat(seat.resourceId)}
+                      className={`p-3 rounded-xl border text-left transition-all relative ${
+                        isSelected
+                          ? 'bg-indigo-600/20 border-indigo-500 shadow-md ring-1 ring-indigo-500/40 text-white'
+                          : isAvailable
+                          ? 'bg-slate-900 border-slate-800 hover:border-slate-700 text-slate-200 cursor-pointer'
+                          : 'bg-slate-900/50 border-slate-800/40 text-slate-500 cursor-not-allowed opacity-60'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-mono text-xs font-bold text-indigo-400">
+                          {seat.name}
+                        </span>
+                        {isSelected && <Check className="w-3.5 h-3.5 text-indigo-400" />}
+                      </div>
+                      <div className="flex items-center gap-1 text-[10px]">
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            isAvailable ? 'bg-emerald-400' : 'bg-rose-400'
+                          }`}
+                        />
+                        <span>{isAvailable ? 'Available' : 'Occupied'}</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ) : labEquipmentList.length > 0 ? (
+            <div className="space-y-2">
+              <p className="text-[11px] text-slate-400 font-medium">Lab inventory benches:</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-72 overflow-y-auto p-1">
+                {labEquipmentList.map((eq) => {
+                  const isSelected = selectedResourceId === eq.id;
+                  return (
+                    <button
+                      key={eq.id}
+                      type="button"
+                      onClick={() => handleSelectSeat(eq.id)}
+                      className={`p-3 rounded-xl border text-left transition-all ${
+                        isSelected
+                          ? 'bg-indigo-600/20 border-indigo-500 shadow-md ring-1 ring-indigo-500/40 text-white'
+                          : 'bg-slate-900 border-slate-800 hover:border-slate-700 text-slate-200'
+                      }`}
+                    >
+                      <span className="font-mono text-xs font-bold text-indigo-400 block">{eq.name}</span>
+                      <span className="text-[10px] text-slate-400">{eq.type}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-96 overflow-y-auto">
-              {availableLabResources.map((res) => {
-                const resId = res.id || res.resourceId;
-                const isChecked = selectedResources.includes(resId);
-                return (
-                  <div
-                    key={resId}
-                    onClick={() => toggleResource(resId)}
-                    className={`p-3.5 rounded-xl border cursor-pointer transition-all ${
-                      isChecked
-                        ? 'bg-indigo-600/15 border-indigo-500 shadow-md ring-1 ring-indigo-500/30'
-                        : 'glass-card border-slate-800 hover:border-slate-700'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={() => toggleResource(resId)}
-                          className="rounded border-slate-700 text-indigo-600 focus:ring-indigo-500"
-                        />
-                        <div>
-                          <span className="text-[10px] font-mono text-indigo-400 font-bold uppercase">
-                            {res.resourceId}
-                          </span>
-                          <h4 className="text-xs font-bold text-slate-100">{res.name}</h4>
-                        </div>
-                      </div>
-                      <StatusBadge status={res.operationalStatus} size="sm" />
-                    </div>
-                    <p className="text-[11px] text-slate-400 mt-1 line-clamp-2">{res.description}</p>
-                    <div className="mt-2 text-[10px] text-slate-400 flex items-center justify-between">
-                      <span className="font-mono bg-slate-800 px-1.5 py-0.5 rounded">{res.type}</span>
-                      <span className={res.availability ? 'text-emerald-400' : 'text-slate-500'}>
-                        {res.availability ? 'Ready' : 'In Use'}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="p-6 rounded-xl border border-dashed border-slate-800 text-center text-xs text-slate-400 space-y-1">
+              <p className="font-medium text-slate-300">Standard Workstation Assignment</p>
+              <p className="text-[11px] text-slate-500">
+                An available individual workstation seat in {selectedLab?.name} will be assigned upon submission.
+              </p>
             </div>
           )}
 
@@ -519,10 +610,10 @@ export const BookingForm: React.FC<BookingFormProps> = ({
           <div>
             <h3 className="text-base font-bold text-white flex items-center gap-2">
               <FileText className="w-4 h-4 text-indigo-400" />
-              <span>STEP 4: Academic or Research Purpose</span>
+              <span>STEP 4: Academic Purpose</span>
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">
-              Explain why this facility is needed (minimum 10 characters for automated queue evaluation)
+              Explain why this workstation is needed (minimum 10 characters)
             </p>
           </div>
 
@@ -537,7 +628,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                 <textarea
                   {...field}
                   rows={4}
-                  placeholder="e.g. Distributed neural network model fine-tuning and CUDA benchmark verification for senior capstone research project."
+                  placeholder="e.g. Distributed neural network model fine-tuning and benchmark verification for academic laboratory assignment."
                   className="w-full p-3.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
                 />
                 <div className="flex justify-between items-center mt-1 text-[11px]">
@@ -554,15 +645,14 @@ export const BookingForm: React.FC<BookingFormProps> = ({
             )}
           />
 
-          {/* Quick Purpose Template Tags */}
           <div className="space-y-1.5">
             <span className="text-[11px] text-slate-400">Quick suggestions:</span>
             <div className="flex flex-wrap gap-2">
               {[
-                'Senior Capstone Thesis Evaluation',
-                'Embedded IoT System Simulation',
-                'Deep Learning Model Inference Test',
-                'Cybersecurity Penetration Lab',
+                'Laboratory Coursework Practical',
+                'Senior Capstone Project',
+                'Deep Learning Model Inference',
+                'Database Query Optimization Lab',
               ].map((template) => (
                 <button
                   key={template}
@@ -578,7 +668,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
 
           <div className="flex items-center justify-between pt-4 border-t border-slate-800">
             <Button variant="ghost" onClick={handleBack} leftIcon={<ArrowLeft className="w-4 h-4" />}>
-              Back to Resources
+              Back to Seat Selection
             </Button>
             <Button
               variant="primary"
@@ -600,202 +690,115 @@ export const BookingForm: React.FC<BookingFormProps> = ({
               <span>STEP 5: Review Reservation Request</span>
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">
-              Please double check all parameters before committing to the campus resource allocator
+              Verify your booking details prior to final submission
             </p>
           </div>
 
-          <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-4 text-xs">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-4 border-b border-slate-800/80">
+          <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-3 text-xs">
+            <div className="grid grid-cols-2 gap-3 pb-3 border-b border-slate-800">
               <div>
-                <span className="text-slate-500 block text-[10px] uppercase font-semibold">
-                  Facility Lab
-                </span>
-                <span className="font-bold text-sm text-white">{selectedLab?.name}</span>
-                <span className="block text-slate-400 text-[11px] mt-0.5">
-                  {selectedLab?.building} • Floor {selectedLab?.floor} ({selectedLab?.location})
-                </span>
+                <span className="text-[10px] text-slate-400 uppercase font-semibold">Laboratory</span>
+                <p className="text-slate-100 font-bold mt-0.5">{selectedLab?.name}</p>
+                <p className="text-[11px] text-indigo-400 font-mono">{selectedLab?.labId}</p>
               </div>
-
               <div>
-                <span className="text-slate-500 block text-[10px] uppercase font-semibold">
-                  Date & Slot Window
-                </span>
-                <span className="font-bold text-sm text-indigo-300">{selectedDate}</span>
-                <span className="block text-slate-400 text-[11px] mt-0.5 font-mono">
-                  {selectedStartTime} - {selectedEndTime}
-                </span>
+                <span className="text-[10px] text-slate-400 uppercase font-semibold">Location</span>
+                <p className="text-slate-200 mt-0.5">{selectedLab?.location || 'Wing D'}</p>
+                <p className="text-[11px] text-slate-400">{selectedLab?.building}</p>
               </div>
             </div>
 
-            <div className="pb-4 border-b border-slate-800/80">
-              <span className="text-slate-500 block text-[10px] uppercase font-semibold mb-1">
-                Requested Hardware ({selectedResources.length})
-              </span>
-              {selectedResources.length === 0 ? (
-                <span className="text-slate-400 italic">Standard workstation seats only.</span>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {selectedResources.map((id) => {
-                    const res = allResources.find((r) => r.id === id || r.resourceId === id);
-                    return (
-                      <span
-                        key={id}
-                        className="px-2 py-0.5 rounded bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 font-mono text-[11px]"
-                      >
-                        {res?.name || id}
-                      </span>
-                    );
-                  })}
-                </div>
-              )}
+            <div className="grid grid-cols-2 gap-3 pb-3 border-b border-slate-800">
+              <div>
+                <span className="text-[10px] text-slate-400 uppercase font-semibold">Reserved Date</span>
+                <p className="text-slate-100 font-medium mt-0.5">{selectedDate}</p>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-400 uppercase font-semibold">Time Window (IST)</span>
+                <p className="text-slate-100 font-medium mt-0.5">
+                  {selectedStartTime} — {selectedEndTime}
+                </p>
+              </div>
+            </div>
+
+            <div className="pb-2">
+              <span className="text-[10px] text-slate-400 uppercase font-semibold">Selected Workstation / Seat</span>
+              <p className="text-indigo-300 font-mono font-bold mt-0.5">
+                {selectedResourceId ? `Seat Resource ID: ${selectedResourceId}` : 'Standard Workstation Bench'}
+              </p>
             </div>
 
             <div>
-              <span className="text-slate-500 block text-[10px] uppercase font-semibold mb-1">
-                Declared Purpose
-              </span>
-              <p className="text-slate-300 bg-slate-950/60 p-3 rounded-xl border border-slate-800 leading-relaxed">
-                {enteredPurpose}
-              </p>
+              <span className="text-[10px] text-slate-400 uppercase font-semibold">Academic Purpose</span>
+              <p className="text-slate-300 mt-0.5 italic">{enteredPurpose}</p>
             </div>
           </div>
 
           <div className="flex items-center justify-between pt-4 border-t border-slate-800">
             <Button variant="ghost" onClick={handleBack} leftIcon={<ArrowLeft className="w-4 h-4" />}>
-              Back to Edit
+              Back to Purpose
             </Button>
             <Button
               variant="primary"
               onClick={() => handleNextFromStep(5)}
+              isLoading={createBookingMutation.isPending}
+              loadingText="Submitting to Backend..."
               rightIcon={<CheckCircle2 className="w-4 h-4" />}
             >
-              Confirm & Submit Reservation
+              Confirm & Book Workstation
             </Button>
           </div>
         </div>
       )}
 
-      {/* STEP 6: Confirm & Outcome Handling (accepted, queued, rejected, error/retry) */}
+      {/* STEP 6: Submission Outcome */}
       {step === 6 && (
-        <div className="space-y-6 py-4 animate-in fade-in duration-200">
+        <div className="space-y-6 text-center animate-in fade-in duration-200 py-4">
           {submissionOutcome.status === 'submitting' && (
-            <div className="p-8 text-center space-y-4">
-              <Hourglass className="w-10 h-10 text-indigo-400 animate-spin mx-auto" />
-              <div>
-                <h3 className="text-lg font-bold text-white">Submitting Reservation...</h3>
-                <p className="text-xs text-slate-400 mt-1">
-                  Evaluating schedule priority, queue placement, and hardware lock.
-                </p>
-              </div>
+            <div className="space-y-3">
+              <div className="w-12 h-12 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin mx-auto" />
+              <h3 className="text-base font-bold text-white">Communicating with Backend...</h3>
+              <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                Verifying resource constraints and executing ACID booking allocation...
+              </p>
             </div>
           )}
 
           {submissionOutcome.status === 'accepted' && (
-            <div className="p-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-center space-y-4">
-              <div className="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
+            <div className="space-y-4">
+              <div className="w-12 h-12 bg-emerald-500/10 text-emerald-400 rounded-full flex items-center justify-center mx-auto border border-emerald-500/20 shadow-lg">
                 <CheckCircle2 className="w-7 h-7" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-white">Reservation Confirmed!</h3>
-                <p className="text-xs text-emerald-300 mt-1">{submissionOutcome.message}</p>
-                <div className="mt-2 inline-block px-3 py-1 rounded bg-slate-900 border border-slate-800 font-mono text-xs text-indigo-400 font-bold">
-                  Booking ID: {submissionOutcome.bookingId}
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-3">
-                <Button
-                  variant="primary"
-                  onClick={() => {
-                    if (onSuccess && submissionOutcome.bookingId) {
-                      onSuccess(submissionOutcome.bookingId);
-                    } else {
-                      navigate(`${basePrefix}/bookings/${submissionOutcome.bookingId}`);
-                    }
-                  }}
-                  rightIcon={<ArrowRight className="w-4 h-4" />}
-                >
-                  View Booking Details
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => navigate(`${basePrefix}/route/${submissionOutcome.bookingId}`)}
-                  leftIcon={<Compass className="w-4 h-4 text-indigo-400" />}
-                >
-                  Open Campus Route
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {submissionOutcome.status === 'queued' && (
-            <div className="p-6 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-center space-y-4">
-              <div className="w-12 h-12 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto">
-                <Clock className="w-7 h-7" />
-              </div>
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400">
-                  Automated Queue Placement
+                <span className="text-xs font-mono font-bold text-emerald-400 uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                  Confirmed (HTTP 201)
                 </span>
-                <h3 className="text-lg font-bold text-white mt-0.5">Booking Placed in Queue</h3>
-                <p className="text-xs text-amber-300 mt-1">{submissionOutcome.message}</p>
-                <div className="mt-3 inline-flex items-center gap-4 px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs">
-                  <div>
-                    <span className="text-slate-500 block text-[10px]">Queue Position</span>
-                    <strong className="text-amber-400 font-mono text-base">
-                      #{submissionOutcome.queuePosition}
-                    </strong>
-                  </div>
-                  <div className="border-l border-slate-800 pl-4">
-                    <span className="text-slate-500 block text-[10px]">Estimated Start</span>
-                    <strong className="text-slate-200 font-mono">
-                      {submissionOutcome.estimatedStart}
-                    </strong>
-                  </div>
-                </div>
+                <h3 className="text-lg font-bold text-white mt-2">Workstation Booking Confirmed</h3>
+                <p className="text-xs text-slate-300 mt-1">{submissionOutcome.message}</p>
               </div>
 
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-3">
+              {submissionOutcome.bookingId && (
+                <div className="p-3 bg-slate-900 rounded-xl border border-slate-800 inline-block font-mono text-xs text-indigo-300">
+                  Booking ID: <strong className="text-white">{submissionOutcome.bookingId}</strong>
+                </div>
+              )}
+
+              <div className="flex flex-wrap items-center justify-center gap-3 pt-3">
                 <Button
                   variant="secondary"
-                  onClick={() => navigate(`${basePrefix}/bookings/${submissionOutcome.bookingId}`)}
-                  rightIcon={<ArrowRight className="w-4 h-4" />}
+                  size="sm"
+                  onClick={() => navigate(`${basePrefix}/route?bookingId=${submissionOutcome.bookingId}`)}
+                  leftIcon={<Compass className="w-4 h-4" />}
                 >
-                  Track Queue Status
+                  Campus Route
                 </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => navigate(`${basePrefix}/dashboard`)}
-                >
-                  Return to Dashboard
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {submissionOutcome.status === 'rejected' && (
-            <div className="p-6 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-center space-y-4">
-              <div className="w-12 h-12 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center mx-auto">
-                <XCircle className="w-7 h-7" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-white">Reservation Request Rejected</h3>
-                <p className="text-xs text-rose-300 mt-1">{submissionOutcome.message}</p>
-              </div>
-
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-3">
                 <Button
                   variant="primary"
-                  onClick={() => setStep(2)}
-                  leftIcon={<RotateCcw className="w-4 h-4" />}
+                  size="sm"
+                  onClick={() => navigate(`${basePrefix}/bookings`)}
+                  leftIcon={<Layers className="w-4 h-4" />}
                 >
-                  Adjust Time Slot
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => navigate(`${basePrefix}/labs`)}
-                >
-                  Search Other Labs
+                  View My Bookings
                 </Button>
               </div>
             </div>
@@ -803,14 +806,14 @@ export const BookingForm: React.FC<BookingFormProps> = ({
 
           {submissionOutcome.status === 'error' && (
             <div className="space-y-4">
-              <ErrorMessage
-                title="Submission Failed"
-                message={submissionOutcome.message || 'An unexpected error occurred while communicating with the backend.'}
-                onRetry={executeBookingSubmission}
-              />
-              <div className="flex justify-center pt-2">
-                <Button variant="ghost" onClick={() => setStep(5)} leftIcon={<ArrowLeft className="w-4 h-4" />}>
-                  Back to Review
+              <div className="w-12 h-12 bg-rose-500/10 text-rose-400 rounded-full flex items-center justify-center mx-auto border border-rose-500/20 shadow-lg">
+                <XCircle className="w-7 h-7" />
+              </div>
+              <h3 className="text-lg font-bold text-white">Booking Submission Failed</h3>
+              <p className="text-xs text-rose-300 max-w-sm mx-auto">{submissionOutcome.message}</p>
+              <div className="pt-2">
+                <Button variant="secondary" onClick={() => setStep(3)} leftIcon={<RotateCcw className="w-4 h-4" />}>
+                  Choose Another Seat
                 </Button>
               </div>
             </div>

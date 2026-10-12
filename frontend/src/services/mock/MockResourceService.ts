@@ -159,4 +159,23 @@ export class MockResourceService implements IResourceService {
       data: { id: resourceId },
     };
   }
+
+  async getAvailable(labId: string, _startTime: string, _endTime: string): Promise<ApiResponse<{ resources: import('../types').AvailableResourceItem[] }>> {
+    const all = getStoredResources().filter((r) => {
+      const rLab = typeof r.lab === 'object' && r.lab !== null ? (r.lab as any).id : r.lab;
+      return rLab === labId;
+    });
+    return {
+      success: true,
+      message: 'Available resources retrieved',
+      data: {
+        resources: all.map((r) => ({
+          resourceId: r.id || r.resourceId,
+          labId,
+          name: r.name,
+          available: r.availability !== false,
+        })),
+      },
+    };
+  }
 }

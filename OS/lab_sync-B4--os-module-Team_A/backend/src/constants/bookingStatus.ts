@@ -1,0 +1,13 @@
+export const BOOKING_STATUS = {
+  DRAFT: 'DRAFT',
+  PENDING: 'PENDING',
+  QUEUED: 'QUEUED',
+  LEASED: 'LEASED',
+  CONFIRMED: 'CONFIRMED',
+  ACTIVE: 'ACTIVE',
+  COMPLETED: 'COMPLETED',
+  CANCELLED: 'CANCELLED',
+  REJECTED: 'REJECTED',
+} as const;
+
+export type BookingStatus = (typeof BOOKING_STATUS)[keyof typeof BOOKING_STATUS];

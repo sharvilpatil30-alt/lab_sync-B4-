@@ -103,4 +103,12 @@ export class MockMaintenanceService implements IMaintenanceService {
       data: records[index],
     };
   }
+
+  async setMaintenance(labId: string, enabled: boolean, reason?: string): Promise<ApiResponse<{ success: boolean; message: string }>> {
+    return {
+      success: true,
+      message: `Lab ${labId} maintenance set to ${enabled}`,
+      data: { success: true, message: reason || 'Status updated' },
+    };
+  }
 }

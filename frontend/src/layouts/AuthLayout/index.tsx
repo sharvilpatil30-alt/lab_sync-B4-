@@ -1,28 +1,52 @@
 import React from 'react';
-import { Outlet } from 'react-router-dom';
-import { Layers } from 'lucide-react';
+import { Outlet, Link } from 'react-router-dom';
 
 export const AuthLayout: React.FC = () => {
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center p-4 relative overflow-hidden">
-      {/* Background glow ambiance */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
-
-      {/* Main container */}
-      <div className="w-full max-w-md relative z-10 space-y-6">
-        <div className="flex flex-col items-center text-center space-y-2">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-xl shadow-indigo-600/20 mb-2">
-            <Layers className="w-6 h-6 text-white" />
+    <div className="min-h-screen bg-[#F8FAFC] text-[#102A43] flex flex-col justify-between">
+      {/* Top Academic Header with Official RIT Logo */}
+      <header className="w-full border-b border-[#D9E2EC] bg-white px-4 sm:px-8 py-3 flex items-center justify-between shadow-2xs">
+        <Link to="/" className="flex items-center gap-3 group">
+          <div className="h-10 flex items-center justify-center shrink-0">
+            <img
+              src="/RIT.png"
+              alt="RIT Logo"
+              className="h-9 w-auto object-contain rounded-md shadow-2xs"
+              onError={(e) => {
+                const target = e.currentTarget;
+                if (!target.src.includes('assets')) {
+                  target.src = '/src/assets/RIT.png';
+                }
+              }}
+            />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Smart Campus Optimizer</h1>
-          <p className="text-xs text-slate-400">Intelligent Laboratory & Resource Management</p>
+          <div className="border-l border-[#D9E2EC] pl-3">
+            <div className="flex items-center gap-1.5">
+              <span className="font-bold text-xs sm:text-sm tracking-tight text-[#0B1F3A] leading-tight">
+                Rajarambapu Institute of Technology
+              </span>
+            </div>
+            <p className="text-[10px] text-[#627D98] font-medium leading-tight hidden sm:block">
+              Smart Campus Lab & Resource Optimizer
+            </p>
+          </div>
+        </Link>
+        <div className="text-xs text-[#627D98] hidden md:block font-medium">
+          Laboratory & Computing Resource Portal
         </div>
+      </header>
 
-        <div className="glass-panel p-6 sm:p-8 rounded-2xl shadow-2xl">
+      {/* Main content slot */}
+      <main className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-10">
+        <div className="w-full max-w-5xl">
           <Outlet />
         </div>
-      </div>
+      </main>
+
+      {/* Academic footer */}
+      <footer className="w-full border-t border-[#D9E2EC] bg-white py-3.5 px-4 text-center text-xs text-[#627D98]">
+        © 2026 Rajarambapu Institute of Technology (RIT), Sakhrale • Smart Campus Optimization Platform
+      </footer>
     </div>
   );
 };

@@ -10,7 +10,7 @@ import { FacultyLayout } from '../layouts/FacultyLayout';
 import { AdminLayout } from '../layouts/AdminLayout';
 
 // Auth Pages
-import { LoginPage, UnauthorizedPage, NotFoundPage } from '../pages/auth';
+import { LoginPage, SignUpPage, UnauthorizedPage, NotFoundPage } from '../pages/auth';
 
 // Student Pages
 import {
@@ -59,6 +59,8 @@ export const AppRoutes: React.FC = () => {
       {/* Public Auth routes */}
       <Route element={<AuthLayout />}>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/register" element={<SignUpPage />} />
       </Route>
 
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
@@ -79,6 +81,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="bookings/create" element={<CreateBookingPage />} />
         <Route path="bookings" element={<MyBookingsPage />} />
         <Route path="bookings/:bookingId" element={<BookingDetailsPage />} />
+        <Route path="route" element={<CampusRoutePage />} />
         <Route path="route/:bookingId" element={<CampusRoutePage />} />
         <Route path="profile" element={<ProfilePage />} />
       </Route>
@@ -99,6 +102,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="bookings/create" element={<CreateBookingPage />} />
         <Route path="bookings" element={<MyBookingsPage />} />
         <Route path="bookings/:bookingId" element={<BookingDetailsPage />} />
+        <Route path="route" element={<CampusRoutePage />} />
         <Route path="route/:bookingId" element={<CampusRoutePage />} />
         <Route path="profile" element={<ProfilePage />} />
       </Route>
@@ -123,6 +127,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="maintenance" element={<AdminMaintenanceListPage />} />
         <Route path="bookings" element={<AdminAllBookingsPage />} />
         <Route path="bookings/:bookingId" element={<BookingDetailsPage />} />
+        <Route path="route" element={<CampusRoutePage />} />
         <Route path="route/:bookingId" element={<CampusRoutePage />} />
         <Route path="monitoring" element={<AdminMonitoringPage />} />
         <Route path="reports" element={<AdminReportsPage />} />

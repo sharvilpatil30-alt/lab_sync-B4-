@@ -122,4 +122,54 @@ export class MockRoutingService implements IRoutingService {
       data: result,
     };
   }
+
+  async getNodes(): Promise<ApiResponse<{ nodes: any[] }>> {
+    return {
+      success: true,
+      message: 'Campus nodes retrieved',
+      data: {
+        nodes: topologyData.nodes.map((n) => ({
+          id: n.id,
+          name: n.name,
+          building: (n as any).building || 'Campus Central',
+          floor: 1,
+          type: n.type || 'junction',
+        })),
+      },
+    };
+  }
+
+  async computeRoute(payload: any): Promise<ApiResponse<any>> {
+    const { fromNodeId, toNodeId, algorithm = 'dijkstra' } = payload;
+    const { path, distance } = findShortestPath(
+      fromNodeId,
+      toNodeId,
+      topologyData.nodes as RouteNode[],
+      topologyData.edges
+    );
+    const travelTimeMinutes = Math.max(1, Math.round(distance / 80));
+    return {
+      success: true,
+      message: 'Route calculated successfully',
+      data: {
+        path,
+        distanceMeters: distance,
+        estimatedTravelTimeMinutes: travelTimeMinutes,
+        algorithm,
+        nodes: topologyData.nodes,
+        edges: topologyData.edges,
+      },
+    };
+  }
+
+  async getAlgorithms(): Promise<ApiResponse<{ algorithms: string[]; default: string }>> {
+    return {
+      success: true,
+      message: 'Algorithms retrieved',
+      data: {
+        algorithms: ['dijkstra', 'astar', 'bfs', 'dfs'],
+        default: 'dijkstra',
+      },
+    };
+  }
 }

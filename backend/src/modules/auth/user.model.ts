@@ -32,8 +32,11 @@ const UserSchema = new Schema<IUser>(
 
 // Never return passwordHash in json output
 UserSchema.set('toJSON', {
+  virtuals: true,
   transform: (_doc, ret) => {
+    ret.id = ret._id.toString();
     delete (ret as any).passwordHash;
+    delete (ret as any).__v;
     return ret;
   },
 });
