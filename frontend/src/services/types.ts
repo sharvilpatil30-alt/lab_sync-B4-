@@ -1,5 +1,6 @@
 import {
   User,
+  Role,
   Lab,
   Resource,
   Booking,
@@ -20,7 +21,7 @@ import {
 } from '../types';
 
 export interface IAuthService {
-  login(credentials: { email: string; password: string }): Promise<ApiResponse<{ token: string; user: User }>>;
+  login(credentials: { email: string; password: string; role?: Role }): Promise<ApiResponse<{ token: string; user: User }>>;
   register(data: { name: string; email: string; password: string; role: string; department?: string }): Promise<ApiResponse<{ token: string; user: User }>>;
   logout(): Promise<void>;
   getCurrentUser(): Promise<ApiResponse<User>>;

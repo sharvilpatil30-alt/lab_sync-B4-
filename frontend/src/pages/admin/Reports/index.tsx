@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   BarChart3,
   TrendingUp,
@@ -12,6 +13,7 @@ import {
   AlertTriangle,
   RefreshCw,
   FileSpreadsheet,
+  Activity,
 } from 'lucide-react';
 import { useReportsDashboard, useAllBookings, useLabs, useResources } from '../../../hooks';
 import {
@@ -25,6 +27,7 @@ import { Breadcrumbs, Skeleton, Table, Column, Button, Select, useToast } from '
 import { LabUtilizationReport, ResourceUtilizationReport } from '../../../types';
 
 export const AdminReportsPage: React.FC = () => {
+  const navigate = useNavigate();
   const { addToast } = useToast();
   const [startDate, setStartDate] = useState('2026-09-17');
   const [endDate, setEndDate] = useState('2026-09-23');
@@ -224,6 +227,25 @@ export const AdminReportsPage: React.FC = () => {
             Sync
           </Button>
         </div>
+      </div>
+
+      {/* Telemetry & Analytics Sub-Services Bar */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 border-b border-slate-800 text-xs scrollbar-none">
+        <button
+          type="button"
+          onClick={() => navigate('/admin/monitoring')}
+          className="flex items-center gap-2 px-3 py-2 text-slate-400 hover:text-slate-200 font-medium whitespace-nowrap transition-colors"
+        >
+          <Activity className="w-3.5 h-3.5" />
+          <span>Live Operational Telemetry</span>
+        </button>
+        <button
+          type="button"
+          className="flex items-center gap-2 px-3 py-2 border-b-2 border-indigo-500 text-indigo-400 font-bold whitespace-nowrap"
+        >
+          <BarChart3 className="w-3.5 h-3.5" />
+          <span>Campus Reports & Analytics</span>
+        </button>
       </div>
 
       {/* Date Range and Multi-Filter Controls */}

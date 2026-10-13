@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, LogIn, Sparkles, AlertTriangle } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, LogIn, AlertTriangle, GraduationCap, BookOpen, Shield } from 'lucide-react';
 import { Button, Input, ErrorMessage } from '../../../components/common';
-import { useAuth } from '../../../hooks';
+import { useAuth, useTheme } from '../../../hooks';
 import { Role } from '../../../types';
 
 export const LoginPage: React.FC = () => {
   const { login, isAuthenticated, role } = useAuth();
+  const { isGoldPink } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
 
+  const [selectedRole, setSelectedRole] = useState<Role>('student');
   const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -38,8 +40,22 @@ export const LoginPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!emailOrUsername.trim() || !password) {
-      setError('Please provide both username/email and password.');
+    const trimmedInput = emailOrUsername.trim().toLowerCase();
+
+    if (!trimmedInput || !password) {
+      setError('Please provide both your email and password.');
+      return;
+    }
+
+    // Strict validation: Only accept emails ending with @ritindia.edu
+    if (!trimmedInput.endsWith('@ritindia.edu')) {
+      setError('Access Denied: Only institutional emails ending with @ritindia.edu are authorized.');
+      return;
+    }
+
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@ritindia\.edu$/i;
+    if (!emailRegex.test(trimmedInput)) {
+      setError('Please provide a valid email address.');
       return;
     }
 
@@ -51,14 +67,13 @@ export const LoginPage: React.FC = () => {
     setError(null);
     setIsLoading(true);
 
-    // Normalize username to campus email format if entered without domain
-    const normalizedEmail = emailOrUsername.includes('@')
-      ? emailOrUsername.trim().toLowerCase()
-      : `${emailOrUsername.trim().toLowerCase()}@campus.edu`;
-
     try {
-      const authenticatedUser = await login({ email: normalizedEmail, password });
-      const targetRole = authenticatedUser?.role;
+      const authenticatedUser = await login({
+        email: trimmedInput,
+        password,
+        role: selectedRole,
+      });
+      const targetRole = selectedRole || authenticatedUser?.role;
 
       if (from && !from.includes('/login') && !from.includes('/unauthorized')) {
         navigate(from, { replace: true });
@@ -77,30 +92,23 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const handleQuickDemo = async (role: Role) => {
-    const demoEmail = `${role}@campus.edu`;
-    const demoPassword = 'password123';
-    setEmailOrUsername(demoEmail);
-    setPassword(demoPassword);
-    setError(null);
-    setIsLoading(true);
-
-    try {
-      await login({ email: demoEmail, password: demoPassword });
-      navigate(`/${role}/dashboard`, { replace: true });
-    } catch (err: any) {
-      const msg = err.response?.data?.message || err.message || 'Demo login failed.';
-      setError(msg);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="text-center">
-        <h2 className="text-xl font-bold text-white">Sign In to Campus Portal</h2>
-        <p className="text-xs text-slate-400 mt-1">Access laboratories, book resources, and track status</p>
+        <h2
+          className={`text-xl font-bold tracking-tight transition-colors ${
+            isGoldPink ? 'text-slate-900' : 'text-white'
+          }`}
+        >
+          Sign In to Campus Portal
+        </h2>
+        <p
+          className={`text-xs mt-1 transition-colors ${
+            isGoldPink ? 'text-slate-600' : 'text-slate-400'
+          }`}
+        >
+          Access laboratories, book resources, and track status
+        </p>
       </div>
 
       {isSessionExpired && (
@@ -118,18 +126,20 @@ export const LoginPage: React.FC = () => {
         />
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-3.5">
+        {/* 1. Campus Email Input */}
         <Input
-          label="Campus Email / Username"
-          type="text"
-          placeholder="e.g. student@campus.edu or student"
+          label="Campus Email"
+          type="email"
+          placeholder="e.g. 2553018@ritindia.edu"
           value={emailOrUsername}
           onChange={(e) => setEmailOrUsername(e.target.value)}
           leftIcon={<Mail className="w-4 h-4" />}
-          autoComplete="username"
+          autoComplete="email"
           required
         />
 
+        {/* 2. Password Input */}
         <Input
           label="Password"
           type={showPassword ? 'text' : 'password'}
@@ -141,7 +151,11 @@ export const LoginPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="hover:text-slate-200 transition-colors focus:outline-none"
+              className={`transition-colors focus:outline-none ${
+                isGoldPink
+                  ? 'text-slate-400 hover:text-slate-700'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
               aria-label={showPassword ? 'Hide password' : 'Show password'}
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -151,52 +165,87 @@ export const LoginPage: React.FC = () => {
           required
         />
 
+        {/* 3. Minimized Compact Role Selector (Shown AFTER Password) */}
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <label
+              className={`block text-[11px] font-semibold uppercase tracking-wider ${
+                isGoldPink ? 'text-slate-700' : 'text-slate-300'
+              }`}
+            >
+              Sign In As Role
+            </label>
+            <span
+              className={`text-[10px] font-medium capitalize ${
+                isGoldPink ? 'text-pink-600' : 'text-indigo-400'
+              }`}
+            >
+              Active: {selectedRole}
+            </span>
+          </div>
+
+          <div
+            className={`grid grid-cols-3 gap-1.5 p-1 rounded-xl border transition-colors ${
+              isGoldPink
+                ? 'bg-rose-50/60 border-pink-200/80'
+                : 'bg-slate-900/80 border-slate-800'
+            }`}
+          >
+            {[
+              { id: 'student' as Role, label: 'Student', icon: GraduationCap },
+              { id: 'faculty' as Role, label: 'Faculty', icon: BookOpen },
+              { id: 'admin' as Role, label: 'Admin', icon: Shield },
+            ].map((r) => {
+              const Icon = r.icon;
+              const isSelected = selectedRole === r.id;
+              return (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => setSelectedRole(r.id)}
+                  className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all duration-150 ${
+                    isSelected
+                      ? isGoldPink
+                        ? 'bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 text-white shadow-sm shadow-pink-500/30'
+                        : 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/30'
+                      : isGoldPink
+                      ? 'text-slate-600 hover:text-slate-900 hover:bg-pink-100/60'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/80'
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5 shrink-0" />
+                  <span>{r.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 4. Submit Button */}
         <Button
           type="submit"
-          className="w-full mt-2"
+          className={`w-full mt-2 transition-all ${
+            isGoldPink
+              ? 'bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 hover:from-pink-600 hover:to-amber-600 text-white shadow-md shadow-pink-500/25 border-transparent'
+              : ''
+          }`}
           isLoading={isLoading}
           leftIcon={<LogIn className="w-4 h-4" />}
         >
-          Sign In
+          Sign In as {selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1)}
         </Button>
       </form>
 
-      {/* Quick Demo Switcher */}
-      <div className="pt-4 border-t border-slate-800">
-        <div className="flex items-center gap-1.5 text-xs text-slate-400 font-semibold mb-2.5">
-          <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-          <span>Quick Demo Access (1-Click)</span>
-        </div>
-        <div className="grid grid-cols-3 gap-2">
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            onClick={() => handleQuickDemo('student')}
-            disabled={isLoading}
-          >
-            Student
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            onClick={() => handleQuickDemo('faculty')}
-            disabled={isLoading}
-          >
-            Faculty
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            onClick={() => handleQuickDemo('admin')}
-            disabled={isLoading}
-          >
-            Admin
-          </Button>
-        </div>
+      <div
+        className={`pt-2 text-center border-t transition-colors ${
+          isGoldPink ? 'border-pink-100/90 text-slate-500' : 'border-slate-800/80 text-slate-500'
+        }`}
+      >
+        <p className="text-[11px]">
+          Smart Campus Resource Management System
+        </p>
       </div>
     </div>
   );
 };
+

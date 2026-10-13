@@ -7,19 +7,19 @@ export class MockReportsService implements IReportsService {
 
     const mockReport: ReportsDashboardData = {
       labUtilization: [
-        { labId: 'lab_cse_01', labName: 'Alan Turing Systems Lab', totalHoursBooked: 74, utilizationRate: 82, bookingCount: 28 },
-        { labId: 'lab_ai_02', labName: 'Deep Learning & Robotics Hub', totalHoursBooked: 88, utilizationRate: 94, bookingCount: 34 },
-        { labId: 'lab_iot_03', labName: 'IoT & Prototyping Bench', totalHoursBooked: 52, utilizationRate: 65, bookingCount: 19 },
-        { labId: 'lab_vr_04', labName: 'VR & Spatial Computing', totalHoursBooked: 31, utilizationRate: 42, bookingCount: 11 },
-        { labId: 'lab_cyber_05', labName: 'Cybersecurity Range', totalHoursBooked: 60, utilizationRate: 75, bookingCount: 22 },
-        { labId: 'lab_fab_06', labName: 'Additive FabLab', totalHoursBooked: 69, utilizationRate: 78, bookingCount: 25 },
+        { labId: 'lab_d01', labName: 'Linux Laboratory (D-01)', totalHoursBooked: 78, utilizationRate: 85, bookingCount: 29 },
+        { labId: 'lab_d02', labName: 'Database Laboratory (D-02)', totalHoursBooked: 84, utilizationRate: 91, bookingCount: 32 },
+        { labId: 'lab_d03', labName: 'Project Laboratory (D-03)', totalHoursBooked: 72, utilizationRate: 78, bookingCount: 27 },
+        { labId: 'lab_d07', labName: 'Network Laboratory (D-07)', totalHoursBooked: 80, utilizationRate: 88, bookingCount: 31 },
+        { labId: 'lab_d08', labName: 'AI & ML Laboratory (D-08)', totalHoursBooked: 92, utilizationRate: 96, bookingCount: 36 },
+        { labId: 'lab_d09', labName: 'Apple Education Center (D-09)', totalHoursBooked: 95, utilizationRate: 98, bookingCount: 38 },
       ],
       resourceUtilization: [
-        { resourceId: 'res_gpu_01', resourceName: 'NVIDIA H100 80GB', type: 'Compute', totalHoursUsed: 92, utilizationRate: 96 },
-        { resourceId: 'res_gpu_02', resourceName: 'NVIDIA A100 40GB', type: 'Compute', totalHoursUsed: 78, utilizationRate: 85 },
-        { resourceId: 'res_3d_01', resourceName: 'Bambu Lab X1-Carbon', type: 'Prototyping', totalHoursUsed: 54, utilizationRate: 68 },
-        { resourceId: 'res_cnc_01', resourceName: 'Haas 3-Axis Mill', type: 'Fabrication', totalHoursUsed: 46, utilizationRate: 58 },
-        { resourceId: 'res_robot_01', resourceName: 'UR5e Robot Arm', type: 'Robotics', totalHoursUsed: 71, utilizationRate: 79 },
+        { resourceId: 'res_pc_d09_02', resourceName: 'OptiPlex 7020 i7-14700 vPro', type: 'Workstation / PC', totalHoursUsed: 94, utilizationRate: 98 },
+        { resourceId: 'res_pc_d08_04', resourceName: 'OptiPlex 7000 i7-12700 vPro', type: 'Workstation / PC', totalHoursUsed: 90, utilizationRate: 94 },
+        { resourceId: 'res_disp_d01', resourceName: 'Samsung Flip 65" Digital Board', type: 'Interactive Display', totalHoursUsed: 62, utilizationRate: 72 },
+        { resourceId: 'res_pc_d11_01', resourceName: 'Apple Mac All-in-One 21.5"', type: 'Workstation / Mac', totalHoursUsed: 76, utilizationRate: 82 },
+        { resourceId: 'res_proj_d08', resourceName: 'Epson EB-E01 3LCD Projector', type: 'Projector', totalHoursUsed: 58, utilizationRate: 65 },
       ],
       bookingTrends: [
         { date: 'Sep 17', confirmed: 12, queued: 3, completed: 11, cancelled: 1 },

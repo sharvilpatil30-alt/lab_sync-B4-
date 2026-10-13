@@ -11,6 +11,7 @@ import {
   BookOpenCheck,
   Activity,
   BarChart3,
+  Server,
   X,
 } from 'lucide-react';
 import { useAuth } from '../../hooks';
@@ -34,28 +35,28 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     switch (currentRole) {
       case 'student':
         return [
-          { label: 'Dashboard', href: '/student/dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
-          { label: 'Search Labs', href: '/student/labs', icon: <Search className="w-4 h-4" /> },
-          { label: 'My Bookings', href: '/student/bookings', icon: <CalendarCheck className="w-4 h-4" /> },
-          { label: 'Profile', href: '/student/profile', icon: <User className="w-4 h-4" /> },
+          { label: 'Dashboard Hub', href: '/student/dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
+          { label: 'Labs & Booking', href: '/student/labs', icon: <Search className="w-4 h-4" /> },
+          { label: 'Inventory & Equipment', href: '/student/inventory', icon: <Server className="w-4 h-4" /> },
+          { label: 'My Reservations', href: '/student/bookings', icon: <CalendarCheck className="w-4 h-4" /> },
+          { label: 'Account Profile', href: '/student/profile', icon: <User className="w-4 h-4" /> },
         ];
       case 'faculty':
         return [
-          { label: 'Dashboard', href: '/faculty/dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
-          { label: 'Search Labs', href: '/faculty/labs', icon: <Search className="w-4 h-4" /> },
-          { label: 'My Bookings', href: '/faculty/bookings', icon: <CalendarCheck className="w-4 h-4" /> },
-          { label: 'Profile', href: '/faculty/profile', icon: <User className="w-4 h-4" /> },
+          { label: 'Dashboard Hub', href: '/faculty/dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
+          { label: 'Labs & Booking', href: '/faculty/labs', icon: <Search className="w-4 h-4" /> },
+          { label: 'Inventory & Equipment', href: '/faculty/inventory', icon: <Server className="w-4 h-4" /> },
+          { label: 'My Reservations', href: '/faculty/bookings', icon: <CalendarCheck className="w-4 h-4" /> },
+          { label: 'Account Profile', href: '/faculty/profile', icon: <User className="w-4 h-4" /> },
         ];
       case 'admin':
         return [
-          { label: 'Dashboard', href: '/admin/dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
-          { label: 'Lab Management', href: '/admin/labs', icon: <Sliders className="w-4 h-4" /> },
-          { label: 'Resource Inventory', href: '/admin/resources', icon: <Cpu className="w-4 h-4" /> },
-          { label: 'Maintenance Schedule', href: '/admin/maintenance', icon: <Wrench className="w-4 h-4" /> },
-          { label: 'All Bookings', href: '/admin/bookings', icon: <BookOpenCheck className="w-4 h-4" /> },
-          { label: 'Live Monitoring', href: '/admin/monitoring', icon: <Activity className="w-4 h-4" /> },
-          { label: 'Reports & Analytics', href: '/admin/reports', icon: <BarChart3 className="w-4 h-4" /> },
-          { label: 'Profile', href: '/admin/profile', icon: <User className="w-4 h-4" /> },
+          { label: 'Overview & Services', href: '/admin/dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
+          { label: 'Inventory & Equipment', href: '/admin/inventory', icon: <Server className="w-4 h-4" /> },
+          { label: 'Facilities & Labs', href: '/admin/labs', icon: <Sliders className="w-4 h-4" /> },
+          { label: 'Bookings & Queue', href: '/admin/bookings', icon: <BookOpenCheck className="w-4 h-4" /> },
+          { label: 'Telemetry & Reports', href: '/admin/monitoring', icon: <Activity className="w-4 h-4" /> },
+          { label: 'Admin Profile', href: '/admin/profile', icon: <User className="w-4 h-4" /> },
         ];
       default:
         return [];
@@ -125,7 +126,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         <div className="p-3 border-t border-slate-800/80">
           <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 text-[11px] text-slate-400">
             <p className="font-medium text-slate-300">Phase 1 Monorepo</p>
-            <p className="text-[10px] text-slate-500 mt-0.5">Team D Implementation</p>
+            <p className="text-[10px] text-slate-500 mt-0.5">Campus Resource Optimization Engine</p>
           </div>
         </div>
       </aside>

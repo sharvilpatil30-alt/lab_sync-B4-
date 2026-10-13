@@ -39,6 +39,7 @@ import {
   AdminAllBookingsPage,
   AdminMonitoringPage,
   AdminReportsPage,
+  InventoryDashboardPage,
 } from '../pages/admin';
 
 export const AppRoutes: React.FC = () => {
@@ -76,6 +77,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="dashboard" element={<StudentDashboard />} />
         <Route path="labs" element={<LabSearchPage />} />
         <Route path="labs/:labId" element={<LabDetailsPage />} />
+        <Route path="inventory" element={<InventoryDashboardPage />} />
         <Route path="bookings/create" element={<CreateBookingPage />} />
         <Route path="bookings" element={<MyBookingsPage />} />
         <Route path="bookings/:bookingId" element={<BookingDetailsPage />} />
@@ -96,6 +98,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="dashboard" element={<FacultyDashboard />} />
         <Route path="labs" element={<LabSearchPage />} />
         <Route path="labs/:labId" element={<LabDetailsPage />} />
+        <Route path="inventory" element={<InventoryDashboardPage />} />
         <Route path="bookings/create" element={<CreateBookingPage />} />
         <Route path="bookings" element={<MyBookingsPage />} />
         <Route path="bookings/:bookingId" element={<BookingDetailsPage />} />
@@ -120,6 +123,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="resources/create" element={<AddResourcePage />} />
         <Route path="resources/add" element={<AddResourcePage />} />
         <Route path="resources/:resourceId" element={<AdminResourceDetailsPage />} />
+        <Route path="inventory" element={<InventoryDashboardPage />} />
         <Route path="maintenance" element={<AdminMaintenanceListPage />} />
         <Route path="bookings" element={<AdminAllBookingsPage />} />
         <Route path="bookings/:bookingId" element={<BookingDetailsPage />} />

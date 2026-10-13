@@ -64,7 +64,7 @@ export const Drawer: React.FC<DrawerProps> = ({
       <div className={`fixed inset-y-0 ${position === 'right' ? 'right-0' : 'left-0'} flex max-w-full`}>
         <div className={`w-screen ${sizeClasses[size]} ${slideClasses[position]} bg-slate-900 border-${position === 'right' ? 'l' : 'r'} border-slate-800 shadow-2xl flex flex-col`}>
           {/* Header */}
-          <div className="flex items-center justify-between p-5 border-b border-slate-800">
+          <div className="drawer-titlebar titlebar flex items-center justify-between p-5 border-b border-slate-800 bg-slate-950/80">
             <div>
               {title && <h2 className="text-base font-bold text-white tracking-tight">{title}</h2>}
               {description && <p className="text-xs text-slate-400 mt-0.5">{description}</p>}

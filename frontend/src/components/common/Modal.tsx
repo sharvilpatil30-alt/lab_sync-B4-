@@ -44,7 +44,7 @@ export const Modal: React.FC<ModalProps> = ({
         role="dialog"
         aria-modal="true"
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
+        <div className="modal-titlebar titlebar flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/80">
           <div>
             {title && <h3 className="text-lg font-bold text-slate-100">{title}</h3>}
             {description && <p className="text-xs text-slate-400 mt-0.5">{description}</p>}

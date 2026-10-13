@@ -10,3 +10,4 @@ export * from './routes.api';
 export * from './reports.api';
 export * from './notifications.api';
 export * from './alerts.api';
+export * from './inventory.api';

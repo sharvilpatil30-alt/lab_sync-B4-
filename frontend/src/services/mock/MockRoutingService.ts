@@ -76,7 +76,7 @@ export class MockRoutingService implements IRoutingService {
     await new Promise((r) => setTimeout(r, 250));
 
     // Retrieve booking to find lab
-    const storedBookings = localStorage.getItem('smart_campus_mock_bookings');
+    const storedBookings = localStorage.getItem('smart_campus_real_bookings_v2') || localStorage.getItem('smart_campus_mock_bookings');
     const bookings = storedBookings ? JSON.parse(storedBookings) : bookingsData;
     const booking = bookings.find((b: any) => b.id === bookingId || b.bookingId === bookingId);
 
@@ -86,9 +86,9 @@ export class MockRoutingService implements IRoutingService {
         : booking.lab
       : (topologyData.labNodeMap as Record<string, string>)[bookingId] || bookingId.startsWith('lab_')
       ? bookingId
-      : 'lab_cse_01';
+      : 'lab_d01';
 
-    const targetNodeId = (topologyData.labNodeMap as Record<string, string>)[labId] || 'node_turing';
+    const targetNodeId = (topologyData.labNodeMap as Record<string, string>)[labId] || 'node_systems';
     const sourceNodeId = topologyData.sourceDefault || 'node_gate';
 
     const { path, distance } = findShortestPath(

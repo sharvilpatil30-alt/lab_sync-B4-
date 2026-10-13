@@ -2,6 +2,8 @@ import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
+import { dfdRouter } from './modules/dfd/routes.js';
+import { inventoryRouter } from './modules/inventory/routes.js';
 
 dotenv.config();
 
@@ -36,6 +38,12 @@ app.get('/api/v1/health', (_req: Request, res: Response) => {
     },
   });
 });
+
+// DFD Constraints & Architecture Pipeline
+app.use('/api/v1/dfd', dfdRouter);
+
+// Real-Time Computer Batches & Normalized Equipment Models
+app.use('/api/v1/inventory', inventoryRouter);
 
 // Placeholder mount points for domain routers (to be added in future modules)
 // app.use('/api/v1/auth', authRouter);

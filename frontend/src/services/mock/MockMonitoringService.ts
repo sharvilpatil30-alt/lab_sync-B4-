@@ -4,31 +4,31 @@ import { labsData, resourcesData, bookingsData } from '../../data/mock';
 
 const activeAlerts: Alert[] = [
   {
-    id: 'alt_01',
-    severity: 'medium',
-    message: 'High network throughput detected on Alan Turing Hall Gateway.',
-    relatedEntityType: 'lab',
-    relatedEntityId: 'lab_cse_01',
-    resolved: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
+    "id": "alt_01",
+    "severity": "medium",
+    "message": "Dell OptiPlex 980 MT partial write-off hardware audit scheduled for Network Laboratory.",
+    "relatedEntityType": "lab",
+    "relatedEntityId": "lab_d07",
+    "resolved": false,
+    "createdAt": new Date(Date.now() - 1000 * 60 * 15).toISOString(),
   },
   {
-    id: 'alt_02',
-    severity: 'high',
-    message: 'Cryogenic compressor sensor ping timeout in Niels Bohr Sub-level.',
-    relatedEntityType: 'resource',
-    relatedEntityId: 'res_cryo_01',
-    resolved: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
+    "id": "alt_02",
+    "severity": "high",
+    "message": "Spatial sensor calibration and headset hardware provisioning for AR/VR Laboratory D-12.",
+    "relatedEntityType": "lab",
+    "relatedEntityId": "lab_d12",
+    "resolved": false,
+    "createdAt": new Date(Date.now() - 1000 * 60 * 45).toISOString(),
   },
   {
-    id: 'alt_03',
-    severity: 'low',
-    message: 'Scheduled maintenance planned for additive manufacturing fab tomorrow.',
-    relatedEntityType: 'lab',
-    relatedEntityId: 'lab_fab_06',
-    resolved: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
+    "id": "alt_03",
+    "severity": "low",
+    "message": "Epson EB-E01 3LCD projector lamp lens cleaning completed in AI & ML Lab D-08.",
+    "relatedEntityType": "resource",
+    "relatedEntityId": "res_proj_d08",
+    "resolved": false,
+    "createdAt": new Date(Date.now() - 1000 * 60 * 120).toISOString(),
   },
 ];
 
@@ -36,13 +36,13 @@ export class MockMonitoringService implements IMonitoringService {
   async getOverview(): Promise<ApiResponse<MonitoringOverview>> {
     await new Promise((r) => setTimeout(r, 200));
 
-    const storedLabs = localStorage.getItem('smart_campus_mock_labs');
+    const storedLabs = localStorage.getItem('smart_campus_real_labs_v2') || localStorage.getItem('smart_campus_mock_labs');
     const labs = storedLabs ? JSON.parse(storedLabs) : labsData;
 
-    const storedResources = localStorage.getItem('smart_campus_mock_resources');
+    const storedResources = localStorage.getItem('smart_campus_real_resources_v2') || localStorage.getItem('smart_campus_mock_resources');
     const resources = storedResources ? JSON.parse(storedResources) : resourcesData;
 
-    const storedBookings = localStorage.getItem('smart_campus_mock_bookings');
+    const storedBookings = localStorage.getItem('smart_campus_real_bookings_v2') || localStorage.getItem('smart_campus_mock_bookings');
     const bookings = storedBookings ? JSON.parse(storedBookings) : bookingsData;
 
     const availableLabs = labs.filter((l: any) => l.operationalStatus === 'available').length;
