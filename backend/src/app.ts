@@ -5,6 +5,10 @@ import dotenv from 'dotenv';
 import { dfdRouter } from './modules/dfd/routes.js';
 import routingRouter from './modules/routing/routes.js';
 import { inventoryRouter } from './modules/inventory/routes.js';
+import { authRouter } from './modules/auth/routes.js';
+import { labRouter } from './modules/labs/routes.js';
+import { resourceRouter } from './modules/resources/routes.js';
+import { bookingRouter } from './modules/bookings/routes.js';
 
 dotenv.config();
 
@@ -46,12 +50,11 @@ app.use('/api/v1/dfd', dfdRouter);
 // Real-Time Computer Batches & Normalized Equipment Models
 app.use('/api/v1/inventory', inventoryRouter);
 
-// Placeholder mount points for domain routers (to be added in future modules)
-// app.use('/api/v1/auth', authRouter);
-// app.use('/api/v1/users', userRouter);
-// app.use('/api/v1/labs', labRouter);
-// app.use('/api/v1/resources', resourceRouter);
-// app.use('/api/v1/bookings', bookingRouter);
+// Domain routers
+app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/labs', labRouter);
+app.use('/api/v1/resources', resourceRouter);
+app.use('/api/v1/bookings', bookingRouter);
 app.use('/api/v1/routes', routingRouter);
 // app.use('/api/v1/maintenance', maintenanceRouter);
 // app.use('/api/v1/monitoring', monitoringRouter);

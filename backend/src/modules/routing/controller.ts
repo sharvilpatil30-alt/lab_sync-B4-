@@ -12,6 +12,7 @@ import { runDijkstra } from './algorithms/dijkstra.js';
 import { runBFS } from './algorithms/bfs.js';
 import { runBellmanFord } from './algorithms/bellmanFord.js';
 import { success, error } from '../../utils/apiResponse.js';
+import { campusDb } from '../persistence/database.js';
 
 export const getTopology = async (_req: Request, res: Response) => {
   return success(res, {
@@ -134,13 +135,22 @@ export const calculateRoute = async (req: Request, res: Response) => {
   }, 'Verified route calculation successful');
 };
 
-// Booking lookup is not wired to this graph. Only explicit destinations or
-// recognized node/lab identifiers can be routed; never invent a booking's lab.
+// Booking or Lab ID parameterized route
 export const getRouteByBookingId = async (req: Request, res: Response) => {
   const { bookingId } = req.params;
   req.query.bookingId = bookingId;
   if (req.query.destination === undefined) {
-    const nodeId = resolveNodeId(bookingId);
+    let nodeId = resolveNodeId(bookingId);
+    if (!nodeId) {
+      // Check if bookingId matches an existing booking in campusDb
+      const booking = campusDb.bookings.get(bookingId);
+      if (booking) {
+        const lab = campusDb.labs.get(booking.lab_id);
+        if (lab && lab.node_id) {
+          nodeId = resolveNodeId(lab.node_id) || resolveNodeId(lab.lab_code || '') || null;
+        }
+      }
+    }
     if (!nodeId) {
       return error(res, 'Booking destination lookup is unavailable. Supply an explicit destination or use /compute with toNodeId.', [], 400);
     }

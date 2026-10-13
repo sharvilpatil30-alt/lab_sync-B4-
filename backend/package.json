@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
+    "test": "npm run build && node --test dist/modules/routing/routing.test.js dist/modules/bookings/bookings.test.js",
     "test:routing": "npm run build && node --test dist/modules/routing/routing.test.js",
+    "test:bookings": "npm run build && node --test dist/modules/bookings/bookings.test.js",
     "start": "node dist/server.js",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write \"src/**/*.ts\""

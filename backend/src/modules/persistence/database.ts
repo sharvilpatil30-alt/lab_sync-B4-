@@ -24,6 +24,7 @@ import {
   INITIAL_COMPUTER_BATCHES,
   INITIAL_EQUIPMENT_MODELS,
 } from '../inventory/inventoryData.js';
+import { CSE_NODES, CSE_EDGES } from '../routing/graph.js';
 
 class CampusDatabase {
   // Operational tables
@@ -55,16 +56,27 @@ class CampusDatabase {
    * Pre-seeds initial authoritative data matching the campus graph and 3NF inventory
    */
   public seedInitialData(): void {
-    // 1. Profiles
+    // 1. Profiles (Supporting authoritative profiles and frontend user models)
     const defaultProfiles: Profile[] = [
       { id: 'usr-student-01', full_name: 'Anya Bandgar', role: 'student', created_at: new Date().toISOString() },
       { id: 'usr-faculty-01', full_name: 'Prof. Rajesh Kulkarni', role: 'faculty', created_at: new Date().toISOString() },
       { id: 'usr-admin-01', full_name: 'Dr. Vikramaditya (Lab Head)', role: 'lab_admin', created_at: new Date().toISOString() },
+      { id: 'usr_student_01', full_name: 'Alex Chen', role: 'student', created_at: new Date().toISOString() },
+      { id: 'usr_faculty_01', full_name: 'Dr. Sarah Jenkins', role: 'faculty', created_at: new Date().toISOString() },
+      { id: 'usr_admin_01', full_name: 'Marcus Vance', role: 'lab_admin', created_at: new Date().toISOString() },
     ];
     defaultProfiles.forEach((p) => this.profiles.set(p.id, p));
 
-    // 2. Campus Nodes (Spatial Graph)
-    const nodes: CampusNode[] = [
+    // 2. Campus Nodes (Spatial Graph: Seed CSE Graph nodes + legacy aliases)
+    CSE_NODES.forEach((n) => {
+      this.campusNodes.set(n.id, {
+        id: n.id,
+        name: n.displayName || n.fullName || n.name,
+        node_type: n.isLab ? 'lab' : n.type === 'entrance' ? 'landmark' : 'building',
+      });
+    });
+
+    const legacyNodes: CampusNode[] = [
       { id: 'node-main-gate', name: 'Main Campus Gate', node_type: 'landmark' },
       { id: 'node-cs-building', name: 'Computer Science Building', node_type: 'building' },
       { id: 'node-lab-ai', name: 'AI & Deep Learning Lab (Room 301)', node_type: 'lab' },
@@ -72,10 +84,20 @@ class CampusDatabase {
       { id: 'node-lab-networks', name: 'Advanced Networking Lab (Room 108)', node_type: 'lab' },
       { id: 'node-library', name: 'Central University Library', node_type: 'building' },
     ];
-    nodes.forEach((n) => this.campusNodes.set(n.id, n));
+    legacyNodes.forEach((n) => this.campusNodes.set(n.id, n));
 
-    // 3. Campus Edges (Weighted Graph)
-    const edges: CampusEdge[] = [
+    // 3. Campus Edges (Weighted Graph: Seed CSE Edges + legacy edges)
+    CSE_EDGES.forEach((e, idx) => {
+      this.campusEdges.set(`cse-edge-${idx}`, {
+        id: `cse-edge-${idx}`,
+        from_node: e.from,
+        to_node: e.to,
+        distance_m: e.weight,
+        weight: e.weight,
+      });
+    });
+
+    const legacyEdges: CampusEdge[] = [
       { id: 'edge-1', from_node: 'node-main-gate', to_node: 'node-cs-building', distance_m: 120, weight: 1.0 },
       { id: 'edge-2', from_node: 'node-cs-building', to_node: 'node-lab-ai', distance_m: 45, weight: 1.2 },
       { id: 'edge-3', from_node: 'node-cs-building', to_node: 'node-lab-systems', distance_m: 30, weight: 1.0 },
@@ -83,22 +105,22 @@ class CampusDatabase {
       { id: 'edge-5', from_node: 'node-main-gate', to_node: 'node-library', distance_m: 90, weight: 1.0 },
       { id: 'edge-6', from_node: 'node-library', to_node: 'node-cs-building', distance_m: 60, weight: 1.1 },
     ];
-    edges.forEach((e) => this.campusEdges.set(e.id, e));
+    legacyEdges.forEach((e) => this.campusEdges.set(e.id, e));
 
     // 4. Labs (Populated from Department Laboratories D-01 through D-12 from Official Inventory Master)
     const departmentalLabs: Lab[] = [
-      { id: 'lab-d01', name: 'Linux Laboratory', lab_code: 'D-01', node_id: 'node-lab-systems', capacity: 42, investment: 1419544.04 },
-      { id: 'lab-d02', name: 'Database Laboratory', lab_code: 'D-02', node_id: 'node-lab-systems', capacity: 46, investment: 3601318.0 },
-      { id: 'lab-d03', name: 'Project Laboratory', lab_code: 'D-03', node_id: 'node-lab-systems', capacity: 49, investment: 2603775.0 },
-      { id: 'lab-d04', name: 'Application Development Tool Laboratory', lab_code: 'D-04', node_id: 'node-lab-ai', capacity: 17, investment: 1459513.0 },
-      { id: 'lab-d05', name: 'Operating System Laboratory', lab_code: 'D-05', node_id: 'node-lab-systems', capacity: 38, investment: 2664951.5 },
-      { id: 'lab-d06', name: 'Web Development Tool Lab', lab_code: 'D-06', node_id: 'node-lab-ai', capacity: 27, investment: 2025848.99 },
-      { id: 'lab-d07', name: 'Network Laboratory', lab_code: 'D-07', node_id: 'node-lab-networks', capacity: 40, investment: 2759191.89 },
-      { id: 'lab-d08', name: 'Artificial Intelligence & Machine Learning Laboratory', lab_code: 'D-08', node_id: 'node-lab-ai', capacity: 50, investment: 2572968.8 },
-      { id: 'lab-d09', name: 'Apple Education Center Laboratory', lab_code: 'D-09', node_id: 'node-lab-ai', capacity: 65, investment: 5470034.99 },
-      { id: 'lab-d10', name: 'PG laboratory-1', lab_code: 'D-10', node_id: 'node-lab-systems', capacity: 34, investment: 1492856.0 },
-      { id: 'lab-d11', name: 'PG laboratory-2', lab_code: 'D-11', node_id: 'node-lab-systems', capacity: 24, investment: 2083780.0 },
-      { id: 'lab-d12', name: 'Augmented Reality/ Virtual Reality Laboratory (ARVR LAB)', lab_code: 'D-12', node_id: 'node-lab-ai', capacity: 30, investment: 6046650.0 },
+      { id: 'lab-d01', name: 'Linux Laboratory', lab_code: 'D-01', node_id: 'node_d01', capacity: 42, investment: 1419544.04 },
+      { id: 'lab-d02', name: 'Database Laboratory', lab_code: 'D-02', node_id: 'node_d02', capacity: 46, investment: 3601318.0 },
+      { id: 'lab-d03', name: 'Project Laboratory', lab_code: 'D-03', node_id: 'node_d03', capacity: 49, investment: 2603775.0 },
+      { id: 'lab-d04', name: 'Application Development Tool Laboratory', lab_code: 'D-04', node_id: 'node_d04', capacity: 17, investment: 1459513.0 },
+      { id: 'lab-d05', name: 'Operating System Laboratory', lab_code: 'D-05', node_id: 'node_d05', capacity: 38, investment: 2664951.5 },
+      { id: 'lab-d06', name: 'Web Development Tool Lab', lab_code: 'D-06', node_id: 'node_d06', capacity: 27, investment: 2025848.99 },
+      { id: 'lab-d07', name: 'Network Laboratory', lab_code: 'D-07', node_id: 'node_d07', capacity: 40, investment: 2759191.89 },
+      { id: 'lab-d08', name: 'Artificial Intelligence & Machine Learning Laboratory', lab_code: 'D-08', node_id: 'node_d08', capacity: 50, investment: 2572968.8 },
+      { id: 'lab-d09', name: 'Apple Education Center Laboratory', lab_code: 'D-09', node_id: 'node_d09', capacity: 65, investment: 5470034.99 },
+      { id: 'lab-d10', name: 'PG laboratory-1', lab_code: 'D-10', node_id: 'node_d10', capacity: 34, investment: 1492856.0 },
+      { id: 'lab-d11', name: 'PG laboratory-2', lab_code: 'D-11', node_id: 'node_d11', capacity: 24, investment: 2083780.0 },
+      { id: 'lab-d12', name: 'Augmented Reality/ Virtual Reality Laboratory (ARVR LAB)', lab_code: 'D-12', node_id: 'node_d12', capacity: 30, investment: 6046650.0 },
     ];
     departmentalLabs.forEach((l) => this.labs.set(l.id, l));
 
@@ -192,7 +214,7 @@ class CampusDatabase {
     const sampleResources: Resource[] = [
       {
         id: 'res-ai-gpu-01',
-        lab_id: 'lab-ai-301',
+        lab_id: 'lab-d08',
         label: 'AI-WS-01 (RTX 4080)',
         state: 'AVAILABLE',
         version: 1,
@@ -202,7 +224,7 @@ class CampusDatabase {
       },
       {
         id: 'res-ai-gpu-02',
-        lab_id: 'lab-ai-301',
+        lab_id: 'lab-d08',
         label: 'AI-WS-02 (RTX 4080)',
         state: 'AVAILABLE',
         version: 1,
@@ -212,11 +234,20 @@ class CampusDatabase {
       },
       {
         id: 'res-sys-ws-01',
-        lab_id: 'lab-sys-204',
+        lab_id: 'lab-d05',
         label: 'SYS-WS-01 (Linux Dev)',
         state: 'AVAILABLE',
         version: 1,
         serial_no: 'SN-SYS-33011-C',
+        updated_at: new Date().toISOString(),
+      },
+      {
+        id: 'res-arvr-ws-01',
+        lab_id: 'lab-d12',
+        label: 'D-12-VR-01 (Workstation & Headset)',
+        state: 'AVAILABLE',
+        version: 1,
+        serial_no: 'SN-ARVR-77001-A',
         updated_at: new Date().toISOString(),
       },
     ];
@@ -405,6 +436,53 @@ class CampusDatabase {
 
     this.bookings.set(booking.id, booking);
     this.idempotencyIndex.set(booking.idempotency_key, booking.id);
+
+    return { success: true, booking };
+  }
+
+  /**
+   * Cancels a booking, releases allocated resources back to AVAILABLE, and audits cancellation
+   */
+  public cancelBooking(params: {
+    bookingId: string;
+    actorId?: string;
+    reason?: string;
+    correlationId?: string;
+  }): { success: boolean; booking?: Booking; error?: string } {
+    const booking = this.bookings.get(params.bookingId);
+    if (!booking) {
+      return { success: false, error: `Booking ${params.bookingId} not found` };
+    }
+
+    if (booking.state === 'CANCELLED') {
+      return { success: true, booking };
+    }
+
+    booking.state = 'CANCELLED';
+    booking.updated_at = new Date().toISOString();
+
+    if (booking.resource_id) {
+      const resource = this.resources.get(booking.resource_id);
+      if (resource && resource.state === 'ALLOCATED') {
+        resource.state = 'AVAILABLE';
+        resource.version += 1;
+        resource.updated_at = new Date().toISOString();
+      }
+    }
+
+    const corrId = params.correlationId || `corr-cancel-${Date.now()}`;
+    this.auditLog.push({
+      id: `aud-cancel-${Date.now()}`,
+      actor_id: params.actorId || booking.user_id,
+      action: 'BOOKING_CANCEL',
+      after: {
+        booking_id: booking.id,
+        reason: params.reason || 'User requested cancellation',
+        resource_id: booking.resource_id,
+      },
+      correlation_id: corrId,
+      created_at: new Date().toISOString(),
+    });
 
     return { success: true, booking };
   }
