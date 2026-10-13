@@ -1,67 +1,84 @@
 import { Router, Request, Response } from 'express';
-import { campusDb } from '../persistence/database.js';
+import { pool } from '../../config/postgres.js';
 import { success, error } from '../../utils/apiResponse.js';
 
 export const labRouter = Router();
 
+const LAB_QUERY = `
+  SELECT
+    l.id,
+    l.name,
+    l.lab_code,
+    l.node_id,
+    l.capacity,
+    l.investment,
+    COUNT(r.id)::int AS "totalResources",
+    COUNT(r.id) FILTER (
+      WHERE UPPER(r.state) = 'AVAILABLE'
+    )::int AS "availableResourcesCount"
+  FROM public.labs l
+  LEFT JOIN public.resources r ON r.lab_id = l.id
+  GROUP BY l.id
+`;
+
+function formatLab(row: any) {
+  return {
+    ...row,
+    labId: row.lab_code || row.id,
+    operationalStatus:
+      row.availableResourcesCount > 0 ? 'available' : 'offline',
+  };
+}
+
 // GET /api/v1/labs
-labRouter.get('/', (_req: Request, res: Response) => {
-  const labs = Array.from(campusDb.labs.values()).map((l) => {
-    const resourcesInLab = Array.from(campusDb.resources.values()).filter(
-      (r) => r.lab_id === l.id
+labRouter.get('/', async (_req: Request, res: Response) => {
+  try {
+    const result = await pool.query(
+      `${LAB_QUERY} ORDER BY l.lab_code`
     );
-    const availableResources = resourcesInLab.filter((r) => r.state === 'AVAILABLE');
 
-    return {
-      id: l.id,
-      labId: l.lab_code || l.id,
-      name: l.name,
-      lab_code: l.lab_code,
-      node_id: l.node_id,
-      capacity: l.capacity,
-      investment: l.investment,
-      operationalStatus: availableResources.length > 0 ? 'available' : 'occupied',
-      totalResources: resourcesInLab.length,
-      availableResourcesCount: availableResources.length,
-    };
-  });
-
-  return success(res, labs, 'Laboratories retrieved');
+    return success(
+      res,
+      result.rows.map(formatLab),
+      'Live laboratories retrieved from PostgreSQL'
+    );
+  } catch (err) {
+    console.error('[Labs] PostgreSQL query failed:', err);
+    return error(res, 'Unable to retrieve laboratories', [], 500);
+  }
 });
 
 // GET /api/v1/labs/:labId
-labRouter.get('/:labId', (req: Request, res: Response) => {
-  const { labId } = req.params;
-  const target = Array.from(campusDb.labs.values()).find(
-    (l) => l.id.toLowerCase() === labId.toLowerCase() ||
-           l.lab_code?.toLowerCase() === labId.toLowerCase()
-  );
+labRouter.get('/:labId', async (req: Request, res: Response) => {
+  try {
+    const result = await pool.query(
+      `${LAB_QUERY}
+       HAVING l.id::text = $1 OR LOWER(l.lab_code) = LOWER($1)`,
+      [req.params.labId]
+    );
 
-  if (!target) {
-    return error(res, `Laboratory '${labId}' not found`, [], 404);
+    if (result.rows.length === 0) {
+      return error(res, 'Laboratory not found', [], 404);
+    }
+
+    const lab = formatLab(result.rows[0]);
+
+    const resources = await pool.query(
+      `SELECT id, lab_id, label, state, version,
+              batch_id, serial_no
+       FROM public.resources
+       WHERE lab_id = $1
+       ORDER BY label`,
+      [lab.id]
+    );
+
+    return success(
+      res,
+      { ...lab, resources: resources.rows },
+      'Live laboratory details retrieved'
+    );
+  } catch (err) {
+    console.error('[Labs] PostgreSQL query failed:', err);
+    return error(res, 'Unable to retrieve laboratory', [], 500);
   }
-
-  const resourcesInLab = Array.from(campusDb.resources.values()).filter(
-    (r) => r.lab_id === target.id
-  );
-  const availableResources = resourcesInLab.filter((r) => r.state === 'AVAILABLE');
-
-  return success(
-    res,
-    {
-      id: target.id,
-      labId: target.lab_code || target.id,
-      name: target.name,
-      lab_code: target.lab_code,
-      node_id: target.node_id,
-      capacity: target.capacity,
-      investment: target.investment,
-      operationalStatus: availableResources.length > 0 ? 'available' : 'occupied',
-      totalResources: resourcesInLab.length,
-      availableResourcesCount: availableResources.length,
-      resources: resourcesInLab,
-    },
-    'Laboratory details retrieved'
-  );
 });
-
