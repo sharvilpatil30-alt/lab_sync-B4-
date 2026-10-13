@@ -2,6 +2,7 @@ import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
+import routingRouter from './modules/routing/routes.js';
 
 dotenv.config();
 
@@ -43,7 +44,7 @@ app.get('/api/v1/health', (_req: Request, res: Response) => {
 // app.use('/api/v1/labs', labRouter);
 // app.use('/api/v1/resources', resourceRouter);
 // app.use('/api/v1/bookings', bookingRouter);
-// app.use('/api/v1/routes', routingRouter);
+ app.use('/api/v1/routes', routingRouter);
 // app.use('/api/v1/maintenance', maintenanceRouter);
 // app.use('/api/v1/monitoring', monitoringRouter);
 // app.use('/api/v1/reports', reportsRouter);
