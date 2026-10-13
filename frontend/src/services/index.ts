@@ -1,4 +1,3 @@
-import { DATA_MODE } from '../config';
 import {
   IAuthService,
   ILabService,
@@ -12,17 +11,6 @@ import {
   INotificationService,
 } from './types';
 
-import { MockAuthService } from './mock/MockAuthService';
-import { MockLabService } from './mock/MockLabService';
-import { MockResourceService } from './mock/MockResourceService';
-import { MockBookingService } from './mock/MockBookingService';
-import { MockRoutingService } from './mock/MockRoutingService';
-import { MockMonitoringService } from './mock/MockMonitoringService';
-import { MockReportsService } from './mock/MockReportsService';
-import { MockMaintenanceService } from './mock/MockMaintenanceService';
-import { MockUserService } from './mock/MockUserService';
-import { MockNotificationService } from './mock/MockNotificationService';
-
 import { ApiAuthService } from './api/ApiAuthService';
 import { ApiLabService } from './api/ApiLabService';
 import { ApiResourceService } from './api/ApiResourceService';
@@ -34,31 +22,24 @@ import { ApiMaintenanceService } from './api/ApiMaintenanceService';
 import { ApiUserService } from './api/ApiUserService';
 import { ApiNotificationService } from './api/ApiNotificationService';
 
-// Determine active mode from localStorage or config default
-export function getActiveDataMode(): 'mock' | 'api' {
-  const override = localStorage.getItem('smart_campus_data_mode');
-  if (override === 'mock' || override === 'api') {
-    return override;
-  }
-  return DATA_MODE === 'api' ? 'api' : 'mock';
+// The production application operates exclusively in Real API Mode.
+export function getActiveDataMode(): 'api' {
+  return 'api';
 }
 
-export function setActiveDataMode(mode: 'mock' | 'api') {
-  localStorage.setItem('smart_campus_data_mode', mode);
-  window.location.reload();
+export function setActiveDataMode(_mode: string) {
+  // No-op: Mock Mode controls are removed; application always uses real backend.
 }
 
-const isApiMode = getActiveDataMode() === 'api';
-
-export const authService: IAuthService = isApiMode ? new ApiAuthService() : new MockAuthService();
-export const userService: IUserService = isApiMode ? new ApiUserService() : new MockUserService();
-export const labService: ILabService = isApiMode ? new ApiLabService() : new MockLabService();
-export const resourceService: IResourceService = isApiMode ? new ApiResourceService() : new MockResourceService();
-export const bookingService: IBookingService = isApiMode ? new ApiBookingService() : new MockBookingService();
-export const routingService: IRoutingService = isApiMode ? new ApiRoutingService() : new MockRoutingService();
-export const monitoringService: IMonitoringService = isApiMode ? new ApiMonitoringService() : new MockMonitoringService();
-export const reportsService: IReportsService = isApiMode ? new ApiReportsService() : new MockReportsService();
-export const maintenanceService: IMaintenanceService = isApiMode ? new ApiMaintenanceService() : new MockMaintenanceService();
-export const notificationService: INotificationService = isApiMode ? new ApiNotificationService() : new MockNotificationService();
+export const authService: IAuthService = new ApiAuthService();
+export const userService: IUserService = new ApiUserService();
+export const labService: ILabService = new ApiLabService();
+export const resourceService: IResourceService = new ApiResourceService();
+export const bookingService: IBookingService = new ApiBookingService();
+export const routingService: IRoutingService = new ApiRoutingService();
+export const monitoringService: IMonitoringService = new ApiMonitoringService();
+export const reportsService: IReportsService = new ApiReportsService();
+export const maintenanceService: IMaintenanceService = new ApiMaintenanceService();
+export const notificationService: INotificationService = new ApiNotificationService();
 
 export * from './types';

@@ -76,7 +76,7 @@ export class MockRoutingService implements IRoutingService {
     await new Promise((r) => setTimeout(r, 250));
 
     // Retrieve booking to find lab
-    const storedBookings = localStorage.getItem('smart_campus_real_bookings_v2') || localStorage.getItem('smart_campus_mock_bookings');
+    const storedBookings = localStorage.getItem('smart_campus_mock_bookings');
     const bookings = storedBookings ? JSON.parse(storedBookings) : bookingsData;
     const booking = bookings.find((b: any) => b.id === bookingId || b.bookingId === bookingId);
 
@@ -86,9 +86,9 @@ export class MockRoutingService implements IRoutingService {
         : booking.lab
       : (topologyData.labNodeMap as Record<string, string>)[bookingId] || bookingId.startsWith('lab_')
       ? bookingId
-      : 'lab_d01';
+      : 'lab_cse_01';
 
-    const targetNodeId = (topologyData.labNodeMap as Record<string, string>)[labId] || 'node_systems';
+    const targetNodeId = (topologyData.labNodeMap as Record<string, string>)[labId] || 'node_turing';
     const sourceNodeId = topologyData.sourceDefault || 'node_gate';
 
     const { path, distance } = findShortestPath(
@@ -120,6 +120,56 @@ export class MockRoutingService implements IRoutingService {
       success: true,
       message: 'Campus route calculated successfully',
       data: result,
+    };
+  }
+
+  async getNodes(): Promise<ApiResponse<{ nodes: any[] }>> {
+    return {
+      success: true,
+      message: 'Campus nodes retrieved',
+      data: {
+        nodes: topologyData.nodes.map((n) => ({
+          id: n.id,
+          name: n.name,
+          building: (n as any).building || 'Campus Central',
+          floor: 1,
+          type: n.type || 'junction',
+        })),
+      },
+    };
+  }
+
+  async computeRoute(payload: any): Promise<ApiResponse<any>> {
+    const { fromNodeId, toNodeId, algorithm = 'dijkstra' } = payload;
+    const { path, distance } = findShortestPath(
+      fromNodeId,
+      toNodeId,
+      topologyData.nodes as RouteNode[],
+      topologyData.edges
+    );
+    const travelTimeMinutes = Math.max(1, Math.round(distance / 80));
+    return {
+      success: true,
+      message: 'Route calculated successfully',
+      data: {
+        path,
+        distanceMeters: distance,
+        estimatedTravelTimeMinutes: travelTimeMinutes,
+        algorithm,
+        nodes: topologyData.nodes,
+        edges: topologyData.edges,
+      },
+    };
+  }
+
+  async getAlgorithms(): Promise<ApiResponse<{ algorithms: string[]; default: string }>> {
+    return {
+      success: true,
+      message: 'Algorithms retrieved',
+      data: {
+        algorithms: ['dijkstra', 'astar', 'bfs', 'dfs'],
+        default: 'dijkstra',
+      },
     };
   }
 }

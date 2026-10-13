@@ -2,16 +2,13 @@ import { ILabService } from '../types';
 import { Lab, LabFilters, ApiResponse } from '../../types';
 import { labsData } from '../../data/mock';
 
-const LABS_KEY = 'smart_campus_real_labs_v2';
+const LABS_KEY = 'smart_campus_mock_labs';
 
 function getStoredLabs(): Lab[] {
   const stored = localStorage.getItem(LABS_KEY);
   if (stored) {
     try {
-      const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].labId?.startsWith('D-')) {
-        return parsed;
-      }
+      return JSON.parse(stored);
     } catch {
       // fallback
     }

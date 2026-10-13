@@ -123,11 +123,11 @@ export const LabDetailsPage: React.FC = () => {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => navigate(`${basePrefix}/route/${lab.id || lab.labId}`)}
-            leftIcon={<Compass className="w-3.5 h-3.5 text-indigo-400" />}
-            className="text-xs"
+            onClick={() => navigate(`${basePrefix}/route?labId=${lab.id || lab.labId}`)}
+            leftIcon={<Compass className="w-3.5 h-3.5 text-[#2563EB]" />}
+            className="text-xs text-[#2563EB] border-[#BFDBFE] hover:bg-[#EFF6FF]"
           >
-            View Route
+            Get Directions
           </Button>
           <Button
             variant="ghost"
@@ -167,7 +167,7 @@ export const LabDetailsPage: React.FC = () => {
           <div className="flex flex-wrap items-center gap-3">
             <Button
               variant="outline"
-              onClick={() => navigate(`${basePrefix}/route/${lab.id || lab.labId}`)}
+              onClick={() => navigate(`${basePrefix}/route?labId=${encodeURIComponent(lab.id || lab.labId)}`)}
               leftIcon={<Compass className="w-4 h-4 text-indigo-400" />}
             >
               View Route
@@ -397,7 +397,7 @@ export const LabDetailsPage: React.FC = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate(`${basePrefix}/route/${lab.id || lab.labId}`)}
+              onClick={() => navigate(`${basePrefix}/route?labId=${encodeURIComponent(lab.id || lab.labId)}`)}
               leftIcon={<Compass className="w-3.5 h-3.5 text-indigo-400" />}
               className="text-xs"
             >

@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 import { dfdRouter } from './modules/dfd/routes.js';
+import routingRouter from './modules/routing/routes.js';
 import { inventoryRouter } from './modules/inventory/routes.js';
 
 dotenv.config();
@@ -51,7 +52,7 @@ app.use('/api/v1/inventory', inventoryRouter);
 // app.use('/api/v1/labs', labRouter);
 // app.use('/api/v1/resources', resourceRouter);
 // app.use('/api/v1/bookings', bookingRouter);
-// app.use('/api/v1/routes', routingRouter);
+app.use('/api/v1/routes', routingRouter);
 // app.use('/api/v1/maintenance', maintenanceRouter);
 // app.use('/api/v1/monitoring', monitoringRouter);
 // app.use('/api/v1/reports', reportsRouter);

@@ -50,9 +50,9 @@ export function Table<T>({
   }
 
   return (
-    <div className={`w-full overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/60 backdrop-blur-sm ${className}`}>
-      <table className="w-full text-left text-sm text-slate-300">
-        <thead className="bg-slate-950/60 text-xs uppercase font-semibold text-slate-400 border-b border-slate-800">
+    <div className={`w-full overflow-x-auto rounded-xl border border-[#D9E2EC] bg-white shadow-2xs ${className}`}>
+      <table className="w-full text-left text-sm text-[#102A43]">
+        <thead className="bg-[#F8FAFC] text-xs uppercase font-semibold text-[#627D98] border-b border-[#D9E2EC]">
           <tr>
             {columns.map((col) => (
               <th key={col.key} className={`px-4 py-3.5 ${col.className || ''}`}>
@@ -61,13 +61,13 @@ export function Table<T>({
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-800/60">
+        <tbody className="divide-y divide-[#D9E2EC]">
           {data.map((item) => (
             <tr
               key={keyExtractor(item)}
               onClick={() => onRowClick && onRowClick(item)}
               className={`transition-colors duration-150 ${
-                onRowClick ? 'cursor-pointer hover:bg-slate-800/50' : 'hover:bg-slate-800/30'
+                onRowClick ? 'cursor-pointer hover:bg-[#F8FAFC]' : 'hover:bg-[#F8FAFC]/60'
               }`}
             >
               {columns.map((col) => (
