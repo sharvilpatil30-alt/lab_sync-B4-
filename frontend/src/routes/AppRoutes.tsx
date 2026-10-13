@@ -1,3 +1,4 @@
+import { InventoryDashboardPage } from '../pages/admin/Inventory/InventoryDashboardPage';
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks';
@@ -10,7 +11,7 @@ import { FacultyLayout } from '../layouts/FacultyLayout';
 import { AdminLayout } from '../layouts/AdminLayout';
 
 // Auth Pages
-import { LoginPage, UnauthorizedPage, NotFoundPage } from '../pages/auth';
+import { LoginPage, SignUpPage, UnauthorizedPage, NotFoundPage } from '../pages/auth';
 
 // Student Pages
 import {
@@ -39,7 +40,6 @@ import {
   AdminAllBookingsPage,
   AdminMonitoringPage,
   AdminReportsPage,
-  InventoryDashboardPage,
 } from '../pages/admin';
 
 export const AppRoutes: React.FC = () => {
@@ -60,6 +60,8 @@ export const AppRoutes: React.FC = () => {
       {/* Public Auth routes */}
       <Route element={<AuthLayout />}>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/register" element={<SignUpPage />} />
       </Route>
 
       <Route path="/unauthorized" element={<UnauthorizedPage />} />
@@ -74,13 +76,14 @@ export const AppRoutes: React.FC = () => {
         }
       >
         <Route index element={<Navigate to="/student/dashboard" replace />} />
+        <Route path="inventory" element={<InventoryDashboardPage />} />
         <Route path="dashboard" element={<StudentDashboard />} />
         <Route path="labs" element={<LabSearchPage />} />
         <Route path="labs/:labId" element={<LabDetailsPage />} />
-        <Route path="inventory" element={<InventoryDashboardPage />} />
         <Route path="bookings/create" element={<CreateBookingPage />} />
         <Route path="bookings" element={<MyBookingsPage />} />
         <Route path="bookings/:bookingId" element={<BookingDetailsPage />} />
+        <Route path="route" element={<CampusRoutePage />} />
         <Route path="route/:bookingId" element={<CampusRoutePage />} />
         <Route path="profile" element={<ProfilePage />} />
       </Route>
@@ -95,13 +98,14 @@ export const AppRoutes: React.FC = () => {
         }
       >
         <Route index element={<Navigate to="/faculty/dashboard" replace />} />
+        <Route path="inventory" element={<InventoryDashboardPage />} />
         <Route path="dashboard" element={<FacultyDashboard />} />
         <Route path="labs" element={<LabSearchPage />} />
         <Route path="labs/:labId" element={<LabDetailsPage />} />
-        <Route path="inventory" element={<InventoryDashboardPage />} />
         <Route path="bookings/create" element={<CreateBookingPage />} />
         <Route path="bookings" element={<MyBookingsPage />} />
         <Route path="bookings/:bookingId" element={<BookingDetailsPage />} />
+        <Route path="route" element={<CampusRoutePage />} />
         <Route path="route/:bookingId" element={<CampusRoutePage />} />
         <Route path="profile" element={<ProfilePage />} />
       </Route>
@@ -116,6 +120,7 @@ export const AppRoutes: React.FC = () => {
         }
       >
         <Route index element={<Navigate to="/admin/dashboard" replace />} />
+        <Route path="inventory" element={<InventoryDashboardPage />} />
         <Route path="dashboard" element={<AdminDashboard />} />
         <Route path="labs" element={<AdminLabListPage />} />
         <Route path="labs/:labId" element={<AdminLabDetailsPage />} />
@@ -123,10 +128,10 @@ export const AppRoutes: React.FC = () => {
         <Route path="resources/create" element={<AddResourcePage />} />
         <Route path="resources/add" element={<AddResourcePage />} />
         <Route path="resources/:resourceId" element={<AdminResourceDetailsPage />} />
-        <Route path="inventory" element={<InventoryDashboardPage />} />
         <Route path="maintenance" element={<AdminMaintenanceListPage />} />
         <Route path="bookings" element={<AdminAllBookingsPage />} />
         <Route path="bookings/:bookingId" element={<BookingDetailsPage />} />
+        <Route path="route" element={<CampusRoutePage />} />
         <Route path="route/:bookingId" element={<CampusRoutePage />} />
         <Route path="monitoring" element={<AdminMonitoringPage />} />
         <Route path="reports" element={<AdminReportsPage />} />

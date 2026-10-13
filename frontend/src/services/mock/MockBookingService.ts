@@ -2,16 +2,13 @@ import { IBookingService } from '../types';
 import { Booking, BookingFilters, ApiResponse, SchedulingResult, BookingStatus } from '../../types';
 import { bookingsData } from '../../data/mock';
 
-const BOOKINGS_KEY = 'smart_campus_real_bookings_v2';
+const BOOKINGS_KEY = 'smart_campus_mock_bookings';
 
 function getStoredBookings(): Booking[] {
   const stored = localStorage.getItem(BOOKINGS_KEY);
   if (stored) {
     try {
-      const parsed = JSON.parse(stored);
-      if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].lab?.startsWith('lab_d')) {
-        return parsed;
-      }
+      return JSON.parse(stored);
     } catch {
       // fallback
     }

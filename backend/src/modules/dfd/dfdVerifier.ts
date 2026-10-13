@@ -39,7 +39,7 @@ export class DFDConstraintVerifier {
       const testKey = `test-idemp-${Date.now()}`;
       const bookingPayload = {
         userId: 'usr-student-01',
-        labId: 'lab-ai-301',
+        labId: 'lab-d08',
         startAt: new Date(Date.now() + 3600000).toISOString(),
         endAt: new Date(Date.now() + 7200000).toISOString(),
         idempotencyKey: testKey,

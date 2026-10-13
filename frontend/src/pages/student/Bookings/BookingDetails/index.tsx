@@ -64,6 +64,7 @@ export const BookingDetailsPage: React.FC = () => {
   const { data: allResources = [] } = useResources();
   const {
     data: route,
+    error: routeError,
     refetch: refetchRoute,
     isRefetching: isRefetchingRoute,
   } = useCampusRoute(bookingId);
@@ -410,7 +411,7 @@ export const BookingDetailsPage: React.FC = () => {
           </div>
         ) : (
           <div className="p-8 rounded-2xl glass-panel border border-slate-800 text-center text-xs text-slate-400">
-            Route calculation in progress for this reservation destination...
+            {routeError ? `Route unavailable: ${routeError.message}` : 'Route calculation in progress for this reservation destination...'}
           </div>
         )}
       </div>

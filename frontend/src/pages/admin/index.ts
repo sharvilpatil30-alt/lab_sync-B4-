@@ -10,4 +10,3 @@ export * from './Bookings/BookingDetails';
 export * from './Monitoring';
 export * from './Reports';
 export * from './Profile';
-export * from './Inventory/InventoryDashboardPage';

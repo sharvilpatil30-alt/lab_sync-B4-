@@ -18,18 +18,18 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
 }) => {
   const normalized = (status || '').toUpperCase();
 
-  let colorClasses = 'bg-slate-800 text-slate-300 border-slate-700';
-  let dotColor = 'bg-slate-400';
+  let colorClasses = 'bg-[#F0F4F8] text-[#627D98] border-[#D9E2EC]';
+  let dotColor = 'bg-[#627D98]';
 
   switch (normalized) {
-    // Available / Confirmed / Completed / Resolved / Active
+    // Available / Confirmed / Completed / Resolved / Active / Optimal
     case 'AVAILABLE':
     case 'CONFIRMED':
     case 'COMPLETED':
     case 'ACTIVE':
     case 'OPTIMAL':
-      colorClasses = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-      dotColor = 'bg-emerald-400';
+      colorClasses = 'bg-[#ECFDF5] text-[#15803D] border-[#A7F3D0]';
+      dotColor = 'bg-[#15803D]';
       break;
 
     // In Progress / Leased / Occupied / In-use
@@ -37,25 +37,25 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
     case 'IN-USE':
     case 'LEASED':
     case 'IN-PROGRESS':
-      colorClasses = 'bg-blue-500/10 text-blue-400 border-blue-500/20';
-      dotColor = 'bg-blue-400';
+      colorClasses = 'bg-[#EFF6FF] text-[#2563EB] border-[#BFDBFE]';
+      dotColor = 'bg-[#2563EB]';
       break;
 
-    // Queued / Pending / Scheduled / Alternative
+    // Queued / Pending / Scheduled / Alternative / Waitlisted
     case 'QUEUED':
     case 'PENDING':
     case 'SCHEDULED':
     case 'WAITLISTED':
     case 'ALTERNATIVE':
-      colorClasses = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
-      dotColor = 'bg-amber-400 animate-pulse';
+      colorClasses = 'bg-[#FFFBEB] text-[#B45309] border-[#FDE68A]';
+      dotColor = 'bg-[#D97706] animate-pulse';
       break;
 
     // Maintenance / Warning / Degraded
     case 'MAINTENANCE':
     case 'DEGRADED':
-      colorClasses = 'bg-orange-500/10 text-orange-400 border-orange-500/20';
-      dotColor = 'bg-orange-400';
+      colorClasses = 'bg-[#FFF7ED] text-[#C2410C] border-[#FFEDD5]';
+      dotColor = 'bg-[#EA580C]';
       break;
 
     // Offline / Cancelled / Rejected / Expired / Critical
@@ -65,13 +65,13 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
     case 'EXPIRED':
     case 'UNAVAILABLE':
     case 'CRITICAL':
-      colorClasses = 'bg-rose-500/10 text-rose-400 border-rose-500/20';
-      dotColor = 'bg-rose-400';
+      colorClasses = 'bg-[#FEF2F2] text-[#DC2626] border-[#FECACA]';
+      dotColor = 'bg-[#DC2626]';
       break;
 
     default:
-      colorClasses = 'bg-slate-800 text-slate-300 border-slate-700';
-      dotColor = 'bg-slate-400';
+      colorClasses = 'bg-[#F0F4F8] text-[#627D98] border-[#D9E2EC]';
+      dotColor = 'bg-[#627D98]';
   }
 
   const sizeClasses = {

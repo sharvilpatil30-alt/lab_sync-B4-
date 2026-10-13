@@ -6,11 +6,15 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
+    "test": "npm run build && node --test dist/modules/routing/routing.test.js dist/modules/bookings/bookings.test.js",
+    "test:routing": "npm run build && node --test dist/modules/routing/routing.test.js",
+    "test:bookings": "npm run build && node --test dist/modules/bookings/bookings.test.js",
     "start": "node dist/server.js",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write \"src/**/*.ts\""
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.117.3",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",

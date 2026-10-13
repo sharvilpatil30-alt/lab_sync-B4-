@@ -34,13 +34,13 @@ export const Search: React.FC<SearchProps> = ({
 
   return (
     <div className={`relative flex items-center w-full ${className}`}>
-      <SearchIcon className="absolute left-3 w-4 h-4 text-slate-400 pointer-events-none" />
+      <SearchIcon className="absolute left-3 w-4 h-4 text-[#627D98] pointer-events-none" />
       <input
         type="text"
         value={localValue}
         onChange={(e) => setLocalValue(e.target.value)}
         placeholder={placeholder}
-        className="w-full bg-slate-900 border border-slate-800 focus:border-indigo-500 rounded-lg text-slate-200 placeholder-slate-500 text-sm pl-9 pr-8 py-2 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+        className="w-full bg-white border border-[#D9E2EC] focus:border-[#2563EB] rounded-lg text-[#102A43] placeholder-[#829AB1] text-sm pl-9 pr-8 py-2 transition-all focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20"
       />
       {localValue && (
         <button
@@ -48,7 +48,7 @@ export const Search: React.FC<SearchProps> = ({
             setLocalValue('');
             onChange('');
           }}
-          className="absolute right-2.5 p-0.5 rounded text-slate-400 hover:text-slate-200 hover:bg-slate-800"
+          className="absolute right-2.5 p-0.5 rounded text-[#627D98] hover:text-[#0B1F3A] hover:bg-[#F0F4F8]"
           aria-label="Clear search"
         >
           <X className="w-3.5 h-3.5" />

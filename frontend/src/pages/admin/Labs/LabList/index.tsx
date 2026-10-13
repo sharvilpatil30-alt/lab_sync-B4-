@@ -11,11 +11,8 @@ import {
   XCircle,
   Wrench,
   AlertTriangle,
-  LayoutGrid,
-  Table as TableIcon,
-  Cpu,
 } from 'lucide-react';
-import { useLabs, useResources, useUpdateLab } from '../../../../hooks';
+import { useLabs, useResources, useUpdateLab, useSetMaintenance } from '../../../../hooks';
 import { Lab, LabOperationalStatus } from '../../../../types';
 import {
   Table,
@@ -28,12 +25,10 @@ import {
   ConfirmDialog,
   useToast,
 } from '../../../../components/common';
-import { LabDashboard } from '../../../../components/lab';
 
 export const AdminLabListPage: React.FC = () => {
   const navigate = useNavigate();
   const { addToast } = useToast();
-  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
@@ -44,6 +39,7 @@ export const AdminLabListPage: React.FC = () => {
 
   const { data: allResources = [] } = useResources();
   const updateLabMutation = useUpdateLab();
+  const setMaintenanceMutation = useSetMaintenance();
 
   // Status transition state
   const [statusAction, setStatusAction] = useState<{
@@ -56,10 +52,24 @@ export const AdminLabListPage: React.FC = () => {
   const handleApplyStatusChange = async () => {
     if (!statusAction) return;
     try {
-      await updateLabMutation.mutateAsync({
-        labId: statusAction.lab.id || statusAction.lab.labId,
-        data: { operationalStatus: statusAction.targetStatus },
-      });
+      const labKey = statusAction.lab.id || statusAction.lab.labId;
+      if (statusAction.targetStatus === 'maintenance') {
+        await setMaintenanceMutation.mutateAsync({
+          labId: labKey,
+          enabled: true,
+          reason: 'Facility calibration and scheduled maintenance inspection',
+        });
+      } else if (statusAction.lab.operationalStatus === 'maintenance' && statusAction.targetStatus === 'available') {
+        await setMaintenanceMutation.mutateAsync({
+          labId: labKey,
+          enabled: false,
+        });
+      } else {
+        await updateLabMutation.mutateAsync({
+          labId: labKey,
+          data: { operationalStatus: statusAction.targetStatus },
+        });
+      }
 
       addToast({
         type: 'success',
@@ -261,116 +271,49 @@ export const AdminLabListPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* Segmented View Mode Switcher */}
-          <div className="flex items-center p-1 rounded-xl bg-slate-900 border border-slate-800 text-xs">
-            <button
-              type="button"
-              onClick={() => setViewMode('grid')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all ${
-                viewMode === 'grid'
-                  ? 'bg-indigo-600 text-white shadow-md font-semibold'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <LayoutGrid className="w-3.5 h-3.5" />
-              <span>Occupancy Grid</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode('table')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all ${
-                viewMode === 'table'
-                  ? 'bg-indigo-600 text-white shadow-md font-semibold'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <TableIcon className="w-3.5 h-3.5" />
-              <span>Admin Table</span>
-            </button>
-          </div>
-
-          {viewMode === 'table' && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => refetch()}
-              isLoading={isRefetching}
-              leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
-            >
-              Refresh Data
-            </Button>
-          )}
-        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => refetch()}
+          isLoading={isRefetching}
+          leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
+        >
+          Refresh Data
+        </Button>
       </div>
 
-      {/* Facilities Service Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 border-b border-slate-800 text-xs scrollbar-none">
-        <button
-          type="button"
-          className="flex items-center gap-2 px-3 py-2 border-b-2 border-indigo-500 text-indigo-400 font-bold whitespace-nowrap"
-        >
-          <DoorOpen className="w-3.5 h-3.5" />
-          <span>Laboratories & Occupancy</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => navigate('/admin/resources')}
-          className="flex items-center gap-2 px-3 py-2 text-slate-400 hover:text-slate-200 font-medium whitespace-nowrap transition-colors"
-        >
-          <Cpu className="w-3.5 h-3.5" />
-          <span>Hardware & Resource Inventory</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => navigate('/admin/maintenance')}
-          className="flex items-center gap-2 px-3 py-2 text-slate-400 hover:text-slate-200 font-medium whitespace-nowrap transition-colors"
-        >
-          <Wrench className="w-3.5 h-3.5" />
-          <span>Maintenance Console</span>
-        </button>
-      </div>
-
-      {viewMode === 'grid' ? (
-        <LabDashboard
-          initialStatus={statusFilter as any}
+      {/* Search and Filters */}
+      <div className="glass-panel p-4 rounded-xl border border-slate-800 flex flex-col sm:flex-row items-center gap-3">
+        <Search
+          placeholder="Filter by lab ID, name, or building complex..."
+          value={searchTerm}
+          onChange={setSearchTerm}
+          className="flex-1"
         />
-      ) : (
-        <div className="space-y-6">
-          {/* Search and Filters */}
-          <div className="glass-panel p-4 rounded-xl border border-slate-800 flex flex-col sm:flex-row items-center gap-3">
-            <Search
-              placeholder="Filter by lab ID, name, or building complex..."
-              value={searchTerm}
-              onChange={setSearchTerm}
-              className="flex-1"
-            />
 
-            <div className="w-full sm:w-56">
-              <Select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                options={[
-                  { value: 'all', label: 'All Operational States' },
-                  { value: 'available', label: 'Available (Open)' },
-                  { value: 'occupied', label: 'Occupied (Active)' },
-                  { value: 'maintenance', label: 'Maintenance (Inspection)' },
-                  { value: 'offline', label: 'Offline (Disabled)' },
-                ]}
-              />
-            </div>
-          </div>
-
-          {/* Table */}
-          <Table
-            columns={columns}
-            data={labs}
-            keyExtractor={(lab) => lab.id || lab.labId}
-            isLoading={isLoading}
-            onRowClick={(lab) => navigate(`/admin/labs/${lab.id || lab.labId}`)}
+        <div className="w-full sm:w-56">
+          <Select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            options={[
+              { value: 'all', label: 'All Operational States' },
+              { value: 'available', label: 'Available (Open)' },
+              { value: 'occupied', label: 'Occupied (Active)' },
+              { value: 'maintenance', label: 'Maintenance (Inspection)' },
+              { value: 'offline', label: 'Offline (Disabled)' },
+            ]}
           />
         </div>
-      )}
+      </div>
+
+      {/* Table */}
+      <Table
+        columns={columns}
+        data={labs}
+        keyExtractor={(lab) => lab.id || lab.labId}
+        isLoading={isLoading}
+        onRowClick={(lab) => navigate(`/admin/labs/${lab.id || lab.labId}`)}
+      />
 
       {/* Status Transition Confirmation Dialog */}
       {statusAction && (

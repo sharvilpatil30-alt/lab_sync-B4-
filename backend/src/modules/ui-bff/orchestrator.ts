@@ -62,7 +62,12 @@ export class DFDOrchestrator {
     constraintsChecked.push('C-PROFILE: Validated actor role and existence');
 
     // Constraint 2: Lab Existence & Capacity
-    const lab = campusDb.labs.get(req.labId);
+    let lab = campusDb.labs.get(req.labId);
+    if (!lab) {
+      lab = Array.from(campusDb.labs.values()).find(
+        (l) => l.lab_code?.toLowerCase() === req.labId.toLowerCase() || l.name.toLowerCase() === req.labId.toLowerCase()
+      );
+    }
     if (!lab) {
       return {
         success: false,

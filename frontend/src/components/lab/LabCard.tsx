@@ -1,5 +1,4 @@
-import React from 'react';
-import { Users, MapPin, Building, ArrowRight, CalendarPlus, Clock, Cpu } from 'lucide-react';
+import { Users, MapPin, Building, ArrowRight, CalendarPlus, Clock, Cpu, Compass } from 'lucide-react';
 import { Lab } from '../../types';
 import { StatusBadge, Button } from '../common';
 import { useNavigate } from 'react-router-dom';
@@ -79,21 +78,31 @@ export const LabCard: React.FC<LabCardProps> = ({ lab, selectedDate, selectedTim
         </div>
       </div>
 
-      <div className="flex items-center gap-2 pt-3 border-t border-slate-800/60">
+      <div className="flex items-center gap-1.5 pt-3 border-t border-[#D9E2EC]">
         <Button
           variant="outline"
           size="sm"
-          className="flex-1"
+          className="flex-1 text-xs"
           onClick={() => navigate(`${basePrefix}/labs/${lab.id || lab.labId}`)}
           rightIcon={<ArrowRight className="w-3.5 h-3.5" />}
         >
-          View Details
+          Details
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          title="Get Directions on 2D Campus Map"
+          className="px-2.5 text-xs text-[#2563EB] hover:bg-[#EFF6FF] border-[#BFDBFE]"
+          onClick={() => navigate(`${basePrefix}/route?labId=${lab.id || lab.labId}`)}
+          leftIcon={<Compass className="w-3.5 h-3.5" />}
+        >
+          Directions
         </Button>
         {role !== 'admin' && (
           <Button
             variant={isAvailable ? 'primary' : 'secondary'}
             size="sm"
-            className="flex-1"
+            className="flex-1 text-xs"
             onClick={() => {
               if (onBook) onBook(lab);
               else navigate(`${basePrefix}/bookings/create?labId=${lab.id || lab.labId}`);
@@ -101,7 +110,7 @@ export const LabCard: React.FC<LabCardProps> = ({ lab, selectedDate, selectedTim
             disabled={lab.operationalStatus === 'offline'}
             leftIcon={<CalendarPlus className="w-3.5 h-3.5" />}
           >
-            {isAvailable ? 'Book' : 'Queue Slot'}
+            {isAvailable ? 'Book' : 'Queue'}
           </Button>
         )}
       </div>

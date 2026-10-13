@@ -7,52 +7,45 @@ import {
   monitoringService,
   reportsService,
   maintenanceService,
-  notificationService,
   userService,
+  notificationService,
+  RouteNodeItem,
+  ComputedRouteResult,
 } from '../services';
 import {
-  LabFilters,
-  BookingFilters,
-  ResourceFilters,
-  MaintenanceFilters,
   Lab,
+  LabFilters,
   Resource,
-  User,
+  ResourceFilters,
+  Booking,
+  BookingFilters,
   BookingStatus,
+  MaintenanceRecord,
+  MaintenanceFilters,
+  User,
 } from '../types';
 
-// ============ USER / AUTH HOOKS ============
-export function useCurrentUser() {
-  return useQuery({
-    queryKey: ['current-user'],
-    queryFn: async () => {
-      const res = await userService.getProfile();
-      return res.data;
-    },
-    staleTime: 1000 * 60 * 5, // 5 mins
-  });
-}
-
-export function useUserProfile() {
+// ============ USER PROFILE HOOKS ============
+export function useProfile() {
   const queryClient = useQueryClient();
 
   const query = useQuery({
-    queryKey: ['user-profile'],
+    queryKey: ['profile'],
     queryFn: async () => {
       const res = await userService.getProfile();
       return res.data;
     },
     staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: true,
   });
 
   const updateProfile = useMutation({
-    mutationFn: async (data: Partial<User>) => {
-      const res = await userService.updateProfile(data);
+    mutationFn: async (updatedData: Partial<User>) => {
+      const res = await userService.updateProfile(updatedData);
       return res.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user-profile'] });
-      queryClient.invalidateQueries({ queryKey: ['current-user'] });
+    onSuccess: (data) => {
+      queryClient.setQueryData(['profile'], data);
     },
   });
 
@@ -62,6 +55,8 @@ export function useUserProfile() {
   };
 }
 
+export const useUserProfile = useProfile;
+
 // ============ LABS HOOKS ============
 export function useLabs(filters?: LabFilters) {
   return useQuery({
@@ -70,7 +65,9 @@ export function useLabs(filters?: LabFilters) {
       const res = await labService.list(filters);
       return res.data;
     },
-    staleTime: 1000 * 60 * 2, // 2 mins
+    staleTime: 1000 * 15,
+    refetchInterval: 15000, // 15s polling for cross-user live updates
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -83,7 +80,9 @@ export function useLab(labId?: string) {
       return res.data;
     },
     enabled: !!labId,
-    staleTime: 1000 * 60 * 2,
+    staleTime: 1000 * 15,
+    refetchInterval: 15000,
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -100,7 +99,9 @@ export function useLabAvailability(labId?: string, date?: string) {
       };
     },
     enabled: !!labId,
-    staleTime: 1000 * 30, // 30s
+    staleTime: 1000 * 15,
+    refetchInterval: 15000,
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -142,7 +143,9 @@ export function useResources(filters?: ResourceFilters) {
       const res = await resourceService.list(filters);
       return res.data;
     },
-    staleTime: 1000 * 60 * 2,
+    staleTime: 1000 * 15,
+    refetchInterval: 15000,
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -155,7 +158,23 @@ export function useResource(resourceId?: string) {
       return res.data;
     },
     enabled: !!resourceId,
-    staleTime: 1000 * 60 * 2,
+    staleTime: 1000 * 15,
+  });
+}
+
+// Canonical live workstation availability hook
+export function useAvailableResources(labId?: string, startTime?: string, endTime?: string) {
+  return useQuery({
+    queryKey: ['available-resources', labId, startTime, endTime],
+    queryFn: async () => {
+      if (!labId || !startTime || !endTime) return [];
+      const res = await resourceService.getAvailable(labId, startTime, endTime);
+      return res.data.resources;
+    },
+    enabled: Boolean(labId && startTime && endTime),
+    staleTime: 1000 * 10,
+    refetchInterval: 10000, // 10s auto-refresh for live seat availability
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -210,7 +229,6 @@ export function useUpdateResourceStatus() {
       return res.data;
     },
     onSuccess: (_, variables) => {
-      // Invalidation chain: resource -> monitoring -> reports -> labs
       queryClient.invalidateQueries({ queryKey: ['resources'] });
       queryClient.invalidateQueries({ queryKey: ['resource', variables.resourceId] });
       queryClient.invalidateQueries({ queryKey: ['monitoring-overview'] });
@@ -228,7 +246,9 @@ export function useBookings(filters?: BookingFilters) {
       const res = await bookingService.listOwn(filters);
       return res.data;
     },
-    staleTime: 1000 * 20, // 20s
+    staleTime: 1000 * 10,
+    refetchInterval: 10000,
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -239,7 +259,9 @@ export function useMyBookings(filters?: BookingFilters) {
       const res = await bookingService.listOwn(filters);
       return res.data;
     },
-    staleTime: 1000 * 20,
+    staleTime: 1000 * 10,
+    refetchInterval: 10000, // 10s polling for live booking updates
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -250,7 +272,9 @@ export function useAllBookings(filters?: BookingFilters) {
       const res = await bookingService.listAll(filters);
       return res.data;
     },
-    staleTime: 1000 * 20,
+    staleTime: 1000 * 10,
+    refetchInterval: 10000,
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -263,7 +287,8 @@ export function useBooking(bookingId?: string) {
       return res.data;
     },
     enabled: !!bookingId,
-    staleTime: 1000 * 15,
+    staleTime: 1000 * 10,
+    refetchOnWindowFocus: true,
   });
 }
 
@@ -319,26 +344,19 @@ export function useAllocatedResources(bookingId?: string) {
 export function useCreateBooking() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: {
-      labId: string;
-      date: string;
-      startTime: string;
-      endTime: string;
-      purpose: string;
-      requiredResources?: string[];
-    }) => {
+    mutationFn: async (data: any) => {
       const res = await bookingService.create(data);
       return res.data;
     },
     onSuccess: () => {
-      // Invalidate bookings -> dashboard -> lab availability
       queryClient.invalidateQueries({ queryKey: ['my-bookings'] });
       queryClient.invalidateQueries({ queryKey: ['all-bookings'] });
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
       queryClient.invalidateQueries({ queryKey: ['labs'] });
       queryClient.invalidateQueries({ queryKey: ['lab-availability'] });
+      queryClient.invalidateQueries({ queryKey: ['available-resources'] });
+      queryClient.invalidateQueries({ queryKey: ['resources'] });
       queryClient.invalidateQueries({ queryKey: ['monitoring-overview'] });
-      queryClient.invalidateQueries({ queryKey: ['reports-dashboard'] });
     },
   });
 }
@@ -351,16 +369,14 @@ export function useCancelBooking() {
       return res.data;
     },
     onSuccess: (_, variables) => {
-      // Invalidate booking -> my bookings -> dashboard
       queryClient.invalidateQueries({ queryKey: ['booking', variables.bookingId] });
-      queryClient.invalidateQueries({ queryKey: ['booking-status', variables.bookingId] });
-      queryClient.invalidateQueries({ queryKey: ['queue-status', variables.bookingId] });
       queryClient.invalidateQueries({ queryKey: ['my-bookings'] });
       queryClient.invalidateQueries({ queryKey: ['all-bookings'] });
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
       queryClient.invalidateQueries({ queryKey: ['labs'] });
       queryClient.invalidateQueries({ queryKey: ['lab-availability'] });
-      queryClient.invalidateQueries({ queryKey: ['monitoring-overview'] });
+      queryClient.invalidateQueries({ queryKey: ['available-resources'] });
+      queryClient.invalidateQueries({ queryKey: ['resources'] });
     },
   });
 }
@@ -382,19 +398,47 @@ export function useUpdateBookingStatus() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['booking', variables.bookingId] });
-      queryClient.invalidateQueries({ queryKey: ['booking-status', variables.bookingId] });
-      queryClient.invalidateQueries({ queryKey: ['queue-status', variables.bookingId] });
       queryClient.invalidateQueries({ queryKey: ['my-bookings'] });
       queryClient.invalidateQueries({ queryKey: ['all-bookings'] });
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
       queryClient.invalidateQueries({ queryKey: ['labs'] });
-      queryClient.invalidateQueries({ queryKey: ['monitoring-overview'] });
-      queryClient.invalidateQueries({ queryKey: ['reports-dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['available-resources'] });
     },
   });
 }
 
 // ============ ROUTING HOOKS ============
+export function useCampusNodes() {
+  return useQuery({
+    queryKey: ['campus-nodes'],
+    queryFn: async () => {
+      const res = await routingService.getNodes();
+      return res.data.nodes;
+    },
+    staleTime: 1000 * 60 * 10,
+  });
+}
+
+export function useComputeRoute() {
+  return useMutation({
+    mutationFn: async (data: { fromNodeId: string; toNodeId: string; algorithm?: string }) => {
+      const res = await routingService.computeRoute(data);
+      return res.data;
+    },
+  });
+}
+
+export function useRouteAlgorithms() {
+  return useQuery({
+    queryKey: ['route-algorithms'],
+    queryFn: async () => {
+      const res = await routingService.getAlgorithms();
+      return res.data.algorithms;
+    },
+    staleTime: 1000 * 60 * 30,
+  });
+}
+
 export function useCampusRoute(bookingId?: string) {
   return useQuery({
     queryKey: ['campus-route', bookingId],
@@ -483,7 +527,26 @@ export function useMaintenance(filters?: MaintenanceFilters) {
       const res = await maintenanceService.list(filters);
       return res.data;
     },
-    staleTime: 1000 * 30,
+    staleTime: 1000 * 15,
+    refetchInterval: 15000,
+    refetchOnWindowFocus: true,
+  });
+}
+
+export function useSetMaintenance() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ labId, enabled, reason }: { labId: string; enabled: boolean; reason?: string }) => {
+      const res = await maintenanceService.setMaintenance(labId, enabled, reason);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['labs'] });
+      queryClient.invalidateQueries({ queryKey: ['lab'] });
+      queryClient.invalidateQueries({ queryKey: ['lab-availability'] });
+      queryClient.invalidateQueries({ queryKey: ['resources'] });
+      queryClient.invalidateQueries({ queryKey: ['maintenance'] });
+    },
   });
 }
 
@@ -498,7 +561,6 @@ export function useUpdateMaintenanceStatus() {
       queryClient.invalidateQueries({ queryKey: ['maintenance'] });
       queryClient.invalidateQueries({ queryKey: ['labs'] });
       queryClient.invalidateQueries({ queryKey: ['resources'] });
-      queryClient.invalidateQueries({ queryKey: ['monitoring-overview'] });
     },
   });
 }
@@ -514,7 +576,6 @@ export function useCreateMaintenance() {
       queryClient.invalidateQueries({ queryKey: ['maintenance'] });
       queryClient.invalidateQueries({ queryKey: ['labs'] });
       queryClient.invalidateQueries({ queryKey: ['resources'] });
-      queryClient.invalidateQueries({ queryKey: ['monitoring-overview'] });
     },
   });
 }

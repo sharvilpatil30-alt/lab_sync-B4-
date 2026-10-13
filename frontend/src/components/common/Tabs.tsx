@@ -45,7 +45,7 @@ export const TabsList: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({
   ...props
 }) => (
   <div
-    className={`inline-flex items-center gap-1.5 p-1 rounded-xl bg-slate-900 border border-slate-800 overflow-x-auto scrollbar-none max-w-full ${className}`}
+    className={`inline-flex items-center gap-1 p-1 rounded-xl bg-[#F0F4F8] border border-[#D9E2EC] ${className}`}
     role="tablist"
     {...props}
   >
@@ -77,10 +77,10 @@ export const TabsTrigger: React.FC<TabsTriggerProps> = ({
       role="tab"
       aria-selected={isActive}
       onClick={() => context.setActiveTab(value)}
-      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer whitespace-nowrap shrink-0 ${
+      className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
         isActive
-          ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/25 font-bold'
-          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+          ? 'bg-[#0B1F3A] text-white shadow-xs'
+          : 'text-[#627D98] hover:text-[#0B1F3A] hover:bg-white/80'
       } ${className}`}
       {...props}
     >
@@ -89,7 +89,7 @@ export const TabsTrigger: React.FC<TabsTriggerProps> = ({
       {badge !== undefined && (
         <span
           className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-            isActive ? 'bg-indigo-500/30 text-white' : 'bg-slate-800 text-slate-400'
+            isActive ? 'bg-white/20 text-white' : 'bg-white text-[#627D98] border border-[#D9E2EC]'
           }`}
         >
           {badge}

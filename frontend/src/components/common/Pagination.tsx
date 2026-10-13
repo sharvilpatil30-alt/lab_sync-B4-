@@ -22,18 +22,18 @@ export const Pagination: React.FC<PaginationProps> = ({
   if (totalPages <= 1) return null;
 
   return (
-    <div className={`flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400 py-3 ${className}`}>
+    <div className={`flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#627D98] py-3 ${className}`}>
       <div>
         {totalItems !== undefined && pageSize !== undefined ? (
           <span>
-            Showing <strong className="text-slate-200">{(currentPage - 1) * pageSize + 1}</strong> to{' '}
-            <strong className="text-slate-200">{Math.min(currentPage * pageSize, totalItems)}</strong> of{' '}
-            <strong className="text-slate-200">{totalItems}</strong> entries
+            Showing <strong className="text-[#102A43]">{(currentPage - 1) * pageSize + 1}</strong> to{' '}
+            <strong className="text-[#102A43]">{Math.min(currentPage * pageSize, totalItems)}</strong> of{' '}
+            <strong className="text-[#102A43]">{totalItems}</strong> entries
           </span>
         ) : (
           <span>
-            Page <strong className="text-slate-200">{currentPage}</strong> of{' '}
-            <strong className="text-slate-200">{totalPages}</strong>
+            Page <strong className="text-[#102A43]">{currentPage}</strong> of{' '}
+            <strong className="text-[#102A43]">{totalPages}</strong>
           </span>
         )}
       </div>
@@ -47,7 +47,7 @@ export const Pagination: React.FC<PaginationProps> = ({
         >
           Previous
         </Button>
-        <span className="px-3 py-1 bg-slate-900 border border-slate-800 rounded-lg text-slate-300 font-medium">
+        <span className="px-3 py-1 bg-[#F0F4F8] border border-[#D9E2EC] rounded-lg text-[#0B1F3A] font-semibold">
           {currentPage} / {totalPages}
         </span>
         <Button
