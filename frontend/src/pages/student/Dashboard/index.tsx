@@ -85,7 +85,7 @@ export const StudentDashboard: React.FC = () => {
   const totalLabs = allLabs.length;
   const availabilityPct = totalLabs > 0 ? Math.round((availableLabs.length / totalLabs) * 100) : 0;
   const totalSeats = allLabs.reduce((sum, l) => sum + (l.capacity || 0), 0);
-  const availableSeats = availableLabs.reduce((sum, l) => sum + (l.capacity || 0), 0);
+  const availableSeats = allLabs.reduce((sum, l) => sum + (l.availableResourcesCount || 0), 0);
 
   // Bookings metrics using documented status rules
   const upcomingBookings = myBookings.filter((b) => {

@@ -1,0 +1,328 @@
+{
+  "live": {
+    "marker": "INTEGRATION_TEST_20261014_DO_NOT_USE",
+    "mode": "Live committed HTTP operations with verified demo profile and local signed test transport; real backend restart",
+    "demoEmail": "2553016@ritindia.edu",
+    "resourceId": "00aa5e46-ad8a-48ae-9af3-5cadf4826961",
+    "results": [
+      {
+        "name": "Verified demo identity and isolated resource prerequisites",
+        "status": "PASS",
+        "ms": 1315.4
+      },
+      {
+        "name": "Concurrent HTTP booking attempts: exactly one 201 and one 409",
+        "status": "PASS",
+        "ms": 3005.2
+      },
+      {
+        "name": "Booking and purpose survive actual backend process restart",
+        "status": "PASS",
+        "ms": 6235.8
+      },
+      {
+        "name": "First test booking cancellation persists",
+        "status": "PASS",
+        "ms": 1375
+      },
+      {
+        "name": "Second labelled booking can reuse released time slot",
+        "status": "PASS",
+        "ms": 1477.6
+      },
+      {
+        "name": "Second test booking return completes and releases inventory",
+        "status": "PASS",
+        "ms": 2298.1
+      },
+      {
+        "name": "Both final states survive another backend restart",
+        "status": "PASS",
+        "ms": 1544.3
+      }
+    ],
+    "bookings": [
+      {
+        "id": "aa4f1c25-a0c8-448c-bde7-997ceac42eba",
+        "state": "CANCELLED"
+      },
+      {
+        "id": "bc37eb73-5b24-46aa-be01-9a210e564789",
+        "state": "COMPLETED"
+      }
+    ],
+    "pass": 7,
+    "fail": 0
+  },
+  "rollback": {
+    "mode": "All changes rolled back; role fixtures do not test real Supabase login",
+    "results": [
+      {
+        "name": "Create valid booking with real foreign keys",
+        "status": "PASS",
+        "ms": 1639.8
+      },
+      {
+        "name": "Replay and inventory allocation",
+        "status": "PASS",
+        "ms": 927.5
+      },
+      {
+        "name": "Student overlap rejected",
+        "status": "PASS",
+        "ms": 919.6
+      },
+      {
+        "name": "Cross-user cancellation denied",
+        "status": "PASS",
+        "ms": 830.2
+      },
+      {
+        "name": "Cross-lab resource denied",
+        "status": "PASS",
+        "ms": 816
+      },
+      {
+        "name": "Invalid time, missing purpose rejected",
+        "status": "PASS",
+        "ms": 789.2
+      },
+      {
+        "name": "Faculty preemption using trusted-role test fixture",
+        "status": "PASS",
+        "ms": 2117.9
+      },
+      {
+        "name": "Preemption notification and purpose audit persisted within transaction",
+        "status": "PASS",
+        "ms": 1197.1
+      },
+      {
+        "name": "Faculty cannot preempt faculty; student cannot elevate through payload",
+        "status": "PASS",
+        "ms": 2483.6
+      },
+      {
+        "name": "Cancellation does not release resource with another future booking",
+        "status": "PASS",
+        "ms": 3720.1
+      },
+      {
+        "name": "Terminal booking cannot be reactivated",
+        "status": "PASS",
+        "ms": 277.5
+      }
+    ],
+    "pass": 11,
+    "fail": 0
+  },
+  "http": {
+    "mode": "Read-only HTTP; local signed role fixtures",
+    "results": [
+      {
+        "name": "Anonymous auth/me is JSON 401",
+        "status": "PASS",
+        "ms": 14.7
+      },
+      {
+        "name": "Invalid session is rejected",
+        "status": "PASS",
+        "ms": 698.4
+      },
+      {
+        "name": "Trusted test-signed student role mapping",
+        "status": "PASS",
+        "ms": 3.7
+      },
+      {
+        "name": "Trusted test-signed faculty role mapping",
+        "status": "PASS",
+        "ms": 2.9
+      },
+      {
+        "name": "Trusted test-signed admin role mapping",
+        "status": "PASS",
+        "ms": 2.1
+      },
+      {
+        "name": "Trusted test-signed lab_admin role mapping",
+        "status": "PASS",
+        "ms": 2.2
+      },
+      {
+        "name": "Live labs HTTP count",
+        "status": "PASS",
+        "count": 12,
+        "ms": 139.4
+      },
+      {
+        "name": "Live resources HTTP count",
+        "status": "PASS",
+        "count": 432,
+        "ms": 496.8
+      },
+      {
+        "name": "Real UUID seat availability contract",
+        "status": "PASS",
+        "count": 42,
+        "ms": 302.6
+      },
+      {
+        "name": "Invalid availability time JSON 400",
+        "status": "PASS"
+      },
+      {
+        "name": "Monitoring uses live counts",
+        "status": "PASS",
+        "ms": 404.6
+      },
+      {
+        "name": "Authenticated /bookings/my",
+        "status": "PASS",
+        "ms": 148.1
+      },
+      {
+        "name": "Authenticated /bookings",
+        "status": "PASS",
+        "ms": 150.8
+      },
+      {
+        "name": "Authenticated /notifications",
+        "status": "PASS",
+        "ms": 138.7
+      },
+      {
+        "name": "Authenticated /monitoring/alerts",
+        "status": "PASS",
+        "ms": 154.2
+      },
+      {
+        "name": "Persisted demo booking route uses live lab mapping",
+        "status": "PASS",
+        "ms": 163.3
+      },
+      {
+        "name": "Student denied administrator status override",
+        "status": "PASS"
+      },
+      {
+        "name": "Cross-origin allowlist rejects unrelated origin",
+        "status": "PASS"
+      },
+      {
+        "name": "Configured localhost CORS allowed",
+        "status": "PASS"
+      }
+    ],
+    "pass": 19,
+    "fail": 0
+  },
+  "auth": {
+    "mode": "Production middleware and live demo profile roles, stubbed Supabase identity transport; password login NOT tested",
+    "results": [
+      {
+        "name": "Production middleware uses Admin Demo database role despite admin signup metadata",
+        "status": "PASS"
+      },
+      {
+        "name": "Production middleware uses Student Demo database role despite admin signup metadata",
+        "status": "PASS"
+      },
+      {
+        "name": "Production middleware uses Faculty Demo database role despite admin signup metadata",
+        "status": "PASS"
+      },
+      {
+        "name": "Unverified email denied before profile use",
+        "status": "PASS"
+      },
+      {
+        "name": "Invalid Supabase identity denied in production",
+        "status": "PASS"
+      }
+    ],
+    "pass": 5,
+    "fail": 0
+  },
+  "browser": {
+    "mode": "Real Chromium with intercepted auth/bookings; catalog read from live DB. Not real credential verification.",
+    "results": [
+      {
+        "name": "student login redirects using /auth/me role, ignoring editable admin metadata",
+        "status": "PASS",
+        "ms": 541.8
+      },
+      {
+        "name": "faculty login redirects using /auth/me role, ignoring editable admin metadata",
+        "status": "PASS",
+        "ms": 359.6
+      },
+      {
+        "name": "admin login redirects using /auth/me role, ignoring editable admin metadata",
+        "status": "PASS",
+        "ms": 321.7
+      },
+      {
+        "name": "lab_admin login redirects using /auth/me role, ignoring editable admin metadata",
+        "status": "PASS",
+        "ms": 328.7
+      },
+      {
+        "name": "Backend profile failure prevents login",
+        "status": "PASS",
+        "ms": 325.2
+      },
+      {
+        "name": "Student lab search renders all 12 live-read labs",
+        "status": "PASS",
+        "ms": 437.3
+      },
+      {
+        "name": "Student cannot open admin dashboard by changing URL",
+        "status": "PASS",
+        "ms": 109.3
+      },
+      {
+        "name": "Past date prevents wizard progression",
+        "status": "PASS",
+        "ms": 332.5
+      },
+      {
+        "name": "Wizard six steps, selected state, payload and booking detail",
+        "status": "PASS",
+        "ms": 638.8
+      },
+      {
+        "name": "My Bookings displays persisted-response fixture and cancellation",
+        "status": "PASS",
+        "ms": 415.5
+      },
+      {
+        "name": "409 conflict gives retry feedback without success navigation",
+        "status": "PASS",
+        "ms": 627.4
+      },
+      {
+        "name": "Faculty priority seats selectable only for trusted faculty role",
+        "status": "PASS",
+        "ms": 1748
+      },
+      {
+        "name": "Catalog request failure produces retryable error",
+        "status": "PASS",
+        "ms": 1125.2
+      }
+    ],
+    "pass": 13,
+    "fail": 0
+  },
+  "backend_regression": {
+    "pass": 15,
+    "fail": 0,
+    "scope": "Legacy in-memory scheduling regression and routing; not persistence evidence"
+  },
+  "frontend_integration": {
+    "pass": 12,
+    "fail": 0
+  }
+}

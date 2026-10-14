@@ -22,27 +22,9 @@ export function mapBackendEquipmentToResource(raw: any): Resource {
 
 export class ApiResourceService implements IResourceService {
   async list(filters?: ResourceFilters): Promise<ApiResponse<Resource[]>> {
-    let rawList: any[] = [];
-
-    try {
-      // 1. Try canonical /inventory/equipment (Team C PostgreSQL)
-      const res = await apiClient.get('/inventory/equipment', { params: filters });
-      const payload = res.data?.data || res.data;
-      if (Array.isArray(payload)) {
-        rawList = payload;
-      }
-    } catch {
-      // 2. Fall back to /resources
-      try {
-        const fallbackRes = await apiClient.get('/resources', { params: filters });
-        const payload = fallbackRes.data?.data || fallbackRes.data;
-        if (Array.isArray(payload)) {
-          rawList = payload;
-        }
-      } catch (error) {
-        throw error;
-      }
-    }
+    const response = await apiClient.get('/resources', { params: filters });
+    const rawList = response.data?.data;
+    if (!Array.isArray(rawList)) throw new Error('Invalid resource response from campus server');
 
     return {
       success: true,
@@ -52,14 +34,6 @@ export class ApiResourceService implements IResourceService {
   }
 
   async getById(resourceId: string): Promise<ApiResponse<Resource>> {
-    try {
-      const res = await apiClient.get(`/inventory/equipment/${resourceId}`);
-      const raw = res.data?.data || res.data;
-      if (raw) return { success: true, message: 'Resource found', data: mapBackendEquipmentToResource(raw) };
-    } catch {
-      // fallback
-    }
-
     const res = await apiClient.get(`/resources/${resourceId}`);
     const raw = res.data?.data || res.data;
     return { success: true, message: 'Resource found', data: mapBackendEquipmentToResource(raw) };
@@ -82,10 +56,11 @@ export class ApiResourceService implements IResourceService {
         message: 'Available resources retrieved',
         data: {
           resources: list.map((r: any) => ({
-            resourceId: r.resourceId || r.id,
+            resourceId: String(r.id || r.resourceId || ''),
             labId: r.labId || labId,
             name: r.name || (r.label ? `Seat ${r.label}` : 'Workstation'),
-            available: r.available !== false,
+            available: Boolean(r.id || r.resourceId) && r.available === true,
+            preemptable: r.preemptable === true,
           })),
         },
       };

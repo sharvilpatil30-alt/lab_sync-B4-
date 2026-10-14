@@ -4,19 +4,12 @@ import { apiClient } from './client';
 
 export function mapBackendBookingToFrontend(raw: any): Booking {
   const id = raw.bookingId || raw.id || 'booking';
-  const startIso = raw.startTime || raw.start_at || new Date().toISOString();
-  const endIso = raw.endTime || raw.end_at || new Date().toISOString();
-  const dateStr = startIso.split('T')[0];
+  const startIso = raw.startTime || raw.start_at || '';
+  const endIso = raw.endTime || raw.end_at || '';
+  const dateStr = startIso ? new Date(startIso).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }) : '';
+  const time = (value: string) => value ? new Date(value).toLocaleTimeString('en-GB', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' }) : '';
 
-  const rawState = (raw.state || raw.status || 'CONFIRMED').toUpperCase();
-  const canonicalStatus: BookingStatus =
-    rawState === 'CANCELLED' ? 'CANCELLED' :
-    rawState === 'COMPLETED' ? 'COMPLETED' :
-    rawState === 'REJECTED'  ? 'REJECTED'  :
-    rawState === 'WAITLISTED'? 'WAITLISTED':
-    rawState === 'ACTIVE'    ? 'ACTIVE'    :
-    rawState === 'QUEUED'    ? 'QUEUED'    :
-    rawState === 'LEASED'    ? 'LEASED'    : 'CONFIRMED';
+  const canonicalStatus: BookingStatus = String(raw.state || raw.status || 'REQUESTED').toUpperCase();
 
   const labReference = raw.lab ?? raw.lab_code ?? raw.labId ?? raw.lab_id ?? '';
   // Keep stable identifiers for detail links and booking-to-route lookup.
@@ -25,12 +18,12 @@ export function mapBackendBookingToFrontend(raw: any): Booking {
     id,
     bookingId: id,
     user: raw.user_id || raw.user || 'CurrentUser',
-    userRole: 'student',
+    userRole: raw.priority === 0 ? 'admin' : raw.priority === 1 ? 'faculty' : 'student',
     lab: labReference,
     date: dateStr,
-    startTime: startIso.includes('T') ? startIso.split('T')[1].slice(0, 5) : '09:00',
-    endTime: endIso.includes('T') ? endIso.split('T')[1].slice(0, 5) : '10:00',
-    purpose: raw.purpose || 'Academic laboratory coursework and computing session',
+    startTime: time(startIso),
+    endTime: time(endIso),
+    purpose: raw.purpose || 'Purpose not recorded',
     requiredResources: raw.resource_id ? [raw.resource_id] : (raw.resourceId ? [raw.resourceId] : []),
     allocatedResources: raw.resource_id ? [raw.resource_id] : (raw.resourceId ? [raw.resourceId] : []),
     status: canonicalStatus,
@@ -42,31 +35,9 @@ export function mapBackendBookingToFrontend(raw: any): Booking {
 
 export class ApiBookingService implements IBookingService {
   async listOwn(filters?: BookingFilters): Promise<ApiResponse<Booking[]>> {
-    let rawList: any[] = [];
-
-    try {
-      // 1. Try canonical /bookings/my
-      const res = await apiClient.get('/bookings/my', { params: filters });
-      const payload = res.data?.data || res.data;
-      if (Array.isArray(payload)) {
-        rawList = payload;
-      } else if (payload?.bookings && Array.isArray(payload.bookings)) {
-        rawList = payload.bookings;
-      }
-    } catch {
-      // 2. Fall back to /bookings
-      try {
-        const fallbackRes = await apiClient.get('/bookings', { params: filters });
-        const payload = fallbackRes.data?.data || fallbackRes.data;
-        if (Array.isArray(payload)) {
-          rawList = payload;
-        } else if (payload?.bookings && Array.isArray(payload.bookings)) {
-          rawList = payload.bookings;
-        }
-      } catch (error) {
-        throw error;
-      }
-    }
+    const res = await apiClient.get('/bookings/my', { params: filters });
+    const rawList = res.data?.data;
+    if (!Array.isArray(rawList)) throw new Error('Invalid booking response from campus server');
 
     return {
       success: true,
@@ -77,7 +48,7 @@ export class ApiBookingService implements IBookingService {
 
   async listAll(filters?: BookingFilters): Promise<ApiResponse<Booking[]>> {
     try {
-      const res = await apiClient.get('/admin/bookings', { params: filters });
+      const res = await apiClient.get('/bookings', { params: filters });
       const payload = res.data?.data || res.data;
       const list = Array.isArray(payload) ? payload : (payload?.bookings || []);
       return {
@@ -108,10 +79,10 @@ export class ApiBookingService implements IBookingService {
     let endTimeIso = data.endTime;
 
     if (data.date && data.startTime && !data.startTime.includes('T')) {
-      startTimeIso = new Date(`${data.date}T${data.startTime}:00`).toISOString();
+      startTimeIso = new Date(`${data.date}T${data.startTime}:00+05:30`).toISOString();
     }
     if (data.date && data.endTime && !data.endTime.includes('T')) {
-      endTimeIso = new Date(`${data.date}T${data.endTime}:00`).toISOString();
+      endTimeIso = new Date(`${data.date}T${data.endTime}:00+05:30`).toISOString();
     }
 
     const payload = {
@@ -121,6 +92,7 @@ export class ApiBookingService implements IBookingService {
       purpose: data.purpose,
       labId: data.labId,
       seatNumber: data.seatNumber,
+      idempotencyKey: data.idempotencyKey,
     };
 
     const res = await apiClient.post('/bookings', payload);
@@ -134,25 +106,13 @@ export class ApiBookingService implements IBookingService {
 
   // Canonical endpoint: POST /api/v1/bookings/:id/cancel
   async cancel(bookingId: string, cancellationReason?: string): Promise<ApiResponse<Booking>> {
-    let raw: any;
-    try {
-      // 1. Try canonical POST /bookings/:id/cancel
-      const res = await apiClient.post(`/bookings/${bookingId}/cancel`, {
-        reason: cancellationReason,
-      });
-      raw = res.data?.data || res.data;
-    } catch {
-      // 2. Try PATCH fallback
-      const fallbackRes = await apiClient.patch(`/bookings/${bookingId}/cancel`, {
-        cancellationReason,
-      });
-      raw = fallbackRes.data?.data || fallbackRes.data;
-    }
+    const res = await apiClient.post(`/bookings/${bookingId}/cancel`, { reason: cancellationReason });
+    const raw = res.data?.data;
 
     return {
       success: true,
       message: 'Booking successfully cancelled',
-      data: mapBackendBookingToFrontend(raw || { id: bookingId, state: 'CANCELLED' }),
+      data: mapBackendBookingToFrontend(raw),
     };
   }
 

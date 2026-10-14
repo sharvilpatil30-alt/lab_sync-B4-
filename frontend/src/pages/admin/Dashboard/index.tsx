@@ -32,10 +32,10 @@ export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const { data: overview, isLoading: overviewLoading, refetch: refetchOverview } = useLiveMonitoring(20000);
+  const { data: overview, isLoading: overviewLoading, error: overviewError, refetch: refetchOverview } = useLiveMonitoring(20000);
   const { data: labs = [], refetch: refetchLabs } = useLabs();
   const { data: allBookings = [], refetch: refetchBookings } = useAllBookings();
-  const { data: maintenanceRecords = [], refetch: refetchMaintenance } = useMaintenance();
+  const { data: maintenanceRecords = [], error: maintenanceError, refetch: refetchMaintenance } = useMaintenance();
   const { data: resources = [], refetch: refetchResources } = useResources();
   const { data: reportsData } = useReportsDashboard();
 
@@ -68,10 +68,11 @@ export const AdminDashboard: React.FC = () => {
   const maintenanceResources = resources.filter((r) => r.operationalStatus === 'maintenance').length;
 
   const activeAlerts = overview?.alerts?.filter((a) => !a.resolved) || [];
-  const utilizationRate = reportsData?.summary.averageUtilization ?? 68;
+  const utilizationRate = reportsData?.summary.averageUtilization ?? null;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-200">
+      {overviewError && <div role="alert" className="p-4 text-rose-300">Campus metrics unavailable: {overviewError.message}. Use Refresh to retry.</div>}
       {/* Top Banner */}
       <div className="glass-panel p-6 sm:p-8 rounded-2xl border border-slate-800 shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
@@ -283,7 +284,7 @@ export const AdminDashboard: React.FC = () => {
           <div className="flex items-center gap-2">
             <span className="text-xs text-slate-400">Average Facility Utilization:</span>
             <span className="text-sm font-extrabold text-indigo-400 font-mono">
-              {utilizationRate}%
+              {utilizationRate === null ? 'Unavailable' : `${utilizationRate}%`}
             </span>
           </div>
         </div>
@@ -293,7 +294,7 @@ export const AdminDashboard: React.FC = () => {
           <div className="w-full bg-slate-900 rounded-full h-3 overflow-hidden border border-slate-800">
             <div
               className="bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-500 h-full rounded-full transition-all duration-500"
-              style={{ width: `${utilizationRate}%` }}
+              style={{ width: utilizationRate === null ? '0%' : `${utilizationRate}%` }}
             />
           </div>
           <div className="flex justify-between text-[11px] text-slate-400">
@@ -405,6 +406,7 @@ export const AdminDashboard: React.FC = () => {
           </div>
 
           <div className="divide-y divide-slate-800/60 max-h-80 overflow-y-auto pr-1">
+            {maintenanceError && <p role="alert" className="text-sm text-amber-300">Maintenance work orders are unavailable. {maintenanceError.message}</p>}
             {maintenanceRecords.slice(0, 5).map((m) => (
               <div
                 key={m.id || m.maintenanceId}

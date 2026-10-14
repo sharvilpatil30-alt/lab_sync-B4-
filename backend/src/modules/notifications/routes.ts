@@ -1,41 +1,47 @@
-import { Router, Response } from 'express';
-import { campusDb } from '../persistence/database.js';
-import { success, error } from '../../utils/apiResponse.js';
+import { Router } from 'express';
+import { pool } from '../../config/postgres.js';
 import { authenticate, AuthenticatedRequest } from '../../middleware/authenticate.js';
-
+import { success } from '../../utils/apiResponse.js';
+import { AppError } from '../../utils/AppError.js';
+import { asyncHandler } from '../../utils/asyncHandler.js';
 export const notificationRouter = Router();
-
-// GET /api/v1/notifications
-notificationRouter.get('/', authenticate, (req: AuthenticatedRequest, res: Response) => {
-  const userId = req.user?.id || req.user?._id;
-  if (!userId) {
-    return error(res, 'User ID not identified', [], 401);
-  }
-
-  const notifications = campusDb.getNotificationsForUser(userId);
-  return success(res, notifications, 'Notifications retrieved successfully');
-});
-
-// PATCH /api/v1/notifications/:id/read
-notificationRouter.patch('/:id/read', authenticate, (req: AuthenticatedRequest, res: Response) => {
-  const { id } = req.params;
-  const userId = req.user?.id || req.user?._id;
-
-  const marked = campusDb.markNotificationAsRead(id, userId);
-  if (!marked) {
-    return error(res, `Notification '${id}' not found or unauthorized`, [], 404);
-  }
-
-  return success(res, { id }, 'Notification marked as read');
-});
-
-// POST /api/v1/notifications/read-all
-notificationRouter.post('/read-all', authenticate, (req: AuthenticatedRequest, res: Response) => {
-  const userId = req.user?.id || req.user?._id;
-  if (!userId) {
-    return error(res, 'User ID not identified', [], 401);
-  }
-
-  const count = campusDb.markAllNotificationsAsRead(userId);
-  return success(res, { count }, 'All notifications marked as read');
-});
+notificationRouter.use(authenticate);
+const select = `SELECT n.id,n.after,n.created_at,EXISTS(SELECT 1 FROM public.audit_log r WHERE r.action='NOTIFICATION_READ' AND r.actor_id=$1 AND r.after->>'notification_id'=n.id::text) AS read FROM public.audit_log n WHERE n.action='BOOKING_NOTIFICATION' AND n.after->>'user'=$1::text`;
+notificationRouter.get(
+  '/',
+  asyncHandler(async (req: AuthenticatedRequest, res) => {
+    const { rows } = await pool.query(select + ' ORDER BY n.created_at DESC', [req.user.id]);
+    return success(
+      res,
+      rows.map((n) => ({
+        ...n.after,
+        id: n.id,
+        read: n.read,
+        isRead: n.read,
+        createdAt: n.created_at,
+      })),
+      'Notifications retrieved',
+    );
+  }),
+);
+notificationRouter.patch(
+  '/:id/read',
+  asyncHandler(async (req: AuthenticatedRequest, res) => {
+    const result = await pool.query(
+      `INSERT INTO public.audit_log(actor_id,action,after,correlation_id) SELECT $1,'NOTIFICATION_READ',jsonb_build_object('notification_id',n.id::text),n.id::text FROM public.audit_log n WHERE n.id::text=$2 AND n.action='BOOKING_NOTIFICATION' AND n.after->>'user'=$1::text RETURNING id`,
+      [req.user.id, req.params.id],
+    );
+    if (!result.rowCount) throw new AppError('Notification not found', 404);
+    return success(res, { id: req.params.id }, 'Notification read');
+  }),
+);
+notificationRouter.post(
+  '/read-all',
+  asyncHandler(async (req: AuthenticatedRequest, res) => {
+    const result = await pool.query(
+      `INSERT INTO public.audit_log(actor_id,action,after,correlation_id) SELECT $1,'NOTIFICATION_READ',jsonb_build_object('notification_id',n.id::text),n.id::text FROM public.audit_log n WHERE n.action='BOOKING_NOTIFICATION' AND n.after->>'user'=$1::text AND NOT EXISTS(SELECT 1 FROM public.audit_log r WHERE r.action='NOTIFICATION_READ' AND r.actor_id=$1 AND r.after->>'notification_id'=n.id::text)`,
+      [req.user.id],
+    );
+    return success(res, { count: result.rowCount }, 'Notifications read');
+  }),
+);

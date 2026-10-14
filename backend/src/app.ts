@@ -1,7 +1,9 @@
+import { monitoringRouter } from './modules/monitoring/routes.js';
 import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
+import { errorHandler } from './middleware/errorHandler.js';
 import { dfdRouter } from './modules/dfd/routes.js';
 import routingRouter from './modules/routing/routes.js';
 import { inventoryRouter } from './modules/inventory/routes.js';
@@ -29,7 +31,7 @@ app.use(
       if (isAllowed) {
         return callback(null, true);
       }
-      return callback(null, true);
+      return callback(null, false);
     },
     credentials: true,
   }),
@@ -57,7 +59,8 @@ app.get('/api/v1/health', (_req: Request, res: Response) => {
 });
 
 // DFD Constraints & Architecture Pipeline
-app.use('/api/v1/dfd', dfdRouter);
+// The legacy DFD verifier mutates seeded memory; never expose it as a live API.
+if (process.env.NODE_ENV === 'test') app.use('/api/v1/dfd', dfdRouter);
 
 // Real-Time Computer Batches & Normalized Equipment Models
 app.use('/api/v1/inventory', inventoryRouter);
@@ -70,7 +73,10 @@ app.use('/api/v1/bookings', bookingRouter);
 app.use('/api/v1/routes', routingRouter);
 app.use('/api/v1/notifications', notificationRouter);
 // app.use('/api/v1/maintenance', maintenanceRouter);
-// app.use('/api/v1/monitoring', monitoringRouter);
+app.use('/api/v1/monitoring', monitoringRouter);
 // app.use('/api/v1/reports', reportsRouter);
+
+app.use((_req, res) => { res.status(404).json({ success: false, message: 'Endpoint not found' }); });
+app.use(errorHandler);
 
 export default app;

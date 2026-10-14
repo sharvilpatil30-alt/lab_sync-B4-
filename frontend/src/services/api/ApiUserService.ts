@@ -4,7 +4,7 @@ import { apiClient } from './client';
 
 export class ApiUserService implements IUserService {
   async getProfile(): Promise<ApiResponse<User>> {
-    const res = await apiClient.get('/users/me');
+    const res = await apiClient.get('/auth/me');
     return res.data;
   }
 

@@ -37,18 +37,13 @@ export class ApiAuthService implements IAuthService {
           id: meData.userId || meData.id || data.user.id,
           name: meData.fullName || meData.name || data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'Campus User',
           email: meData.email || data.user.email || credentials.email,
-          role: normalizeRole(meData.role || data.user.app_metadata?.role),
+          role: normalizeRole(meData.role),
           department: meData.department || 'Computer Science & Engineering',
         };
-      } catch {
-        // Fallback to Supabase metadata if backend /auth/me is pending
-        verifiedUser = {
-          id: data.user.id,
-          name: data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'Campus User',
-          email: data.user.email || credentials.email,
-          role: normalizeRole(data.user.app_metadata?.role),
-          department: data.user.user_metadata?.department || 'Computer Science & Engineering',
-        };
+      } catch (error) {
+        localStorage.removeItem('smart_campus_auth_token');
+        localStorage.removeItem('smart_campus_auth_user');
+        throw error;
       }
 
       localStorage.setItem('smart_campus_auth_user', JSON.stringify(verifiedUser));

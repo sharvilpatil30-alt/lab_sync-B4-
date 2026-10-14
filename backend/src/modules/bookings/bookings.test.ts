@@ -4,12 +4,22 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { once } from 'node:events';
 import jwt from 'jsonwebtoken';
-import app from '../../app.js';
+import express from 'express';
+import { bookingRouter } from './legacy-test-routes.js';
+import { authRouter } from '../auth/routes.js';
+import { errorHandler } from '../../middleware/errorHandler.js';
+const app=express();
+app.use(express.json());
+app.get('/api/v1/health', (_req,res)=>res.json({success:true}));
+app.use('/api/v1/bookings',bookingRouter);
+app.use('/api/v1/auth',authRouter);
+app.get('/api/v1/notifications',(req,res)=> { const token=req.headers.authorization?.slice(7) || ''; const u=jwt.verify(token,config.jwtSecret) as any; res.json({success:true,data:campusDb.getNotificationsForUser(u.id)}); });
+app.use(errorHandler);
 import { config } from '../../config/env.js';
 import { campusDb } from '../persistence/database.js';
 import { DFDOrchestrator } from '../ui-bff/orchestrator.js';
 
-test('Integration & OS Scheduler: Booking Priority, Conflict Preemption, Notifications and Concurrency', async (t) => {
+test('Legacy memory regression & OS Scheduler: Booking Priority, Conflict Preemption, Notifications and Concurrency', async (t) => {
   const server = app.listen(0);
   await once(server, 'listening');
   const port = (server.address() as any).port;

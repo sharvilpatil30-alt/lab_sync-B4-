@@ -38,12 +38,13 @@ export class SchedulingEngine {
   public static evaluate(
     booking: Booking,
     preferredPolicy: SchedulingPolicy = 'PRIORITY',
-    preferredResourceId?: string
+    preferredResourceId?: string,
+    store: Pick<typeof campusDb, 'resources' | 'bookings'> = campusDb
   ): SchedulingResult {
     const isFacultyOrAdmin = booking.priority <= 1; // 0=lab_admin, 1=faculty
 
     // 1. Get candidate resources in target lab
-    const availableInLab = Array.from(campusDb.resources.values()).filter(
+    const availableInLab = Array.from(store.resources.values()).filter(
       (r) => r.lab_id === booking.lab_id
     );
 
@@ -66,7 +67,7 @@ export class SchedulingEngine {
 
     // Helper: checks if a booking has an active overlap
     const getActiveOverlaps = (resourceId: string): Booking[] => {
-      return Array.from(campusDb.bookings.values()).filter((b) => {
+      return Array.from(store.bookings.values()).filter((b) => {
         if (b.id === booking.id) return false;
         if (b.resource_id !== resourceId) return false;
         if (!['LEASED', 'CONFIRMED', 'ACTIVE', 'REQUESTED', 'QUEUED'].includes(b.state)) return false;
@@ -80,7 +81,7 @@ export class SchedulingEngine {
     // 2. First look for a resource that has NO active overlapping reservations
     let candidate: Resource | undefined;
     if (preferredResourceId) {
-      const target = campusDb.resources.get(preferredResourceId);
+      const target = store.resources.get(preferredResourceId);
       if (target && target.lab_id === booking.lab_id && target.state !== 'MAINTENANCE') {
         const overlaps = getActiveOverlaps(target.id);
         if (overlaps.length === 0) {
@@ -121,11 +122,11 @@ export class SchedulingEngine {
     if (isFacultyOrAdmin) {
       // Find candidate resources in lab: preferred resource first, then any lab resource
       const targetResources = preferredResourceId
-        ? [campusDb.resources.get(preferredResourceId)].filter(Boolean) as Resource[]
+        ? [store.resources.get(preferredResourceId)].filter(Boolean) as Resource[]
         : availableInLab;
 
       for (const res of targetResources) {
-        if (res.state === 'MAINTENANCE') continue;
+        if (res.lab_id !== booking.lab_id || res.state === 'MAINTENANCE') continue;
         const overlaps = getActiveOverlaps(res.id);
         // Check if overlaps contain any faculty/admin reservation
         const hasFacultyConflict = overlaps.some((b) => b.priority <= 1);
@@ -171,7 +172,7 @@ export class SchedulingEngine {
     }
 
     // 5. For student requesters, if conflicting with faculty or no slots available
-    const hasAnyFacultyOverlap = Array.from(campusDb.bookings.values()).some((b) => {
+    const hasAnyFacultyOverlap = Array.from(store.bookings.values()).some((b) => {
       if (b.lab_id !== booking.lab_id) return false;
       if (!['LEASED', 'CONFIRMED', 'ACTIVE', 'REQUESTED', 'QUEUED'].includes(b.state)) return false;
       if (b.priority > 1) return false; // not faculty

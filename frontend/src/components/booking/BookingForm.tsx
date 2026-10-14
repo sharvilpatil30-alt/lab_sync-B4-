@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -22,7 +22,10 @@ import {
 } from 'lucide-react';
 import { Lab, Resource, BookingStatus } from '../../types';
 import { Button, Input, Select, ErrorMessage, StatusBadge } from '../common';
-import { useCreateBooking, useLabs, useResources, useAvailableResources, useAuth } from '../../hooks';
+import { useCreateBooking, useLabs, useAvailableResources, useAuth } from '../../hooks';
+
+// getRandomValues also works on the team's HTTP LAN origin (randomUUID requires HTTPS).
+const createRequestKey = () => Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
 
 // Validation Schema with Zod
 const bookingSchema = z
@@ -30,14 +33,14 @@ const bookingSchema = z
     labId: z.string().min(1, 'Please select a laboratory facility.'),
     date: z.string().min(1, 'Please select a reservation date.').refine((val) => {
       if (!val) return false;
-      const selected = new Date(val);
+      const selected = new Date(`${val}T23:59:59+05:30`);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       return selected >= today;
     }, 'Date must be today or in the future.'),
     startTime: z.string().min(1, 'Start time is required.'),
     endTime: z.string().min(1, 'End time is required.'),
-    selectedResourceId: z.string().optional(),
+    selectedResourceId: z.string().min(1, 'Please select a workstation.'),
     requiredResources: z.array(z.string()),
     purpose: z.string().min(10, 'Purpose description must be at least 10 characters long.'),
   })
@@ -77,8 +80,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
   const { role, user } = useAuth();
   const basePrefix = role === 'admin' ? '/admin' : role === 'faculty' ? '/faculty' : '/student';
 
-  const { data: labs = [], isLoading: labsLoading } = useLabs();
-  const { data: allResources = [] } = useResources();
+  const { data: labs = [], isLoading: labsLoading, error: labsError, refetch: refetchLabs } = useLabs();
   const createBookingMutation = useCreateBooking();
 
   // Wizard Step: 1 to 6
@@ -108,11 +110,12 @@ export const BookingForm: React.FC<BookingFormProps> = ({
     (() => {
       const d = new Date();
       d.setDate(d.getDate() + 1);
-      return d.toISOString().split('T')[0];
+      return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
     })();
 
   const {
     control,
+    register,
     handleSubmit,
     watch,
     setValue,
@@ -158,8 +161,8 @@ export const BookingForm: React.FC<BookingFormProps> = ({
       return { startIso: '', endIso: '' };
     }
     try {
-      const s = new Date(`${selectedDate}T${selectedStartTime}:00`).toISOString();
-      const e = new Date(`${selectedDate}T${selectedEndTime}:00`).toISOString();
+      const s = new Date(`${selectedDate}T${selectedStartTime}:00+05:30`).toISOString();
+      const e = new Date(`${selectedDate}T${selectedEndTime}:00+05:30`).toISOString();
       return { startIso: s, endIso: e };
     } catch {
       return { startIso: '', endIso: '' };
@@ -174,19 +177,23 @@ export const BookingForm: React.FC<BookingFormProps> = ({
     refetch: refetchAvailability,
   } = useAvailableResources(selectedLab?.id || selectedLabId, startIso, endIso);
 
-  // Fallback resources for lab if live availability returned empty
-  const labEquipmentList = useMemo(() => {
-    return allResources.filter((r) => {
-      const rLab = typeof r.lab === 'object' && r.lab !== null ? (r.lab as any).id : r.lab;
-      return rLab === selectedLab?.id || rLab === selectedLab?.labId || rLab === selectedLab?.name;
-    });
-  }, [allResources, selectedLab]);
+  const submitting = useRef(false);
+  const requestKey = useRef(createRequestKey());
+  useEffect(() => { requestKey.current = createRequestKey(); }, [selectedLabId, selectedResourceId, selectedDate, selectedStartTime, selectedEndTime, enteredPurpose]);
+  useEffect(() => { register('selectedResourceId'); register('requiredResources'); }, [register]);
+  useEffect(() => {
+    setValue('selectedResourceId', '');
+    setValue('requiredResources', []);
+  }, [selectedLabId, selectedDate, selectedStartTime, selectedEndTime, setValue]);
 
   const handleSelectSeat = (resourceId: string) => {
-    setValue('selectedResourceId', resourceId);
+    setValue('selectedResourceId', resourceId, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
     setValue('requiredResources', [resourceId]);
     setConflictMessage(null);
   };
+
+  const canSelectSeat = (seat: { available: boolean; preemptable?: boolean }) =>
+    seat.available || ((role === 'faculty' || role === 'admin') && seat.preemptable === true);
 
   // Step Validation logic
   const handleNextFromStep = async (currentStep: number) => {
@@ -197,18 +204,19 @@ export const BookingForm: React.FC<BookingFormProps> = ({
       const validDate = await trigger('date');
       const validStart = await trigger('startTime');
       const validEnd = await trigger('endTime');
-      if (validDate && validStart && validEnd) {
+      if (validDate && validStart && validEnd && startIso && endIso && Date.parse(startIso) > Date.now() && Date.parse(endIso) > Date.parse(startIso)) {
         refetchAvailability();
         setStep(3);
+      } else {
+        setConflictMessage('Choose a future start time and a later end time (IST).');
       }
     } else if (currentStep === 3) {
-      if (!availabilityError && availableSeats.some(s => s.resourceId === selectedResourceId && s.available)) setStep(4);
+      if (!availabilityError && availableSeats.some(s => s.resourceId === selectedResourceId && canSelectSeat(s))) setStep(4);
     } else if (currentStep === 4) {
       const validPurpose = await trigger('purpose');
       if (validPurpose) setStep(5);
     } else if (currentStep === 5) {
-      setStep(6);
-      await executeBookingSubmission();
+      if (await trigger()) { setStep(6); await executeBookingSubmission(); }
     }
   };
 
@@ -220,21 +228,19 @@ export const BookingForm: React.FC<BookingFormProps> = ({
 
   // Step 6 Execution (never duplicate submit)
   const executeBookingSubmission = async () => {
-    if (submissionOutcome.status === 'submitting') return;
+    if (submitting.current) return;
+    submitting.current = true;
 
     setSubmissionOutcome({ status: 'submitting' });
     setConflictMessage(null);
 
-    const resourceIdToBook =
-      selectedResourceId ||
-      (availableSeats.length > 0 ? availableSeats[0].resourceId : undefined) ||
-      (labEquipmentList.length > 0 ? labEquipmentList[0].id : undefined) ||
-      selectedLab?.id ||
-      selectedLabId;
+    const resourceIdToBook = selectedResourceId;
 
     try {
+      if (!resourceIdToBook || availabilityError || !availableSeats.some(s => s.resourceId === resourceIdToBook && canSelectSeat(s))) throw new Error('Choose an available workstation before confirming.');
       const res = await createBookingMutation.mutateAsync({
         resourceId: resourceIdToBook,
+        idempotencyKey: requestKey.current,
         startTime: startIso,
         endTime: endIso,
         labId: selectedLab?.id || selectedLabId,
@@ -293,8 +299,10 @@ export const BookingForm: React.FC<BookingFormProps> = ({
         status: 'error',
         message: errorMsg,
       });
-    }
+    } finally { submitting.current = false; }
   };
+
+  if (labsError) return <ErrorMessage title="Laboratories unavailable" message={labsError.message} onRetry={() => { void refetchLabs(); }} />;
 
   if (labsLoading) {
     return (
@@ -524,12 +532,13 @@ export const BookingForm: React.FC<BookingFormProps> = ({
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-72 overflow-y-auto p-1">
                 {availableSeats.map((seat) => {
                   const isSelected = selectedResourceId === seat.resourceId;
-                  const isAvailable = seat.available;
+                  const isAvailable = canSelectSeat(seat);
 
                   return (
                     <button
                       key={seat.resourceId}
                       type="button"
+                      aria-pressed={isSelected}
                       disabled={!isAvailable}
                       onClick={() => handleSelectSeat(seat.resourceId)}
                       className={`p-3 rounded-xl border text-left transition-all relative ${
@@ -552,33 +561,8 @@ export const BookingForm: React.FC<BookingFormProps> = ({
                             isAvailable ? 'bg-emerald-400' : 'bg-rose-400'
                           }`}
                         />
-                        <span>{isAvailable ? 'Available' : 'Occupied'}</span>
+                        <span>{seat.available ? 'Available' : isAvailable ? 'Faculty priority — cancels student booking' : 'Occupied'}</span>
                       </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ) : labEquipmentList.length > 0 ? (
-            <div className="space-y-2">
-              <p className="text-[11px] text-slate-400 font-medium">Lab inventory benches:</p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-72 overflow-y-auto p-1">
-                {labEquipmentList.map((eq) => {
-                  const isSelected = selectedResourceId === eq.id;
-                  return (
-                    <button
-                      key={eq.id}
-                      type="button"
-                      disabled
-                      onClick={() => handleSelectSeat(eq.id)}
-                      className={`p-3 rounded-xl border text-left transition-all ${
-                        isSelected
-                          ? 'bg-indigo-600/20 border-indigo-500 shadow-md ring-1 ring-indigo-500/40 text-white'
-                          : 'bg-slate-900 border-slate-800 hover:border-slate-700 text-slate-200'
-                      }`}
-                    >
-                      <span className="font-mono text-xs font-bold text-indigo-400 block">{eq.name}</span>
-                      <span className="text-[10px] text-slate-400">{eq.type}</span>
                     </button>
                   );
                 })}
@@ -600,7 +584,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
             <Button
               variant="primary"
               onClick={() => handleNextFromStep(3)}
-              disabled={!!availabilityError || isAvailabilityLoading || !availableSeats.some(s => s.resourceId === selectedResourceId && s.available)}
+              disabled={!!availabilityError || isAvailabilityLoading || !availableSeats.some(s => s.resourceId === selectedResourceId && canSelectSeat(s))}
               rightIcon={<ArrowRight className="w-4 h-4" />}
             >
               Next: Enter Purpose

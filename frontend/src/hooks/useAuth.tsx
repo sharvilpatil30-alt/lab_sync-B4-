@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { User, Role } from '../types';
 import { authService } from '../services';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
@@ -19,6 +20,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const queryClient = useQueryClient();
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -29,60 +31,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const restoreSession = async () => {
       try {
-        // 1. If Supabase is active, check active Supabase session
-        if (isSupabaseConfigured && supabase) {
-          const { data } = await supabase.auth.getSession();
-          if (data?.session) {
-            const activeToken = data.session.access_token;
-            let activeUser: User;
-            try {
-              const meRes = await authService.getCurrentUser();
-              const meData = (meRes as any).data || meRes;
-              activeUser = {
-                id: meData.userId || meData.id || data.session.user.id,
-                name: meData.fullName || meData.name || data.session.user.user_metadata?.full_name || data.session.user.email?.split('@')[0] || 'Campus User',
-                email: meData.email || data.session.user.email || '',
-                role: normalizeRole(meData.role || data.session.user.app_metadata?.role),
-                department: meData.department || 'Computer Science & Engineering',
-              };
-            } catch {
-              activeUser = {
-                id: data.session.user.id,
-                name: data.session.user.user_metadata?.full_name || data.session.user.email?.split('@')[0] || 'Campus User',
-                email: data.session.user.email || '',
-                role: normalizeRole(data.session.user.app_metadata?.role),
-                department: data.session.user.user_metadata?.department || 'Computer Science & Engineering',
-              };
-            }
-
-            if (isMounted) {
-              setToken(activeToken);
-              setUser(activeUser);
-              localStorage.setItem('smart_campus_auth_token', activeToken);
-              localStorage.setItem('smart_campus_auth_user', JSON.stringify(activeUser));
-            }
-            setIsLoading(false);
-            return;
-          }
+        const session = isSupabaseConfigured && supabase
+          ? (await supabase.auth.getSession()).data.session : null;
+        const activeToken = session?.access_token || (!isSupabaseConfigured ? localStorage.getItem('smart_campus_auth_token') : null);
+        if (!activeToken) {
+          localStorage.removeItem('smart_campus_auth_token');
+          localStorage.removeItem('smart_campus_auth_user');
+          return;
         }
-
-        // 2. Fallback to localStorage session
-        const storedToken = localStorage.getItem('smart_campus_auth_token');
-        const storedUser = localStorage.getItem('smart_campus_auth_user');
-
-        if (storedToken && storedUser) {
-          try {
-            const parsedUser = JSON.parse(storedUser);
-            parsedUser.role = normalizeRole(parsedUser.role);
-            if (isMounted) {
-              setToken(storedToken);
-              setUser(parsedUser);
-            }
-          } catch {
-            localStorage.removeItem('smart_campus_auth_user');
-            localStorage.removeItem('smart_campus_auth_token');
-          }
+        localStorage.setItem('smart_campus_auth_token', activeToken);
+        const response = await authService.getCurrentUser();
+        const profile = response.data;
+        const activeUser = { ...profile, role: normalizeRole(profile.role) };
+        if (isMounted) {
+          setToken(activeToken);
+          setUser(activeUser);
+          localStorage.setItem('smart_campus_auth_user', JSON.stringify(activeUser));
         }
+      } catch {
+        if (isMounted) { setUser(null); setToken(null); }
+        localStorage.removeItem('smart_campus_auth_token');
+        localStorage.removeItem('smart_campus_auth_user');
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -93,7 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Listen for Supabase auth state changes if configured
     let authListener: { subscription: { unsubscribe: () => void } } | null = null;
     if (isSupabaseConfigured && supabase) {
-      const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
+      const { data } = supabase.auth.onAuthStateChange((event, session) => {
         if (!isMounted) return;
         if (event === 'SIGNED_OUT' || !session) {
           setUser(null);
@@ -133,6 +102,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const res = await authService.login(credentials);
       const authenticatedUser = res.data?.user || (res as any).user;
       const authToken = res.data?.token || (res as any).token;
+      queryClient.clear();
       setUser(authenticatedUser);
       setToken(authToken);
       return authenticatedUser;
@@ -170,6 +140,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await authService.logout();
     } finally {
+      queryClient.clear();
       setUser(null);
       setToken(null);
       setIsLoading(false);

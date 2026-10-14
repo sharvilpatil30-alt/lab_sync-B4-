@@ -14,7 +14,7 @@ const LAB_QUERY = `
     l.investment,
     COUNT(r.id)::int AS "totalResources",
     COUNT(r.id) FILTER (
-      WHERE UPPER(r.state) = 'AVAILABLE'
+      WHERE r.state <> 'MAINTENANCE' AND NOT EXISTS (SELECT 1 FROM public.bookings b WHERE b.resource_id=r.id AND b.state IN ('LEASED','CONFIRMED','ACTIVE') AND b.start_at<=now() AND b.end_at>now())
     )::int AS "availableResourcesCount"
   FROM public.labs l
   LEFT JOIN public.resources r ON r.lab_id = l.id
@@ -26,7 +26,7 @@ function formatLab(row: any) {
     ...row,
     labId: row.lab_code || row.id,
     operationalStatus:
-      row.availableResourcesCount > 0 ? 'available' : 'offline',
+      row.availableResourcesCount > 0 ? 'available' : row.totalResources > 0 ? 'occupied' : 'offline',
   };
 }
 

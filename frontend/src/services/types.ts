@@ -45,6 +45,7 @@ export interface AvailableResourceItem {
   labId: string;
   name: string;
   available: boolean;
+  preemptable?: boolean;
 }
 
 export interface IResourceService {
@@ -58,6 +59,7 @@ export interface IResourceService {
 }
 
 export interface CreateBookingPayload {
+  idempotencyKey?: string;
   resourceId: string;
   startTime: string; // ISO 8601
   endTime: string;   // ISO 8601

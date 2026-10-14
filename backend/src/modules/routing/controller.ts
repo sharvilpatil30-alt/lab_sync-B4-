@@ -12,7 +12,8 @@ import { runDijkstra } from './algorithms/dijkstra.js';
 import { runBFS } from './algorithms/bfs.js';
 import { runBellmanFord } from './algorithms/bellmanFord.js';
 import { success, error } from '../../utils/apiResponse.js';
-import { campusDb } from '../persistence/database.js';
+import { pool } from '../../config/postgres.js';
+import { authenticate, AuthenticatedRequest } from '../../middleware/authenticate.js';
 
 export const getTopology = async (_req: Request, res: Response) => {
   return success(res, {
@@ -136,27 +137,31 @@ export const calculateRoute = async (req: Request, res: Response) => {
 };
 
 // Booking or Lab ID parameterized route
-export const getRouteByBookingId = async (req: Request, res: Response) => {
+export const getRouteByBookingId = async (req: AuthenticatedRequest, res: Response) => {
   const { bookingId } = req.params;
   req.query.bookingId = bookingId;
-  if (req.query.destination === undefined) {
-    let nodeId = resolveNodeId(bookingId);
-    if (!nodeId) {
-      // Check if bookingId matches an existing booking in campusDb
-      const booking = campusDb.bookings.get(bookingId);
-      if (booking) {
-        const lab = campusDb.labs.get(booking.lab_id);
-        if (lab && lab.node_id) {
-          nodeId = resolveNodeId(lab.node_id) || resolveNodeId(lab.lab_code || '') || null;
-        }
-      }
-    }
-    if (!nodeId) {
-      return error(res, 'Booking destination lookup is unavailable. Supply an explicit destination or use /compute with toNodeId.', [], 400);
-    }
-    req.query.destination = nodeId;
+  const publicDestination = resolveNodeId(bookingId);
+  if (publicDestination) {
+    req.query.destination = publicDestination;
+    return calculateRoute(req, res);
   }
-  return calculateRoute(req, res);
+  if (!/^[0-9a-f-]{36}$/i.test(bookingId)) {
+    return error(res, 'Booking destination lookup is unavailable. Supply an explicit destination or use /compute with toNodeId.', [], 400);
+  }
+  return authenticate(req, res, async (authError?: any) => {
+    if (authError) return error(res, authError.message, [], authError.statusCode || 401);
+    try {
+      const booking = (await pool.query(`SELECT b.user_id,l.lab_code FROM public.bookings b JOIN public.labs l ON l.id=b.lab_id WHERE b.id::text=$1`, [bookingId])).rows[0];
+      if (!booking) return error(res, 'Booking not found', [], 404);
+      if (booking.user_id !== req.user.id && !['admin','lab_admin'].includes(req.user.role)) return error(res, 'Not authorized to view this booking', [], 403);
+      const destination = resolveNodeId(booking.lab_code);
+      if (!destination) return error(res, 'Booked laboratory is not mapped', [], 404);
+      req.query.destination = destination;
+      return calculateRoute(req, res);
+    } catch {
+      return error(res, 'Unable to retrieve booking destination', [], 503);
+    }
+  });
 };
 
 export const getNodes = async (_req: Request, res: Response) => success(res, {

@@ -148,3 +148,29 @@ test('lab selection treats all-building filter as unfiltered and preserves D-cod
     assert.equal((await service.list({ building: 'Unknown' })).data.length, 0);
   } finally { apiClient.defaults.adapter = original; }
 });
+
+test('booking timestamps display in IST and requested state is not promoted to confirmed', () => {
+  const booking = mapBackendBookingToFrontend({ id: 'id', state: 'REQUESTED', start_at: '2027-01-20T20:00:00Z', end_at: '2027-01-20T21:00:00Z', priority: 1 });
+  assert.equal(booking.date, '2027-01-21');
+  assert.equal(booking.startTime, '01:30');
+  assert.equal(booking.endTime, '02:30');
+  assert.equal(booking.status, 'REQUESTED');
+  assert.equal(booking.userRole, 'faculty');
+});
+
+test('seat mapping requires authoritative availability and retains preemption signal', async () => {
+  const original = apiClient.defaults.adapter;
+  apiClient.defaults.adapter = async config => ({ data: { data: { resources: [
+    { id: 'real-uuid', resourceId: 'display-label', available: true },
+    { id: 'unknown-status' },
+    { id: 'student-reserved', available: false, preemptable: true },
+  ] } }, status: 200, statusText: 'OK', headers: {}, config });
+  try {
+    const seats = (await new ApiResourceService().getAvailable('lab', 'start', 'end')).data.resources;
+    assert.equal(seats[0].resourceId, 'real-uuid');
+    assert.equal(seats[0].available, true);
+    assert.equal(seats[1].available, false);
+    assert.equal(seats[2].available, false);
+    assert.equal(seats[2].preemptable, true);
+  } finally { apiClient.defaults.adapter = original; }
+});

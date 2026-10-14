@@ -22,6 +22,7 @@ export function mapBackendLabToFrontend(raw: any): Lab {
     building: raw.building || 'RIT Academic Complex (Engineering Wing)',
     floor: raw.floor ?? (/^D-(10|11)$/i.test(labCode) ? 1 : /^D-\d{2}$/i.test(labCode) ? 0 : 'Unknown'),
     capacity,
+    availableResourcesCount: Number(raw.availableResourcesCount ?? 0),
     operationalStatus,
     maintenanceStatus: raw.maintenanceStatus || raw.maintenance_reason || '',
     availableResources: raw.availableResources || [],
@@ -32,27 +33,9 @@ export function mapBackendLabToFrontend(raw: any): Lab {
 
 export class ApiLabService implements ILabService {
   async list(filters?: LabFilters): Promise<ApiResponse<Lab[]>> {
-    let rawList: any[] = [];
-
-    try {
-      // 1. Query canonical /labs endpoint with live operational statuses
-      const res = await apiClient.get('/labs', { params: filters });
-      const payload = res.data?.data || res.data;
-      if (Array.isArray(payload)) {
-        rawList = payload;
-      }
-    } catch {
-      // 2. Fall back to /inventory/labs if /labs is unavailable
-      try {
-        const fallbackRes = await apiClient.get('/inventory/labs', { params: filters });
-        const payload = fallbackRes.data?.data || fallbackRes.data;
-        if (Array.isArray(payload)) {
-          rawList = payload;
-        }
-      } catch (err: any) {
-        throw err;
-      }
-    }
+    const response = await apiClient.get('/labs', { params: filters });
+    const rawList = response.data?.data;
+    if (!Array.isArray(rawList)) throw new Error('Invalid lab response from campus server');
 
     const mappedLabs = rawList.map(mapBackendLabToFrontend);
 
@@ -80,36 +63,8 @@ export class ApiLabService implements ILabService {
   }
 
   async getById(labId: string): Promise<ApiResponse<Lab>> {
-    // 1. Try direct /inventory/labs/:id or /labs/:id
-    try {
-      const res = await apiClient.get(`/inventory/labs/${labId}`);
-      const raw = res.data?.data || res.data;
-      if (raw) return { success: true, message: 'Lab found', data: mapBackendLabToFrontend(raw) };
-    } catch {
-      // fallback
-    }
-
-    try {
-      const res = await apiClient.get(`/labs/${labId}`);
-      const raw = res.data?.data || res.data;
-      if (raw) return { success: true, message: 'Lab found', data: mapBackendLabToFrontend(raw) };
-    } catch {
-      // fallback to list query
-    }
-
-    // 2. Look up from full list
-    const listRes = await this.list();
-    const match = listRes.data.find(
-      (l) =>
-        l.id === labId ||
-        l.labId.toLowerCase() === labId.toLowerCase()
-    );
-
-    if (match) {
-      return { success: true, message: 'Lab found', data: match };
-    }
-
-    throw new Error(`Laboratory facility '${labId}' not found in campus database.`);
+    const res = await apiClient.get(`/labs/${labId}`);
+    return { success: true, message: 'Lab found', data: mapBackendLabToFrontend(res.data.data) };
   }
 
   async create(data: Omit<Lab, 'id' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<Lab>> {

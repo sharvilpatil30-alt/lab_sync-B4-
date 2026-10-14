@@ -31,8 +31,8 @@ export async function authenticate(
       return next(new AppError('Authentication required', 401));
     }
 
-    // 1. Verify backend-signed JWT token (for tests and local development)
-    if (process.env.NODE_ENV === 'test' || !supabase) {
+    // 1. Local signed transport credentials are accepted only in explicit test mode.
+    if (process.env.NODE_ENV === 'test') {
       try {
         const decoded: any = jwt.verify(token, config.jwtSecret);
         if (decoded && (decoded.id || decoded.userId || decoded.sub)) {
@@ -141,13 +141,14 @@ export async function authenticate(
     }
 
     const profile = result.rows[0];
+    if (!profile || !['student','faculty','admin','lab_admin'].includes(profile.role)) return next(new AppError('Account role is not supported',403));
 
     req.user = {
       id: authUser.id,
       _id: authUser.id,
       name: profile.full_name,
       email,
-      role: profile.role,
+      role: profile.role === 'lab_admin' ? 'admin' : profile.role,
       department: 'Computer Science & Engineering',
     };
 
