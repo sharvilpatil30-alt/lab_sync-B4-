@@ -55,6 +55,13 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking, onCancel }) =
         </div>
       )}
 
+      {booking.status === 'CANCELLED' && booking.cancellationReason && (
+        <div className="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-xs text-rose-300 space-y-1">
+          <span className="font-semibold block text-rose-400">Cancellation Reason:</span>
+          <p className="text-slate-300">{booking.cancellationReason}</p>
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-800/60">
         <Button
           variant="outline"

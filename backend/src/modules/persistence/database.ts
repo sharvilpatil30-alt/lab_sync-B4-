@@ -19,6 +19,7 @@ import {
   EquipmentModel,
   PurchaseBatch,
   AssetEvent,
+  NotificationRecord,
 } from '../../types/dfd.types.js';
 import {
   INITIAL_COMPUTER_BATCHES,
@@ -37,6 +38,7 @@ class CampusDatabase {
   public schedulingDecisions: Map<string, SchedulingDecision> = new Map();
   public routes: Map<string, RouteRecord> = new Map();
   public auditLog: AuditLogRecord[] = [];
+  public notifications: Map<string, NotificationRecord> = new Map();
 
   // 3NF Dead-stock & Inventory Extension tables
   public equipmentCategories: Map<string, EquipmentCategory> = new Map();
@@ -306,10 +308,10 @@ class CampusDatabase {
       if (!resource) {
         return { success: false, error: `Resource ${params.resourceId} not found` };
       }
-      if (resource.state !== 'AVAILABLE' && resource.state !== 'RESERVED') {
+      if (resource.state === 'MAINTENANCE') {
         return {
           success: false,
-          error: `Resource ${params.resourceId} cannot be allocated: current state is ${resource.state}`,
+          error: `Resource ${params.resourceId} cannot be allocated: current state is MAINTENANCE`,
         };
       }
     }
@@ -454,11 +456,21 @@ class CampusDatabase {
       return { success: false, error: `Booking ${params.bookingId} not found` };
     }
 
+    if (params.actorId && booking.user_id !== params.actorId) {
+      const actor = this.profiles.get(params.actorId);
+      if (actor && actor.role === 'student') {
+        return { success: false, error: 'Not authorized to cancel this booking' };
+      }
+    }
+
     if (booking.state === 'CANCELLED') {
       return { success: true, booking };
     }
 
     booking.state = 'CANCELLED';
+    if (params.reason) {
+      booking.cancellation_reason = params.reason;
+    }
     booking.updated_at = new Date().toISOString();
 
     if (booking.resource_id) {
@@ -485,6 +497,80 @@ class CampusDatabase {
     });
 
     return { success: true, booking };
+  }
+
+  /**
+   * Transaction Snapshot Support
+   * Enables ACID rollback if a booking, preemption, or notification operation fails.
+   */
+  public createSnapshot() {
+    return {
+      bookings: new Map(Array.from(this.bookings.entries()).map(([k, v]) => [k, { ...v }])),
+      resources: new Map(Array.from(this.resources.entries()).map(([k, v]) => [k, { ...v }])),
+      notifications: new Map(Array.from(this.notifications.entries()).map(([k, v]) => [k, { ...v }])),
+      auditLog: [...this.auditLog.map((a) => ({ ...a }))],
+      idempotencyIndex: new Map(this.idempotencyIndex),
+    };
+  }
+
+  public restoreSnapshot(snapshot: any) {
+    this.bookings = snapshot.bookings;
+    this.resources = snapshot.resources;
+    this.notifications = snapshot.notifications;
+    this.auditLog = snapshot.auditLog;
+    this.idempotencyIndex = snapshot.idempotencyIndex;
+  }
+
+  /**
+   * Notification management methods for students and faculty
+   */
+  public createNotification(data: {
+    user: string;
+    title: string;
+    message: string;
+    type?: 'info' | 'success' | 'warning' | 'error';
+    relatedEntityType?: string;
+    relatedEntityId?: string;
+  }): NotificationRecord {
+    const id = `notif-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+    const notification: NotificationRecord = {
+      id,
+      user: data.user,
+      title: data.title,
+      message: data.message,
+      type: data.type || 'info',
+      read: false,
+      relatedEntityType: data.relatedEntityType,
+      relatedEntityId: data.relatedEntityId,
+      createdAt: new Date().toISOString(),
+    };
+    this.notifications.set(id, notification);
+    return notification;
+  }
+
+  public getNotificationsForUser(userId: string): NotificationRecord[] {
+    return Array.from(this.notifications.values())
+      .filter((n) => n.user === userId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  public markNotificationAsRead(id: string, userId?: string): boolean {
+    const notif = this.notifications.get(id);
+    if (!notif) return false;
+    if (userId && notif.user !== userId) return false;
+    notif.read = true;
+    return true;
+  }
+
+  public markAllNotificationsAsRead(userId: string): number {
+    let count = 0;
+    for (const notif of this.notifications.values()) {
+      if (notif.user === userId && !notif.read) {
+        notif.read = true;
+        count++;
+      }
+    }
+    return count;
   }
 }
 

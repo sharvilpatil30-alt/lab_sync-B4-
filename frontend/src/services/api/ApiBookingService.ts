@@ -34,6 +34,7 @@ export function mapBackendBookingToFrontend(raw: any): Booking {
     requiredResources: raw.resource_id ? [raw.resource_id] : (raw.resourceId ? [raw.resourceId] : []),
     allocatedResources: raw.resource_id ? [raw.resource_id] : (raw.resourceId ? [raw.resourceId] : []),
     status: canonicalStatus,
+    cancellationReason: raw.cancellation_reason || raw.cancellationReason || raw.reason,
     createdAt: raw.created_at || raw.createdAt || new Date().toISOString(),
     updatedAt: raw.updated_at || raw.updatedAt || new Date().toISOString(),
   };
