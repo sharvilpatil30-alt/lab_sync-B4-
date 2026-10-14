@@ -72,7 +72,7 @@ export async function changeInventory(
   const ids = rows.map((r: any) => r.id);
   const busy = (
     await db.query(
-      "SELECT 1 FROM bookings WHERE resource_id=ANY($1::uuid[]) AND state IN ('LEASED','CONFIRMED','ACTIVE','REQUESTED','QUEUED') AND end_at>now() LIMIT 1",
+      "SELECT 1 FROM bookings WHERE (resource_id=ANY($1::uuid[]) OR (booking_scope='WHOLE_LAB' AND lab_id=(SELECT lab_id FROM resources WHERE id=ANY($1::uuid[]) LIMIT 1))) AND state IN ('LEASED','CONFIRMED','ACTIVE','REQUESTED','QUEUED') AND end_at>now() LIMIT 1",
       [ids],
     )
   ).rowCount;
@@ -252,7 +252,7 @@ adminRouter.get(
     const duration = (+end - +start) / 3600000;
     const resourceUtilization = resources.map((r) => {
       const total = bookings
-        .filter((b) => b.resource_id === r.id)
+        .filter((b) => b.resource_id === r.id || (b.booking_scope === 'WHOLE_LAB' && b.lab_id === r.lab_id))
         .reduce((n, b) => n + hours(b), 0);
       return {
         resourceId: r.id,
@@ -263,8 +263,8 @@ adminRouter.get(
       };
     });
     const labUtilization = labs.map((l) => {
-      const total = bookings.filter((b) => b.lab_id === l.id).reduce((n, b) => n + hours(b), 0);
       const capacity = resources.filter((r) => r.lab_id === l.id).length;
+      const total = bookings.filter((b) => b.lab_id === l.id).reduce((n, b) => n + hours(b) * (b.booking_scope === 'WHOLE_LAB' ? capacity : 1), 0);
       return {
         labId: l.id,
         labName: l.name,

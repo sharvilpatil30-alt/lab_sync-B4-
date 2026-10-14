@@ -17,7 +17,7 @@ const LAB_QUERY = `
     COUNT(r.id) FILTER (WHERE r.state='MAINTENANCE')::int AS maintenance_count,
     COUNT(r.id)::int AS "totalResources",
     COUNT(r.id) FILTER (
-      WHERE r.state <> 'MAINTENANCE' AND NOT EXISTS (SELECT 1 FROM public.bookings b WHERE b.resource_id=r.id AND b.state IN ('LEASED','CONFIRMED','ACTIVE') AND b.start_at<=now() AND b.end_at>now())
+      WHERE r.state <> 'MAINTENANCE' AND NOT EXISTS (SELECT 1 FROM public.bookings b WHERE (b.resource_id=r.id OR (b.booking_scope='WHOLE_LAB' AND b.lab_id=r.lab_id)) AND b.state IN ('LEASED','CONFIRMED','ACTIVE') AND b.start_at<=now() AND b.end_at>now())
     )::int AS "availableResourcesCount"
   FROM public.labs l
   LEFT JOIN public.resources r ON r.lab_id = l.id

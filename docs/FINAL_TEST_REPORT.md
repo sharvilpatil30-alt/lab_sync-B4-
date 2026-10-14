@@ -2,7 +2,19 @@
 
 Date: 14 October 2026. Branch: `integration/final-v2`.
 
-## Final publish verification (supersedes the earlier run below)
+## Faculty whole-lab feature — final verification, 14 October 2026
+
+Branch: `feature/faculty-whole-lab`. This section supersedes the older results below.
+
+**PASS:** backend build and 15 existing tests; frontend build and 12 integration tests; 15 Chromium checks (intercepted auth/booking requests); 13 isolated PostgreSQL/HTTP checks; 32 live HTTP/admin probes; 5 production-auth profile checks with stubbed identity transport. Production SPA/deep-link/CSP smoke test and isolated database restart persistence also passed. No new live bookings were created.
+
+Focused PostgreSQL checks: faculty single workstation; faculty-only whole-lab authorization; whole-lab claims and student/faculty conflict rejection; cancellation releases all seats; explicit displacement confirmation; rollback restores student booking, claims and audit; atomic cancellation/notification event persistence; concurrent whole/whole and whole/workstation commits (exactly one winner); single-workstation faculty displacement; stale-preview rejection; direct SQL overlap rejection; HTTP preview/create/availability/cancellation with ownership enforcement. Tests ran in disposable local PostgreSQL 16, not Supabase. Initial fixture issues (lease ID type, reused idempotency keys and browser navigation expectation) were corrected and all checks rerun successfully. Backend tests require local socket permission; sandbox-only invocation failed before rerunning successfully with that permission.
+
+Migration `005_whole_lab_bookings.sql` was applied successfully to existing Supabase. It adds booking scope, exclusive per-resource claims, and transactional claim triggers; backfilled 1 existing active claim. Existing bookings and audit history were preserved. Whole-lab availability and resource-hour utilization now include every workstation. Notification event payloads retain the existing `BOOKING_NOTIFICATION` audit contract.
+
+**BLOCKED:** public staging deployment (no hosting authorization/credentials); real demo password login (team-held passwords). Staging configuration is `render.yaml`; production frontend/backend entry point was tested locally. No public URL is claimed. Whole-lab live creation was deliberately not attempted under the no-new-live-bookings restriction. Historical work-order/import limitations below remain.
+
+## Earlier publish verification
 
 **78 current checks passed, 0 failed:** backend 15, frontend integration 12, Chromium 14, live HTTP/admin 32, production auth/profile 5. Backend and frontend builds pass. No additional live bookings were created. Existing approved test records remain CANCELLED and COMPLETED; the earlier actual restart/concurrency evidence below is retained, not rerun.
 

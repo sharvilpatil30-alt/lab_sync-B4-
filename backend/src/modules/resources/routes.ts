@@ -26,8 +26,8 @@ resourceRouter.get(
     if (!lab) throw new AppError('Laboratory not found', 404);
     const { rows } = await pool.query(
       `SELECT r.id AS "resourceId", r.id, r.lab_id AS "labId", r.label AS name,r.state,
-    (r.state <> 'MAINTENANCE' AND NOT EXISTS(SELECT 1 FROM public.bookings b WHERE b.resource_id=r.id AND b.state IN ('LEASED','CONFIRMED','ACTIVE','REQUESTED','QUEUED') AND b.start_at<$3::timestamptz AND b.end_at>$2::timestamptz)) AS available,
-    (r.state <> 'MAINTENANCE' AND EXISTS(SELECT 1 FROM public.bookings b WHERE b.resource_id=r.id AND b.priority=2 AND b.state IN ('LEASED','CONFIRMED','ACTIVE','REQUESTED','QUEUED') AND b.start_at<$3::timestamptz AND b.end_at>$2::timestamptz) AND NOT EXISTS(SELECT 1 FROM public.bookings b WHERE b.resource_id=r.id AND b.priority<2 AND b.state IN ('LEASED','CONFIRMED','ACTIVE','REQUESTED','QUEUED') AND b.start_at<$3::timestamptz AND b.end_at>$2::timestamptz)) AS preemptable
+    (r.state <> 'MAINTENANCE' AND NOT EXISTS(SELECT 1 FROM public.bookings b WHERE (b.resource_id=r.id OR (b.booking_scope='WHOLE_LAB' AND b.lab_id=r.lab_id)) AND b.state IN ('LEASED','CONFIRMED','ACTIVE','REQUESTED','QUEUED') AND b.start_at<$3::timestamptz AND b.end_at>$2::timestamptz)) AS available,
+    (r.state <> 'MAINTENANCE' AND EXISTS(SELECT 1 FROM public.bookings b WHERE (b.resource_id=r.id OR (b.booking_scope='WHOLE_LAB' AND b.lab_id=r.lab_id)) AND b.priority=2 AND b.state IN ('LEASED','CONFIRMED','ACTIVE','REQUESTED','QUEUED') AND b.start_at<$3::timestamptz AND b.end_at>$2::timestamptz) AND NOT EXISTS(SELECT 1 FROM public.bookings b WHERE (b.resource_id=r.id OR (b.booking_scope='WHOLE_LAB' AND b.lab_id=r.lab_id)) AND b.priority<2 AND b.state IN ('LEASED','CONFIRMED','ACTIVE','REQUESTED','QUEUED') AND b.start_at<$3::timestamptz AND b.end_at>$2::timestamptz)) AS preemptable
     FROM public.resources r WHERE r.lab_id=$1 ORDER BY r.label`,
       [lab.id, startTime, endTime],
     );

@@ -59,6 +59,9 @@ export interface IResourceService {
 }
 
 export interface CreateBookingPayload {
+  bookingScope?: 'WORKSTATION' | 'WHOLE_LAB';
+  previewToken?: string;
+  confirmDisplacement?: boolean;
   idempotencyKey?: string;
   resourceId: string;
   startTime: string; // ISO 8601

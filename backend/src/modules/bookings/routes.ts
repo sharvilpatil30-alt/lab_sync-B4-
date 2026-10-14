@@ -36,6 +36,10 @@ bookingRouter.get(
     return success(res, booking, 'Booking retrieved');
   }),
 );
+bookingRouter.post('/preview',asyncHandler(async(req:AuthenticatedRequest,res)=>{
+  const result=await transaction(db=>createPersistentBooking(db,req.user,req.body,true));
+  return success(res,result.booking,'Conflict preview');
+}));
 bookingRouter.post(
   '/',
   asyncHandler(async (req: AuthenticatedRequest, res) => {

@@ -17,6 +17,7 @@ export function mapBackendBookingToFrontend(raw: any): Booking {
   return {
     id,
     bookingId: id,
+    bookingScope: raw.booking_scope || raw.bookingScope || 'WORKSTATION',
     user: raw.user_id || raw.user || 'CurrentUser',
     userRole: raw.priority === 0 ? 'admin' : raw.priority === 1 ? 'faculty' : 'student',
     lab: labReference,
@@ -93,6 +94,7 @@ export class ApiBookingService implements IBookingService {
       labId: data.labId,
       seatNumber: data.seatNumber,
       idempotencyKey: data.idempotencyKey,
+      bookingScope: data.bookingScope, previewToken: data.previewToken, confirmDisplacement: data.confirmDisplacement,
     };
 
     const res = await apiClient.post('/bookings', payload);

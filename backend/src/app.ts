@@ -1,5 +1,6 @@
 import { adminRouter } from './modules/admin/routes.js';
 import { monitoringRouter } from './modules/monitoring/routes.js';
+import path from 'node:path';
 import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -19,7 +20,7 @@ dotenv.config();
 const app: Express = express();
 
 // Security and middleware setup
-app.use(helmet({ crossOriginResourcePolicy: false }));
+app.use(helmet({ crossOriginResourcePolicy: false, contentSecurityPolicy: { directives: { connectSrc: ["'self'", ...(process.env.SUPABASE_URL ? [process.env.SUPABASE_URL] : [])] } } }));
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -79,6 +80,14 @@ app.use('/api/v1/notifications', notificationRouter);
 app.use('/api/v1/monitoring', monitoringRouter);
 // app.use('/api/v1/reports', reportsRouter);
 
+if (process.env.SERVE_FRONTEND === 'true') {
+  const frontend = path.resolve(__dirname, '../../frontend/dist');
+  app.use(express.static(frontend));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api/')) return next();
+    res.sendFile(path.join(frontend, 'index.html'));
+  });
+}
 app.use((_req, res) => { res.status(404).json({ success: false, message: 'Endpoint not found' }); });
 app.use(errorHandler);
 
