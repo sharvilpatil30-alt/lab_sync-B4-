@@ -572,7 +572,9 @@ class CampusDatabase {
       }
     }
     return count;
-=======
+  }
+
+  /**
    * Completes / returns a booking, releasing the allocated resource back to AVAILABLE
    */
   public completeBooking(params: {
@@ -616,7 +618,6 @@ class CampusDatabase {
     });
 
     return { success: true, booking };
->>>>>>> origin/team-c/aabdal
   }
 }
 
