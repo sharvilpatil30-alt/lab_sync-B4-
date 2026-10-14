@@ -1,3 +1,4 @@
+import { adminRouter } from './modules/admin/routes.js';
 import { monitoringRouter } from './modules/monitoring/routes.js';
 import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
@@ -64,6 +65,8 @@ if (process.env.NODE_ENV === 'test') app.use('/api/v1/dfd', dfdRouter);
 
 // Real-Time Computer Batches & Normalized Equipment Models
 app.use('/api/v1/inventory', inventoryRouter);
+
+app.use('/api/v1', adminRouter);
 
 // Domain routers
 app.use('/api/v1/auth', authRouter);

@@ -2,9 +2,30 @@
 
 Date: 14 October 2026. Branch: `integration/final-v2`.
 
-## Result and scope
+## Final publish verification (supersedes the earlier run below)
 
-**82 automated checks passed; 0 failed in the final runs.** Both TypeScript/production builds pass. This does **not** mean every application feature is complete: real password login is blocked on team-held credentials, and the pre-existing historical-report and maintenance-work-order APIs remain unavailable. Those limits are recorded below rather than hidden by fake data.
+**78 current checks passed, 0 failed:** backend 15, frontend integration 12, Chromium 14, live HTTP/admin 32, production auth/profile 5. Backend and frontend builds pass. No additional live bookings were created. Existing approved test records remain CANCELLED and COMPLETED; the earlier actual restart/concurrency evidence below is retained, not rerun.
+
+Additional fixes: admin `lab=all` no longer hides all inventory; status/type filters work; real historical reporting replaces a missing route; audit/scheduling panels display persisted events; guarded admin lab/resource status and metadata updates are transactional and audited; profile edits persist without permitting role changes; password changes now call Supabase instead of reporting simulated success. Default report dates use the current month. Queues without historical samples display “No queued history”.
+
+| Current verification | Status | Evidence |
+|---|---|---|
+| Admin reports, audit, scheduling endpoints | PASS | Real PostgreSQL HTTP reads; student access denied. |
+| Inventory status and audit writes | PASS | Maintenance/release tested in a rolled-back transaction; no committed inventory changes. An initial JSON-array serialization failure was fixed and the test passed. |
+| All-resource filter and resource details | PASS | 432 real resources; real metadata queries. |
+| Profile role escalation | PASS | PATCH rejects role/identity changes with 403. |
+| Faculty badge, session reload, logout, protected access after logout | PASS | Chromium with intercepted identity transport. Initial browser assertions/navigation timing were corrected. |
+| Six-step wizard and conflict handling | PASS | Browser fixtures; no live create calls. |
+| Prior booking persistence | PASS | Read-only check of both previously approved records and route lookup. |
+| Real Supabase password login/change | BLOCKED | Credentials remain team-held. No actual password change was attempted. |
+| Full lab/resource metadata and profile edits | NOT TESTED with committed writes | Implemented; validation/build checked. No team profiles or catalog metadata changed during tests. |
+| Maintenance work-order creation and catalog import | BLOCKED / incomplete | Status controls work; separate work-order API remains absent. New catalog items use reviewed import, not the disabled Add Resource button. |
+
+Report utilization is allocated resource-hours divided by resource count × hours in the selected date range (24-hour denominator), not a classroom-hours occupancy estimate. Peak hour uses allocated session starts in IST. Queue resolution is derived from persisted WAITLISTED decisions; no sample returns null.
+
+## Earlier integration run (historical evidence)
+
+**82 checks passed in the earlier integration run.** Both TypeScript/production builds pass. This does **not** mean every application feature is complete: real password login is blocked on team-held credentials, and the pre-existing historical-report and maintenance-work-order APIs remain unavailable. Those limits are recorded below rather than hidden by fake data.
 
 Machine-readable measured results: [test-evidence/final-results.json](test-evidence/final-results.json).
 
@@ -93,4 +114,4 @@ The live database exclusion constraint `prevent_double_booking` covers `LEASED`,
 
 See [DEMO_GUIDE.md](DEMO_GUIDE.md) for start commands, account emails, safe role repair, and test commands. Do not rerun the committed live script: the two-record authorization has been consumed and its marker guard will stop it. Rollback-only/read-only tests can be repeated independently.
 
-No merge to main or push was performed. Implementation and documentation are committed on `integration/final-v2`; see the delivery response / `git log -1` for the commit hash.
+Publishing is gated on the current successful builds/tests. See the final delivery response and Git history for the integration and main merge hashes and remote push result.

@@ -12,6 +12,9 @@ const LAB_QUERY = `
     l.node_id,
     l.capacity,
     l.investment,
+    (SELECT a.after FROM audit_log a WHERE a.action='LAB_METADATA_UPDATED' AND a.after->>'lab_id'=l.id::text ORDER BY a.created_at DESC LIMIT 1) AS metadata,
+    (SELECT a.after->>'status' FROM audit_log a WHERE a.action='INVENTORY_STATUS_UPDATED' AND a.after->>'targetType'='lab' AND a.after->>'target'=l.id::text ORDER BY a.created_at DESC LIMIT 1) AS managed_status,
+    COUNT(r.id) FILTER (WHERE r.state='MAINTENANCE')::int AS maintenance_count,
     COUNT(r.id)::int AS "totalResources",
     COUNT(r.id) FILTER (
       WHERE r.state <> 'MAINTENANCE' AND NOT EXISTS (SELECT 1 FROM public.bookings b WHERE b.resource_id=r.id AND b.state IN ('LEASED','CONFIRMED','ACTIVE') AND b.start_at<=now() AND b.end_at>now())
@@ -24,9 +27,10 @@ const LAB_QUERY = `
 function formatLab(row: any) {
   return {
     ...row,
+    ...(row.metadata || {}),
     labId: row.lab_code || row.id,
     operationalStatus:
-      row.availableResourcesCount > 0 ? 'available' : row.totalResources > 0 ? 'occupied' : 'offline',
+      row.managed_status === 'offline' ? 'offline' : row.totalResources > 0 && row.maintenance_count === row.totalResources ? 'maintenance' : row.availableResourcesCount > 0 ? 'available' : row.totalResources > 0 ? 'occupied' : 'offline',
   };
 }
 

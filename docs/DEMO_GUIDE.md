@@ -2,7 +2,19 @@
 
 ## Start the integrated application
 
-From the repository root, in separate terminals:
+For a fresh checkout:
+
+```bash
+git clone https://github.com/sharvilpatil30-alt/lab_sync-B4-.git
+cd lab_sync-B4-
+git checkout main
+git pull --ff-only origin main
+npm ci
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+```
+
+Fill the ignored environment files using the team's existing Supabase connection details. Never copy credentials into Git or documentation. Then, from the repository root, in separate terminals:
 
 ```bash
 npm run dev:backend
@@ -81,6 +93,8 @@ The HTTP script writes a catalog snapshot to `/tmp/campus-browser-catalog.json`;
 ## Known limits
 
 - Actual Supabase password sign-in and emailed verification/reset links need the team to check with its credentials.
-- The existing maintenance-work-order and historical reporting APIs are not implemented/mounted. Admin UI now says unavailable rather than fabricating empty maintenance data or 68% utilization. Current operational dashboard counts come from PostgreSQL.
+- Historical reporting, current statistics, audit events and scheduling decisions now read PostgreSQL. Capture the Admin Dashboard audit/scheduling panel and Reports page. Utilization uses 24-hour resource-hours over the selected interval.
+- Admin lab/resource availability controls are guarded and audited. Active/future reservations prevent maintenance/release overrides. Resource metadata and lab edits persist. Separate maintenance-work-order creation remains unavailable; use status controls. New catalog items require reviewed inventory import.
+- Profile edits persist through the backend without role changes. Password changes require current-password verification and a successful Supabase update; no simulated success remains. Actual password changes were not tested.
 - Push/email notifications are not configured; preemption notifications are persisted in audit events and available through `/notifications` with read/unread support.
 - No database migrations were needed. Existing schema, foreign keys, exclusion constraint, and audit history were preserved. Purpose and cancellation/notification metadata use existing audit records because the live schema has no purpose or notifications columns/tables.

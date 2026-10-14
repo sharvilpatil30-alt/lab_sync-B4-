@@ -84,7 +84,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
         returnByValue: true,
         awaitPromise: true,
       });
-      if (r.exceptionDetails) throw new Error(r.exceptionDetails.text);
+      if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || r.exceptionDetails.text);
       return r.result.value;
     };
     const userId = "11111111-1111-4111-8111-111111111111";
@@ -217,6 +217,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
               alerts: [],
               lastUpdated: new Date().toISOString(),
             };
+          else if (route === "/reports/dashboard") data={labUtilization:[],resourceUtilization:[],bookingTrends:[],summary:{totalBookings:0,averageUtilization:0,peakHour:"No allocated sessions",queueResolutionRate:null}};
           else if (route === "/health") data = { status: "ok" };
           else data = [];
           if (status < 400) data = { success: true, data };
@@ -313,6 +314,14 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
           );
         },
       );
+    await check("Session reload retains trusted faculty badge; logout clears access", async()=>{
+      await login('faculty');await waitFor("location.pathname === '/faculty/dashboard'");
+      await navigate('/faculty/profile');await waitFor("document.body.innerText.includes('Priority reservation privileges')");
+      await send('Page.reload');await sleep(300);await waitFor("document.body.innerText.includes('Priority reservation privileges')");
+      await click('Sign Out');await waitFor("document.body.innerText.includes('Sign Out of Smart Campus?')");
+      await click('Confirm Sign Out');await waitFor("location.pathname === '/login'");
+      await navigate('/faculty/dashboard');await waitFor("location.pathname === '/login'");
+    });
     await check("Backend profile failure prevents login", async () => {
       authFailure = true;
       try {

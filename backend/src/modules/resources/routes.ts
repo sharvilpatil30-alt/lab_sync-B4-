@@ -46,9 +46,10 @@ resourceRouter.get(
 resourceRouter.get(
   '/',
   asyncHandler(async (req, res) => {
-    const filter = req.query.labId || req.query.lab;
+    const rawFilter = req.query.labId || req.query.lab;
+    const filter = rawFilter === 'all' ? undefined : rawFilter;
     const { rows } = await pool.query(
-      `SELECT r.*,l.lab_code FROM public.resources r JOIN public.labs l ON l.id=r.lab_id ${filter ? 'WHERE l.id::text=$1 OR lower(l.lab_code)=lower($1)' : ''} ORDER BY r.label`,
+      `SELECT r.*,l.lab_code, meta.after->>'type' AS type, meta.after->>'description' AS description, meta.after->>'maintenanceStatus' AS "maintenanceStatus" FROM public.resources r JOIN public.labs l ON l.id=r.lab_id LEFT JOIN LATERAL (SELECT after FROM audit_log WHERE action='RESOURCE_METADATA_UPDATED' AND after->>'resource_id'=r.id::text ORDER BY created_at DESC LIMIT 1) meta ON true ${filter ? 'WHERE l.id::text=$1 OR lower(l.lab_code)=lower($1)' : ''} ORDER BY r.label`,
       filter ? [filter] : [],
     );
     return success(res, rows, 'Live resources');
@@ -58,7 +59,7 @@ resourceRouter.get(
   '/:resourceId',
   asyncHandler(async (req, res) => {
     const resource = (
-      await pool.query('SELECT * FROM public.resources WHERE id::text=$1', [req.params.resourceId])
+      await pool.query(`SELECT r.*, meta.after->>'type' AS type, meta.after->>'description' AS description, meta.after->>'maintenanceStatus' AS "maintenanceStatus" FROM resources r LEFT JOIN LATERAL (SELECT after FROM audit_log WHERE action='RESOURCE_METADATA_UPDATED' AND after->>'resource_id'=r.id::text ORDER BY created_at DESC LIMIT 1) meta ON true WHERE r.id::text=$1`, [req.params.resourceId])
     ).rows[0];
     if (!resource) throw new AppError('Resource not found', 404);
     return success(res, resource, 'Resource retrieved');

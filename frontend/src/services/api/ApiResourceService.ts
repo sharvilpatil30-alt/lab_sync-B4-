@@ -29,7 +29,7 @@ export class ApiResourceService implements IResourceService {
     return {
       success: true,
       message: 'Resources retrieved successfully',
-      data: rawList.map(mapBackendEquipmentToResource),
+      data: rawList.map(mapBackendEquipmentToResource).filter((r: Resource) => (!filters?.status || filters.status === 'all' || r.operationalStatus === filters.status) && (!filters?.type || filters.type === 'all' || r.type.toLowerCase() === filters.type.toLowerCase())),
     };
   }
 

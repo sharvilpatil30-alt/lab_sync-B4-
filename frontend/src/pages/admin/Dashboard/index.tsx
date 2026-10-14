@@ -1,3 +1,4 @@
+import { AuditPanel } from './AuditPanel';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -305,6 +306,7 @@ export const AdminDashboard: React.FC = () => {
         </div>
       </div>
 
+      <AuditPanel />
       {/* Status Overview & Live Alerts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">

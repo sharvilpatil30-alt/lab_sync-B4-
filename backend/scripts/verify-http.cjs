@@ -109,6 +109,29 @@ const { config } = require('../dist/config/env.js');
         assert.ok(Array.isArray(r.body.data));
         return { ms: r.ms };
       });
+    await check('All-resource admin filter retains all 432 resources', async()=>{
+      const r=await call('/resources?lab=all&type=all&status=all');assert.equal(r.status,200);assert.equal(r.body.data.length,432);
+    });
+    for(const path of ['/reports/dashboard','/admin/audit','/admin/scheduling']) {
+      await check('Admin live '+path,async()=>{const r=await call(path,{headers:headers('admin')});assert.equal(r.status,200);if(path.includes('reports')){assert.equal(r.body.data.labUtilization.length,12);assert.equal(r.body.data.resourceUtilization.length,432);}else assert.ok(Array.isArray(r.body.data));});
+      await check('Student denied '+path,async()=>{assert.equal((await call(path,{headers:headers('student')})).status,403);});
+    }
+    await check('Profile role escalation rejected',async()=>{assert.equal((await call('/users/me',{method:'PATCH',headers:headers('student'),body:JSON.stringify({role:'admin'})})).status,403);});
+    await check('Student inventory mutation denied',async()=>{assert.equal((await call('/resources/'+resources[0].id,{method:'PATCH',headers:headers('student'),body:JSON.stringify({operationalStatus:'maintenance'})})).status,403);});
+    await check('Invalid report date rejected',async()=>{assert.equal((await call('/reports/dashboard?startDate=invalid',{headers:headers('admin')})).status,400);});
+    await check('Admin inventory status/audit changes rollback without new bookings',async()=>{
+      const {changeInventory}=require('../dist/modules/admin/routes.js');const db=await pool.connect();
+      try{await db.query('BEGIN');const before=(await db.query("SELECT r.* FROM resources r WHERE r.state='AVAILABLE' AND NOT EXISTS(SELECT 1 FROM bookings b WHERE b.resource_id=r.id AND b.end_at>now() AND b.state IN ('LEASED','CONFIRMED','ACTIVE','REQUESTED','QUEUED')) LIMIT 1")).rows[0];assert.ok(before);
+      await changeInventory(db,{id:profile.id},before.id,'resource','maintenance');assert.equal((await db.query('SELECT state FROM resources WHERE id=$1',[before.id])).rows[0].state,'MAINTENANCE');
+      await changeInventory(db,{id:profile.id},before.id,'resource','available');assert.equal((await db.query('SELECT state FROM resources WHERE id=$1',[before.id])).rows[0].state,'AVAILABLE');
+      assert.ok((await db.query("SELECT 1 FROM audit_log WHERE action='INVENTORY_STATUS_UPDATED' AND after->>'target'=$1",[before.id])).rowCount);
+      }finally{await db.query('ROLLBACK');db.release();}
+    });
+    await check('Prior approved bookings remain terminal; no new test bookings', async()=>{
+      const rows=(await pool.query("SELECT b.id,b.state FROM bookings b JOIN audit_log a ON a.after->>'booking_id'=b.id::text WHERE a.action='BOOKING_COMMIT' AND a.after->>'purpose'='INTEGRATION_TEST_20261014_DO_NOT_USE' ORDER BY b.id")).rows;
+      assert.equal(rows.length,2);assert.deepEqual(rows.map(r=>r.state).sort(),['CANCELLED','COMPLETED']);
+    });
+    await check('Resource detail loads persisted metadata',async()=>{const r=await call('/resources/'+resources[0].id);assert.equal(r.status,200);assert.equal(r.body.data.id,resources[0].id);});
     await check('Persisted demo booking route uses live lab mapping', async () => {
       const record = (
         await pool.query(

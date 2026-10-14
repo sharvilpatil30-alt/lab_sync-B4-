@@ -65,6 +65,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { data } = supabase.auth.onAuthStateChange((event, session) => {
         if (!isMounted) return;
         if (event === 'SIGNED_OUT' || !session) {
+          queryClient.clear();
           setUser(null);
           setToken(null);
           localStorage.removeItem('smart_campus_auth_token');

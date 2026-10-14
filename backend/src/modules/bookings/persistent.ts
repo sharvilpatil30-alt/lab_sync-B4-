@@ -37,7 +37,7 @@ export async function audit(
 ) {
   await db.query(
     'INSERT INTO public.audit_log(actor_id,action,before,after,correlation_id) VALUES($1,$2,$3,$4,$5)',
-    [actor, action, before, after, correlation],
+    [actor, action, before == null ? null : JSON.stringify(before), after == null ? null : JSON.stringify(after), correlation],
   );
 }
 export async function syncResource(db: PoolClient, id: string) {

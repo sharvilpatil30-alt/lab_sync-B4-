@@ -26,12 +26,12 @@ import { LabUtilizationReport, ResourceUtilizationReport } from '../../../types'
 
 export const AdminReportsPage: React.FC = () => {
   const { addToast } = useToast();
-  const [startDate, setStartDate] = useState('2026-09-17');
-  const [endDate, setEndDate] = useState('2026-09-23');
+  const [startDate, setStartDate] = useState(() => new Date(Date.now()-30*86400000).toLocaleDateString('en-CA'));
+  const [endDate, setEndDate] = useState(() => new Date().toLocaleDateString('en-CA'));
   const [selectedLabFilter, setSelectedLabFilter] = useState('all');
   const [selectedStatusFilter, setSelectedStatusFilter] = useState('all');
 
-  const { data: reportData, isLoading, refetch } = useReportsDashboard({ startDate, endDate });
+  const { data: reportData, isLoading, error: reportError, refetch } = useReportsDashboard({ startDate, endDate });
   const { data: allBookings = [] } = useAllBookings();
   const { data: labs = [] } = useLabs();
   const { data: resources = [] } = useResources();
@@ -58,7 +58,7 @@ export const AdminReportsPage: React.FC = () => {
       ['Total Reservations', reportData.summary.totalBookings],
       ['Average Utilization', `${reportData.summary.averageUtilization}%`],
       ['Peak Hour', reportData.summary.peakHour],
-      ['Queue Resolution Rate', `${reportData.summary.queueResolutionRate}%`],
+      ['Queue Resolution Rate', reportData.summary.queueResolutionRate === null ? 'No queued history' : `${reportData.summary.queueResolutionRate == null ? 'No queued history' : `${reportData.summary.queueResolutionRate}%`}`],
       ['Completed Sessions', completedCount],
       ['Confirmed Sessions', confirmedCount],
       ['Queued Sessions', queuedCount],
@@ -174,6 +174,7 @@ export const AdminReportsPage: React.FC = () => {
   if (isLoading || !reportData) {
     return (
       <div className="space-y-6">
+      {reportError && <p role="alert" className="text-red-500">Reports unavailable: {reportError.message}</p>}
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-24 w-full" />
         <Skeleton className="h-72 w-full" />
@@ -273,7 +274,7 @@ export const AdminReportsPage: React.FC = () => {
 
         <div className="glass-card p-4 rounded-xl border border-slate-800 space-y-1">
           <span className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Queue Clearance Rate</span>
-          <p className="text-2xl font-extrabold text-amber-400 font-mono">{reportData.summary.queueResolutionRate}%</p>
+          <p className="text-2xl font-extrabold text-amber-400 font-mono">{reportData.summary.queueResolutionRate == null ? 'No queued history' : `${reportData.summary.queueResolutionRate}%`}</p>
         </div>
       </div>
 

@@ -86,7 +86,7 @@ export const AdminResourceListPage: React.FC = () => {
           <Button
             variant="primary"
             size="sm"
-            onClick={() => navigate('/admin/resources/add')}
+            disabled title="New equipment is added through the reviewed inventory import"
             leftIcon={<Plus className="w-4 h-4" />}
           >
             Add Resource
@@ -109,13 +109,7 @@ export const AdminResourceListPage: React.FC = () => {
             onChange={(e) => setTypeFilter(e.target.value)}
             options={[
               { value: 'all', label: 'All Categories' },
-              { value: 'compute', label: 'Compute / GPUs' },
-              { value: 'robotics', label: 'Robotics & Automation' },
-              { value: 'server', label: 'Server & Rack Infrastructure' },
-              { value: 'networking', label: 'Networking & Gateways' },
-              { value: 'fabrication', label: 'Rapid Prototyping & CNC' },
-              { value: 'vr', label: 'Virtual & Mixed Reality' },
-              { value: 'biotech', label: 'Biotechnology & Sequencing' },
+              ...Array.from(new Set(resources.map(r => r.type))).map(type => ({value: type, label: type})),
             ]}
           />
 

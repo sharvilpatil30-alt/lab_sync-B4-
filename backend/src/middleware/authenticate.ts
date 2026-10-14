@@ -143,13 +143,15 @@ export async function authenticate(
     const profile = result.rows[0];
     if (!profile || !['student','faculty','admin','lab_admin'].includes(profile.role)) return next(new AppError('Account role is not supported',403));
 
+    const metadata = (await pool.query("SELECT after FROM audit_log WHERE actor_id=$1 AND action='PROFILE_UPDATED' ORDER BY created_at DESC LIMIT 1", [authUser.id])).rows[0]?.after;
     req.user = {
       id: authUser.id,
       _id: authUser.id,
       name: profile.full_name,
       email,
       role: profile.role === 'lab_admin' ? 'admin' : profile.role,
-      department: 'Computer Science & Engineering',
+      department: metadata?.department || 'Computer Science & Engineering',
+      profile: { phone: metadata?.profile?.phone || '' },
     };
 
     next();
