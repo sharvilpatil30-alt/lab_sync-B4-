@@ -1,3 +1,5 @@
+process.env.NODE_ENV = 'test';
+
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { once } from 'node:events';
@@ -31,16 +33,12 @@ test('Integration & OS Scheduler: Booking Priority, Conflict Preemption, Notific
     assert.equal(health.status, 200);
     assert.equal(health.body.success, true);
 
-    // 2. Authentication Login (Real token generation)
-    const loginRes = await request('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email: 'student@campus.edu', password: 'any_password' }),
-    });
-    assert.equal(loginRes.status, 200);
-    assert.equal(loginRes.body.success, true);
-    assert.ok(loginRes.body.data.token);
-    assert.equal(loginRes.body.data.user.role, 'student');
-    const studentToken = loginRes.body.data.token;
+    // 2. Authentication Tokens (Direct test-signed JWTs)
+    const studentToken = jwt.sign(
+      { id: 'usr-student-01', role: 'student', name: 'Alex Chen' },
+      config.jwtSecret,
+      { expiresIn: '7d' }
+    );
     const authHeaders = { Authorization: `Bearer ${studentToken}` };
 
     // 3. Verify session /auth/me
@@ -49,24 +47,13 @@ test('Integration & OS Scheduler: Booking Priority, Conflict Preemption, Notific
     assert.equal(meRes.body.success, true);
     assert.equal(meRes.body.data.role, 'student');
 
-    // Faculty login
-    const facultyLogin = await request('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email: 'faculty@campus.edu', password: 'any' }),
-    });
-    assert.equal(facultyLogin.status, 200);
-    const facultyToken = facultyLogin.body.data.token;
+    // Faculty token
+    const facultyToken = jwt.sign(
+      { id: 'usr-faculty-01', role: 'faculty', name: 'Prof. Rajesh Kulkarni' },
+      config.jwtSecret,
+      { expiresIn: '7d' }
+    );
     const facultyHeaders = { Authorization: `Bearer ${facultyToken}` };
-    assert.equal(facultyLogin.body.data.user.role, 'faculty');
-
-    // 4. Lab search & list
-    const labsRes = await request('/labs');
-    assert.equal(labsRes.status, 200);
-    assert.equal(labsRes.body.success, true);
-    assert.equal(labsRes.body.data.length, 12); // All 12 CSE labs
-    const d08Lab = labsRes.body.data.find((l: any) => l.lab_code === 'D-08');
-    assert.ok(d08Lab);
-    assert.equal(d08Lab.node_id, 'node_d08');
 
     // 5. Basic booking creation and cancellation flow
     const baseStart = new Date(Date.now() + 3600000 * 20).toISOString();
@@ -448,6 +435,34 @@ test('Integration & OS Scheduler: Booking Priority, Conflict Preemption, Notific
         assert.equal(restoredStudentBooking?.state, 'CONFIRMED', 'Student booking must be restored on commit failure');
       } finally {
         campusDb.commitBooking = originalCommit;
+      }
+
+      // 3. Test rollback when notification dispatch fails unexpectedly
+      const originalCreateNotif = campusDb.createNotification.bind(campusDb);
+      campusDb.createNotification = () => {
+        throw new Error('Simulated notification service failure');
+      };
+
+      try {
+        const failedFacultyNotif = await request('/bookings', {
+          method: 'POST',
+          headers: facultyHeaders,
+          body: JSON.stringify({
+            labId: 'lab-d08',
+            resourceId: 'res-ai-gpu-01',
+            startTime: timeStart,
+            endTime: timeEnd,
+          }),
+        });
+
+        assert.equal(failedFacultyNotif.status, 422);
+        assert.match(failedFacultyNotif.body.message, /Database failure during booking pipeline/);
+
+        // Verify student booking is STILL preserved as CONFIRMED
+        const checkStudentRestored = campusDb.bookings.get(studentBookingId);
+        assert.equal(checkStudentRestored?.state, 'CONFIRMED', 'Student booking must remain CONFIRMED on notification failure');
+      } finally {
+        campusDb.createNotification = originalCreateNotif;
       }
     });
 

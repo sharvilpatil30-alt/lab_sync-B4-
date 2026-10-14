@@ -130,6 +130,9 @@ export class DFDOrchestrator {
       updated_at: new Date().toISOString(),
     };
 
+    // Take database snapshot before any modifications to guarantee full atomic rollback
+    const dbSnapshot = campusDb.createSnapshot();
+
     const requestedRes = campusDb.createRequestedBooking(newBooking);
     if (!requestedRes.success) {
       return {
@@ -147,7 +150,7 @@ export class DFDOrchestrator {
 
     // Handle faculty-versus-faculty conflict or student conflict when allocation cannot proceed
     if (scheduleResult.conflictType === 'FACULTY_CONFLICT') {
-      campusDb.bookings.delete(newBooking.id);
+      campusDb.restoreSnapshot(dbSnapshot);
       return {
         success: false,
         conflict: true,
@@ -160,7 +163,7 @@ export class DFDOrchestrator {
     }
 
     if (scheduleResult.decision === 'REJECTED') {
-      campusDb.bookings.delete(newBooking.id);
+      campusDb.restoreSnapshot(dbSnapshot);
       return {
         success: false,
         correlationId,
@@ -170,7 +173,7 @@ export class DFDOrchestrator {
     }
 
     if (scheduleResult.decision === 'WAITLISTED') {
-      campusDb.bookings.delete(newBooking.id);
+      campusDb.restoreSnapshot(dbSnapshot);
       return {
         success: false,
         conflict: true,
@@ -180,8 +183,6 @@ export class DFDOrchestrator {
       };
     }
 
-    // Take database snapshot before any preemption mutations to guarantee transaction safety
-    const dbSnapshot = campusDb.createSnapshot();
     const cancelledStudentBookings: Booking[] = [];
 
     try {

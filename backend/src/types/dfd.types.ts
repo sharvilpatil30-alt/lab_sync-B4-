@@ -76,8 +76,21 @@ export interface Booking {
   start_at: string;
   end_at: string;
   idempotency_key: string;
+  cancellation_reason?: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface NotificationRecord {
+  id: string;
+  user: string;
+  title: string;
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  read: boolean;
+  relatedEntityType?: string;
+  relatedEntityId?: string;
+  createdAt: string;
 }
 
 export type SchedulingPolicy = 'FCFS' | 'SJF' | 'ROUND_ROBIN' | 'PRIORITY';
