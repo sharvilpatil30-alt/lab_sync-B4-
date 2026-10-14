@@ -178,6 +178,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
                 })),
             };
           } else if (route === "/resources") data = catalog.resources;
+          else if (route === "/bookings/preview") data = {canConfirm:true,previewToken:'isolated-preview',conflicts:[{id:'student-fixture',priority:2}]};
           else if (route === "/bookings" && request.method === "POST") {
             submission = JSON.parse(request.postData);
             if (bookingConflict) {
@@ -497,6 +498,24 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
         await waitFor("location.pathname === '/student/dashboard'");
       },
     );
+    await check("Faculty entire-lab preview and explicit confirmation", async () => {
+      await login("faculty");
+      await waitFor("location.pathname === '/faculty/dashboard'");
+      await navigate('/faculty/bookings/create');
+      await waitFor("!!document.querySelector('[aria-label=\"Booking mode\"]')");
+      await evaluate(`(()=>{const e=document.querySelector('[aria-label="Booking mode"]');e.value='WHOLE_LAB';e.dispatchEvent(new Event('change',{bubbles:true}));})()`);
+      await click('Next: Select Date'); await click('Next: Select Seat');
+      await click('Next: Enter Purpose'); await input('textarea','Entire lab classroom browser test');
+      await click('Next: Review Booking');
+      await waitFor("document.body.innerText.includes('student-fixture')");
+      assert.equal(await evaluate("Array.from(document.querySelectorAll('button')).find(b=>b.innerText.includes('Confirm & Reserve Entire Lab')).disabled"),true);
+      await evaluate("document.querySelector('input[type=checkbox]').click()");
+      await click('Confirm & Reserve Entire Lab');
+      await waitFor("location.pathname.startsWith('/faculty/bookings/') && !location.pathname.endsWith('/create')");
+      assert.equal(submission.bookingScope,'WHOLE_LAB'); assert.equal(submission.confirmDisplacement,true);
+      assert.equal(submission.previewToken,'isolated-preview');
+      await login('student'); await waitFor("location.pathname === '/student/dashboard'");
+    });
     await check(
       "Catalog request failure produces retryable error",
       async () => {

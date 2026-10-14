@@ -19,6 +19,7 @@ export type BookingStatus =
   | string;
 
 export interface Booking {
+  bookingScope?: 'WORKSTATION' | 'WHOLE_LAB';
   id: string;
   bookingId: string;
   user: string | User;

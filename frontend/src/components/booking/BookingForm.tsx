@@ -24,6 +24,8 @@ import { Lab, Resource, BookingStatus } from '../../types';
 import { Button, Input, Select, ErrorMessage, StatusBadge } from '../common';
 import { useCreateBooking, useLabs, useAvailableResources, useAuth } from '../../hooks';
 
+import { apiClient } from '../../services/api/client';
+
 // getRandomValues also works on the team's HTTP LAN origin (randomUUID requires HTTPS).
 const createRequestKey = () => Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
 
@@ -40,10 +42,12 @@ const bookingSchema = z
     }, 'Date must be today or in the future.'),
     startTime: z.string().min(1, 'Start time is required.'),
     endTime: z.string().min(1, 'End time is required.'),
-    selectedResourceId: z.string().min(1, 'Please select a workstation.'),
+    selectedResourceId: z.string(),
+    bookingScope: z.enum(['WORKSTATION', 'WHOLE_LAB']),
     requiredResources: z.array(z.string()),
     purpose: z.string().min(10, 'Purpose description must be at least 10 characters long.'),
   })
+  .refine(data => data.bookingScope === 'WHOLE_LAB' || !!data.selectedResourceId, { message: 'Select a workstation', path: ['selectedResourceId'] })
   .refine(
     (data) => {
       if (data.startTime && data.endTime) {
@@ -124,6 +128,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
   } = useForm<BookingFormValues>({
     resolver: zodResolver(bookingSchema),
     defaultValues: {
+      bookingScope: 'WORKSTATION',
       labId: initialLabId || '',
       date: defaultDate,
       startTime: initialStartTime || '10:00',
@@ -135,6 +140,10 @@ export const BookingForm: React.FC<BookingFormProps> = ({
     mode: 'onChange',
   });
 
+  const bookingScope = watch('bookingScope');
+  const wholeLab = bookingScope === 'WHOLE_LAB';
+  const [preview, setPreview] = useState<{canConfirm:boolean;previewToken:string;conflicts:{id:string;priority:number}[]} | null>(null);
+  const [confirmedDisplacement, setConfirmedDisplacement] = useState(false);
   const selectedLabId = watch('labId');
   const selectedDate = watch('date');
   const selectedStartTime = watch('startTime');
@@ -179,7 +188,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
 
   const submitting = useRef(false);
   const requestKey = useRef(createRequestKey());
-  useEffect(() => { requestKey.current = createRequestKey(); }, [selectedLabId, selectedResourceId, selectedDate, selectedStartTime, selectedEndTime, enteredPurpose]);
+  useEffect(() => { requestKey.current = createRequestKey(); setPreview(null); setConfirmedDisplacement(false); }, [bookingScope, selectedLabId, selectedResourceId, selectedDate, selectedStartTime, selectedEndTime, enteredPurpose]);
   useEffect(() => { register('selectedResourceId'); register('requiredResources'); }, [register]);
   useEffect(() => {
     setValue('selectedResourceId', '');
@@ -211,11 +220,20 @@ export const BookingForm: React.FC<BookingFormProps> = ({
         setConflictMessage('Choose a future start time and a later end time (IST).');
       }
     } else if (currentStep === 3) {
-      if (!availabilityError && availableSeats.some(s => s.resourceId === selectedResourceId && canSelectSeat(s))) setStep(4);
+      if (wholeLab || (!availabilityError && availableSeats.some(s => s.resourceId === selectedResourceId && canSelectSeat(s)))) setStep(4);
     } else if (currentStep === 4) {
       const validPurpose = await trigger('purpose');
-      if (validPurpose) setStep(5);
+      if (validPurpose) {
+        if (role === 'faculty') {
+          try {
+            const response = await apiClient.post('/bookings/preview', {labId:selectedLabId, resourceId:selectedResourceId, bookingScope, startTime:startIso, endTime:endIso, purpose:enteredPurpose});
+            setPreview(response.data.data); setConfirmedDisplacement(false); setConflictMessage(null);
+          } catch (error: any) { setConflictMessage(error.message || 'Conflict preview failed'); return; }
+        }
+        setStep(5);
+      }
     } else if (currentStep === 5) {
+      if (role === 'faculty' && (!preview?.canConfirm || (preview.conflicts.length > 0 && !confirmedDisplacement))) return;
       if (await trigger()) { setStep(6); await executeBookingSubmission(); }
     }
   };
@@ -237,9 +255,10 @@ export const BookingForm: React.FC<BookingFormProps> = ({
     const resourceIdToBook = selectedResourceId;
 
     try {
-      if (!resourceIdToBook || availabilityError || !availableSeats.some(s => s.resourceId === resourceIdToBook && canSelectSeat(s))) throw new Error('Choose an available workstation before confirming.');
+      if (!wholeLab && (!resourceIdToBook || availabilityError || !availableSeats.some(s => s.resourceId === resourceIdToBook && canSelectSeat(s)))) throw new Error('Choose an available workstation before confirming.');
       const res = await createBookingMutation.mutateAsync({
         resourceId: resourceIdToBook,
+        bookingScope, previewToken: preview?.previewToken, confirmDisplacement: confirmedDisplacement,
         idempotencyKey: requestKey.current,
         startTime: startIso,
         endTime: endIso,
@@ -272,7 +291,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
         setSubmissionOutcome({
           status: 'accepted',
           bookingId: newBookingId,
-          message: 'Workstation seat reservation confirmed by campus backend.',
+          message: wholeLab ? 'Entire lab reservation confirmed.' : 'Workstation seat reservation confirmed by campus backend.',
         });
         if (onSuccess && newBookingId) {
           onSuccess(newBookingId);
@@ -380,6 +399,11 @@ export const BookingForm: React.FC<BookingFormProps> = ({
             </p>
           </div>
 
+          {role === 'faculty' && <label className="block text-sm">Booking mode
+            <select aria-label="Booking mode" {...register('bookingScope')} className="block w-full bg-slate-900 p-3 rounded">
+              <option value="WORKSTATION">Single Workstation</option><option value="WHOLE_LAB">Entire Lab</option>
+            </select>
+          </label>}
           <Controller
             name="labId"
             control={control}
@@ -526,7 +550,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
           {availabilityError && <ErrorMessage title="Seat availability unavailable" message={availabilityError.message} onRetry={() => { void refetchAvailability(); }} />}
 
           {/* Seat Grid */}
-          {availableSeats.length > 0 ? (
+          {wholeLab ? <p>Entire lab: all workstations will be reserved. Conflicts are checked before confirmation.</p> : availableSeats.length > 0 ? (
             <div className="space-y-2">
               <p className="text-[11px] text-slate-400 font-medium">Available bookable workstations for this slot:</p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-72 overflow-y-auto p-1">
@@ -584,7 +608,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
             <Button
               variant="primary"
               onClick={() => handleNextFromStep(3)}
-              disabled={!!availabilityError || isAvailabilityLoading || !availableSeats.some(s => s.resourceId === selectedResourceId && canSelectSeat(s))}
+              disabled={!wholeLab && (!!availabilityError || isAvailabilityLoading || !availableSeats.some(s => s.resourceId === selectedResourceId && canSelectSeat(s)))}
               rightIcon={<ArrowRight className="w-4 h-4" />}
             >
               Next: Enter Purpose
@@ -713,7 +737,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({
             <div className="pb-2">
               <span className="text-[10px] text-slate-400 uppercase font-semibold">Selected Workstation / Seat</span>
               <p className="text-indigo-300 font-mono font-bold mt-0.5">
-                {selectedResourceId ? `Seat Resource ID: ${selectedResourceId}` : 'Standard Workstation Bench'}
+                {wholeLab ? 'Entire Lab — all workstations' : selectedResourceId ? `Seat Resource ID: ${selectedResourceId}` : 'Standard Workstation Bench'}
               </p>
             </div>
 
@@ -723,6 +747,11 @@ export const BookingForm: React.FC<BookingFormProps> = ({
             </div>
           </div>
 
+          {preview && <div role="status">
+            {!preview.canConfirm ? <p>Reservation unavailable: faculty conflict or maintenance. Choose another time.</p> : <p>{preview.conflicts.length} overlapping student booking(s).</p>}
+            {preview.conflicts.map(conflict => <p key={conflict.id}>{conflict.id} — {conflict.priority < 2 ? 'Faculty/Admin' : 'Student'}</p>)}
+            {preview.canConfirm && preview.conflicts.length > 0 && <label><input type="checkbox" checked={confirmedDisplacement} onChange={e => setConfirmedDisplacement(e.target.checked)} /> I explicitly confirm cancellation of these student bookings.</label>}
+          </div>}
           <div className="flex items-center justify-between pt-4 border-t border-slate-800">
             <Button variant="ghost" onClick={handleBack} leftIcon={<ArrowLeft className="w-4 h-4" />}>
               Back to Purpose
@@ -730,11 +759,12 @@ export const BookingForm: React.FC<BookingFormProps> = ({
             <Button
               variant="primary"
               onClick={() => handleNextFromStep(5)}
+              disabled={role === 'faculty' && (!preview?.canConfirm || (preview.conflicts.length > 0 && !confirmedDisplacement))}
               isLoading={createBookingMutation.isPending}
               loadingText="Submitting to Backend..."
               rightIcon={<CheckCircle2 className="w-4 h-4" />}
             >
-              Confirm & Book Workstation
+              {wholeLab ? 'Confirm & Reserve Entire Lab' : 'Confirm & Book Workstation'}
             </Button>
           </div>
         </div>

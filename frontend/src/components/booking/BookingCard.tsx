@@ -45,7 +45,7 @@ export const BookingCard: React.FC<BookingCardProps> = ({ booking, onCancel }) =
       </div>
 
       <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
-        {booking.purpose}
+        {booking.bookingScope === 'WHOLE_LAB' && <strong>Entire Lab — </strong>}{booking.purpose}
       </p>
 
       {booking.status === 'QUEUED' && (

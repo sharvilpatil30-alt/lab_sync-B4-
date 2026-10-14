@@ -110,7 +110,7 @@ export const FacultyDashboard: React.FC = () => {
               onClick={() => navigate('/faculty/bookings/create')}
               leftIcon={<CalendarPlus className="w-4 h-4" />}
             >
-              Reserve Lab for Class/Research
+              Reserve Workstation or Entire Lab
             </Button>
             <Button
               variant="outline"

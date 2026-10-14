@@ -43,15 +43,19 @@ export async function audit(
 export async function syncResource(db: PoolClient, id: string) {
   await db.query(
     `UPDATE public.resources r SET state=CASE WHEN EXISTS (
-    SELECT 1 FROM public.bookings b WHERE b.resource_id=r.id AND b.state IN ('LEASED','CONFIRMED','ACTIVE') AND b.end_at>now()
+    SELECT 1 FROM public.bookings b WHERE (b.resource_id=r.id OR (b.booking_scope='WHOLE_LAB' AND b.lab_id=r.lab_id)) AND b.state IN ('LEASED','CONFIRMED','ACTIVE') AND b.end_at>now()
   ) THEN 'ALLOCATED' ELSE 'AVAILABLE' END, version=version+1, updated_at=now()
   WHERE id=$1 AND state <> 'MAINTENANCE'`,
     [id],
   );
 }
-export async function createPersistentBooking(db: PoolClient, user: any, body: any) {
-  const { labId, resourceId, startTime, endTime } = body;
-  if (typeof resourceId !== 'string' || !resourceId || typeof labId !== 'string' || !labId)
+export async function createPersistentBooking(db: PoolClient, user: any, body: any, preview = false) {
+  const { labId, startTime, endTime } = body;
+  const wholeLab = body.bookingScope === 'WHOLE_LAB';
+  if (body.bookingScope && !['WHOLE_LAB','WORKSTATION'].includes(body.bookingScope)) throw new AppError('Invalid booking mode',400);
+  if (wholeLab && user.role !== 'faculty') throw new AppError('Whole-lab reservations require faculty access',403);
+  const resourceId = wholeLab ? null : body.resourceId;
+  if ((!wholeLab && (typeof resourceId !== 'string' || !resourceId)) || typeof labId !== 'string' || !labId)
     throw new AppError('Select a laboratory and workstation', 400);
   if (
     ![startTime, endTime].every(
@@ -78,7 +82,7 @@ export async function createPersistentBooking(db: PoolClient, user: any, body: a
       lab.id,
     ])
   ).rows;
-  if (!resources.some((r) => r.id === resourceId))
+  if (!wholeLab && !resources.some((r) => r.id === resourceId))
     throw new AppError('Workstation does not belong to selected laboratory', 400);
   const start = new Date(startTime).toISOString(),
     end = new Date(endTime).toISOString();
@@ -92,7 +96,7 @@ export async function createPersistentBooking(db: PoolClient, user: any, body: a
   if (key.length > 300) throw new AppError('Idempotency key is too long', 400);
   const replay = (await db.query('SELECT * FROM public.bookings WHERE idempotency_key=$1', [key]))
     .rows[0];
-  if (replay) {
+  if (replay && !preview) {
     if (
       replay.user_id !== user.id ||
       replay.lab_id !== lab.id ||
@@ -122,21 +126,23 @@ export async function createPersistentBooking(db: PoolClient, user: any, body: a
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
-  const result = SchedulingEngine.evaluate(booking, 'PRIORITY', resourceId, {
-    resources: new Map(resources.map((r) => [r.id, r as Resource])),
-    bookings: new Map(
-      rows.map((b) => [
-        b.id,
-        {
-          ...b,
-          start_at: new Date(b.start_at).toISOString(),
-          end_at: new Date(b.end_at).toISOString(),
-        } as Booking,
-      ]),
-    ),
-  });
-  if (result.decision !== 'ALLOCATED')
-    throw new AppError('Scheduling conflict: workstation is unavailable for this time window', 409);
+  const overlaps = rows.filter(b=>new Date(b.start_at).getTime()<Date.parse(end) && new Date(b.end_at).getTime()>Date.parse(start)
+    && (wholeLab || b.booking_scope==='WHOLE_LAB' || b.resource_id===resourceId));
+  const blocked = overlaps.some(b=>b.priority<2 || user.role==='student');
+  const previewToken = createHash('sha256').update(JSON.stringify([user.id,lab.id,resourceId,start,end,purpose,overlaps.map(b=>[b.id,b.version,b.state]).sort()])).digest('hex');
+  if (preview) return { booking: { bookingScope: wholeLab?'WHOLE_LAB':'WORKSTATION', conflicts: overlaps.map(b=>({id:b.id,state:b.state,priority:b.priority,startAt:b.start_at,endAt:b.end_at})), canConfirm: !blocked && resources.length>0 && !(wholeLab ? resources.some(r=>r.state==='MAINTENANCE') : resources.find(r=>r.id===resourceId)?.state==='MAINTENANCE'), previewToken }, replay:false };
+  if (blocked) throw new AppError('Scheduling conflict: faculty or whole-lab reservation cannot be displaced',409);
+  if (overlaps.length && user.role==='faculty' && (body.confirmDisplacement!==true || body.previewToken!==previewToken))
+    throw new AppError('Preview conflicts and explicitly confirm student displacement. Refresh preview if conflicts changed.',409);
+  if (wholeLab && body.previewToken!==previewToken) throw new AppError('Preview the whole-lab reservation before confirming',409);
+  if (wholeLab && (!resources.length || resources.some(r=>r.state==='MAINTENANCE'))) throw new AppError('Entire lab is not available: empty catalog or maintenance',409);
+  const store = { resources: new Map(resources.map(r=>[r.id,r as Resource])), bookings: new Map(rows.map(b=>[b.id,{...b,start_at:new Date(b.start_at).toISOString(),end_at:new Date(b.end_at).toISOString()} as Booking])) };
+  const results = (wholeLab ? resources.map(r=>r.id) : [resourceId]).map(id=>SchedulingEngine.evaluate(booking,'PRIORITY',id,store));
+  const result = results[0];
+  if (!result || results.some(r=>r.decision!=='ALLOCATED')) throw new AppError('Scheduling conflict: requested reservation is unavailable',409);
+  result.preemptableStudentBookings = [...new Map(results.flatMap(r=>r.preemptableStudentBookings||[]).map(b=>[b.id,b])).values()];
+  result.metrics.conflictDetected = results.some(r => r.metrics.conflictDetected);
+  result.metrics.preemptedStudentBookingIds = result.preemptableStudentBookings.map(b => b.id);
   const correlation = randomUUID();
   for (const prior of result.preemptableStudentBookings || []) {
     const reason = `Faculty priority reservation in ${lab.lab_code} (${start} – ${end})`;
@@ -170,22 +176,22 @@ export async function createPersistentBooking(db: PoolClient, user: any, body: a
   }
   const saved = (
     await db.query(
-      `INSERT INTO public.bookings(id,user_id,lab_id,resource_id,state,priority,start_at,end_at,idempotency_key)
-    VALUES($1,$2,$3,$4,'CONFIRMED',$5,$6,$7,$8) RETURNING *`,
-      [booking.id, user.id, lab.id, resourceId, booking.priority, start, end, key],
+      `INSERT INTO public.bookings(id,user_id,lab_id,resource_id,state,priority,start_at,end_at,idempotency_key,booking_scope)
+    VALUES($1,$2,$3,$4,'CONFIRMED',$5,$6,$7,$8,$9) RETURNING *`,
+      [booking.id, user.id, lab.id, resourceId, booking.priority, start, end, key, wholeLab?'WHOLE_LAB':'WORKSTATION'],
     )
   ).rows[0];
   await db.query(
     `INSERT INTO public.scheduling_decisions(booking_id,request_id,policy,decision,lease_id,metrics) VALUES($1,$2,$3,$4,$5,$6)`,
     [booking.id, correlation, result.policy, result.decision, result.leaseId, result.metrics],
   );
-  await syncResource(db, resourceId);
+  for (const id of wholeLab ? resources.map(r=>r.id) : [resourceId]) await syncResource(db,id);
   await audit(
     db,
     user.id,
     'BOOKING_COMMIT',
     null,
-    { booking_id: booking.id, purpose, decision: result.decision, resource_id: resourceId },
+    { booking_id: booking.id, purpose, decision: result.decision, resource_id: resourceId, booking_scope: saved.booking_scope },
     correlation,
   );
   return {
@@ -232,7 +238,10 @@ export async function transitionPersistentBooking(
       [id, state],
     )
   ).rows[0];
-  if (before.resource_id) await syncResource(db, before.resource_id);
+  if (before.booking_scope==='WHOLE_LAB') {
+    const resources=(await db.query('SELECT id FROM resources WHERE lab_id=$1',[before.lab_id])).rows;
+    for (const r of resources) await syncResource(db,r.id);
+  } else if (before.resource_id) await syncResource(db, before.resource_id);
   await audit(db, user.id, `BOOKING_${state}`, before, {
     booking_id: id,
     reason: reason || (state === 'COMPLETED' ? 'Resource returned' : 'Cancelled by user'),

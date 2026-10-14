@@ -5,7 +5,7 @@ import { success } from '../../utils/apiResponse.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 export const monitoringRouter = Router();
 monitoringRouter.use(authenticate);
-const available = `r.state <> 'MAINTENANCE' AND NOT EXISTS(SELECT 1 FROM public.bookings b WHERE b.resource_id=r.id AND b.state IN ('LEASED','CONFIRMED','ACTIVE') AND b.start_at<=now() AND b.end_at>now())`;
+const available = `r.state <> 'MAINTENANCE' AND NOT EXISTS(SELECT 1 FROM public.bookings b WHERE (b.resource_id=r.id OR (b.booking_scope='WHOLE_LAB' AND b.lab_id=r.lab_id)) AND b.state IN ('LEASED','CONFIRMED','ACTIVE') AND b.start_at<=now() AND b.end_at>now())`;
 async function alerts() {
   const { rows } = await pool.query(
     "SELECT id,label,updated_at FROM public.resources WHERE state='MAINTENANCE' ORDER BY label",

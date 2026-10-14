@@ -1,5 +1,36 @@
 # Demo guide — 14 October 2026
 
+## Faculty: workstation or entire lab
+
+Login as `faculty.demo@ritindia.edu` with the team-held password. `/auth/me` supplies the trusted faculty role. Choose **Reserve Workstation or Entire Lab**, then choose **Single Workstation** or **Entire Lab**. Select lab and future IST date/time, select a seat for workstation mode (whole-lab mode reserves all seats), enter purpose, and review the server conflict preview. Faculty/Admin conflicts and maintenance prevent confirmation. Student conflicts require checking the explicit cancellation consent box. A changed conflict set requires going back to Purpose and refreshing the preview. Confirm, then view My Bookings; whole-lab cards are labelled **Entire Lab**. Cancellation releases every reserved workstation. Capture screenshots of mode selection, conflict preview/consent, confirmed booking, and cancellation. Use approved demos only; do not create live test bookings without approval.
+
+## Staging deployment — manual authorization required
+
+No hosting credentials are available in this workspace, so no public deployment was attempted. The existing Supabase already has migration `database/migrations/005_whole_lab_bookings.sql` applied. For a different database, apply that migration after the existing migrations before starting this version.
+
+1. In Render, create a **Blueprint** from `https://github.com/sharvilpatil30-alt/lab_sync-B4-`, branch `main`, using the committed `render.yaml`; authorize GitHub access when prompted.
+2. Set `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY` from the existing backend environment. Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` to the same public Supabase values. Set `CLIENT_URL` to the service's assigned HTTPS URL (update it after creation if necessary). Never use a service-role key in a Vite variable.
+3. Deploy the Blueprint. One service builds and serves both frontend and `/api/v1`; `PORT` is supplied by hosting. Add its HTTPS URL to Supabase Authentication URL Configuration (Site URL and allowed redirect URLs). Verify `/api/v1/health`, then demo login and a dashboard. Do not create live bookings as a deployment smoke test.
+
+Local production equivalent after filling the ignored environment files and building both workspaces:
+
+```bash
+SERVE_FRONTEND=true NODE_ENV=production PORT=5000 npm start --workspace=backend
+```
+
+Open `http://localhost:5000`; frontend Supabase variables are embedded at build time. Development still uses the two commands below.
+
+## Isolated booking regression
+
+```bash
+docker run --rm -d --name labsync-faculty-test -e POSTGRES_PASSWORD=isolated-test-only -p 127.0.0.1:55439:5432 postgres:16
+npm run build --workspace=backend
+(cd backend && node scripts/verify-faculty.cjs)
+docker stop labsync-faculty-test
+```
+
+Wait for PostgreSQL readiness before running the script. It uses a fixed localhost test connection and resets only that disposable database. Never repoint it to Supabase. No additional dependencies are required.
+
 ## Start the integrated application
 
 For a fresh checkout:
