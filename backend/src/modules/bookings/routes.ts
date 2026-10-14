@@ -148,7 +148,47 @@ bookingRouter.patch('/:bookingId/status', authenticate, (req: AuthenticatedReque
     return success(res, cancelRes.booking, 'Booking status transitioned to CANCELLED');
   }
 
+  if (status === 'COMPLETED') {
+    const completeRes = campusDb.completeBooking({ bookingId });
+    return success(res, completeRes.booking, 'Booking status transitioned to COMPLETED');
+  }
+
   booking.state = status;
   booking.updated_at = new Date().toISOString();
   return success(res, booking, `Booking status transitioned to ${status}`);
 });
+
+// POST /api/v1/bookings/:bookingId/return
+bookingRouter.post('/:bookingId/return', authenticate, (req: AuthenticatedRequest, res: Response) => {
+  const { bookingId } = req.params;
+  const userId = req.user?.id || req.user?._id;
+
+  const result = campusDb.completeBooking({
+    bookingId,
+    actorId: userId,
+  });
+
+  if (!result.success) {
+    return error(res, result.error || 'Failed to return resource', [], 400);
+  }
+
+  return success(res, result.booking, 'Booking successfully returned / completed');
+});
+
+// POST /api/v1/bookings/:bookingId/complete
+bookingRouter.post('/:bookingId/complete', authenticate, (req: AuthenticatedRequest, res: Response) => {
+  const { bookingId } = req.params;
+  const userId = req.user?.id || req.user?._id;
+
+  const result = campusDb.completeBooking({
+    bookingId,
+    actorId: userId,
+  });
+
+  if (!result.success) {
+    return error(res, result.error || 'Failed to complete booking', [], 400);
+  }
+
+  return success(res, result.booking, 'Booking successfully returned / completed');
+});
+

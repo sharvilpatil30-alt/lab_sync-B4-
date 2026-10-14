@@ -463,7 +463,7 @@ class CampusDatabase {
 
     if (booking.resource_id) {
       const resource = this.resources.get(booking.resource_id);
-      if (resource && resource.state === 'ALLOCATED') {
+      if (resource && (resource.state === 'ALLOCATED' || resource.state === 'BOOKED')) {
         resource.state = 'AVAILABLE';
         resource.version += 1;
         resource.updated_at = new Date().toISOString();
@@ -479,6 +479,52 @@ class CampusDatabase {
         booking_id: booking.id,
         reason: params.reason || 'User requested cancellation',
         resource_id: booking.resource_id,
+      },
+      correlation_id: corrId,
+      created_at: new Date().toISOString(),
+    });
+
+    return { success: true, booking };
+  }
+
+  /**
+   * Completes / returns a booking, releasing the allocated resource back to AVAILABLE
+   */
+  public completeBooking(params: {
+    bookingId: string;
+    actorId?: string;
+    correlationId?: string;
+  }): { success: boolean; booking?: Booking; error?: string } {
+    const booking = this.bookings.get(params.bookingId);
+    if (!booking) {
+      return { success: false, error: `Booking ${params.bookingId} not found` };
+    }
+
+    if (booking.state === 'COMPLETED') {
+      return { success: true, booking };
+    }
+
+    booking.state = 'COMPLETED';
+    booking.updated_at = new Date().toISOString();
+
+    if (booking.resource_id) {
+      const resource = this.resources.get(booking.resource_id);
+      if (resource && (resource.state === 'ALLOCATED' || resource.state === 'BOOKED')) {
+        resource.state = 'AVAILABLE';
+        resource.version += 1;
+        resource.updated_at = new Date().toISOString();
+      }
+    }
+
+    const corrId = params.correlationId || `corr-return-${Date.now()}`;
+    this.auditLog.push({
+      id: `aud-return-${Date.now()}`,
+      actor_id: params.actorId || booking.user_id,
+      action: 'BOOKING_COMPLETED',
+      after: {
+        booking_id: booking.id,
+        resource_id: booking.resource_id,
+        state: 'COMPLETED',
       },
       correlation_id: corrId,
       created_at: new Date().toISOString(),

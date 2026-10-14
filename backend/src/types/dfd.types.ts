@@ -39,7 +39,7 @@ export interface Lab {
   investment?: number;
 }
 
-export type ResourceState = 'AVAILABLE' | 'RESERVED' | 'ALLOCATED' | 'RELEASING' | 'MAINTENANCE';
+export type ResourceState = 'AVAILABLE' | 'RESERVED' | 'ALLOCATED' | 'BOOKED' | 'RELEASING' | 'MAINTENANCE';
 
 export interface Resource {
   id: string;
