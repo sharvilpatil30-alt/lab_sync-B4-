@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   Lock,
 } from 'lucide-react';
+import { supabase } from '../../../lib/supabase';
 import { useAuth, useUserProfile } from '../../../hooks';
 import { Button, Input, Breadcrumbs, useToast, ErrorMessage, ConfirmDialog } from '../../../components/common';
 
@@ -76,18 +77,18 @@ export const ProfilePage: React.FC = () => {
     }
 
     setIsChangingPassword(true);
-    // Simulate password change latency
-    await new Promise((r) => setTimeout(r, 600));
-    setIsChangingPassword(false);
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
+    try {
+      if (!supabase || !user?.email) throw new Error('Supabase authentication is unavailable');
+      const verified = await supabase.auth.signInWithPassword({ email: user.email, password: currentPassword });
+      if (verified.error) throw verified.error;
+      const changed = await supabase.auth.updateUser({ password: newPassword });
+      if (changed.error) throw changed.error;
+      setCurrentPassword(''); setNewPassword(''); setConfirmPassword('');
+      addToast({ type: 'success', title: 'Credentials Updated', message: 'Account password changed successfully.' });
+    } catch (err: any) {
+      addToast({ type: 'error', title: 'Password change failed', message: err.message || 'Try again.' });
+    } finally { setIsChangingPassword(false); }
 
-    addToast({
-      type: 'success',
-      title: 'Credentials Updated',
-      message: 'Account password changed successfully.',
-    });
   };
 
   const handleConfirmLogout = async () => {

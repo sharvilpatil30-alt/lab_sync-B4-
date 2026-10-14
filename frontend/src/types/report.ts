@@ -30,6 +30,6 @@ export interface ReportsDashboardData {
     totalBookings: number;
     averageUtilization: number;
     peakHour: string;
-    queueResolutionRate: number;
+    queueResolutionRate: number | null;
   };
 }

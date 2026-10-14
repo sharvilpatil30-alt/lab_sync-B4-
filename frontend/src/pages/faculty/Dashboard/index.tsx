@@ -41,7 +41,7 @@ export const FacultyDashboard: React.FC = () => {
   const { data: labs = [], isLoading: labsLoading, refetch: refetchLabs } = useLabs();
   const { data: myBookings = [], isLoading: bookingsLoading, refetch: refetchBookings } = useMyBookings();
   const { data: notifications = [], refetch: refetchNotifications } = useNotifications();
-  const { data: monitoring, isLoading: monitoringLoading, refetch: refetchMonitoring } = useLiveMonitoring();
+  const { data: monitoring, isLoading: monitoringLoading, error: monitoringError, refetch: refetchMonitoring } = useLiveMonitoring();
   const { data: alerts = [], refetch: refetchAlerts } = useAlerts();
 
   const handleRefresh = async () => {
@@ -82,6 +82,7 @@ export const FacultyDashboard: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-200">
+      {monitoringError && <div role="alert" className="p-4 text-rose-300">Campus metrics unavailable: {monitoringError.message}. Use Refresh to retry.</div>}
       {/* Faculty Academic Banner */}
       <div className="glass-panel p-6 sm:p-8 rounded-2xl border border-slate-800 relative overflow-hidden shadow-2xl">
         <div className="absolute top-0 right-0 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />

@@ -35,7 +35,7 @@ export const LoginPage: React.FC = () => {
   // Automatically redirect if already authenticated
   React.useEffect(() => {
     if (isAuthenticated && role && !isSessionExpired) {
-      if (from && !from.includes('/login') && !from.includes('/unauthorized')) {
+      if (from?.startsWith(`/${role}/`)) {
         navigate(from, { replace: true });
       } else if (role === 'admin') {
         navigate('/admin/dashboard', { replace: true });
@@ -71,7 +71,7 @@ export const LoginPage: React.FC = () => {
       const authenticatedUser = await login({ email: normalizedEmail, password });
       const targetRole = authenticatedUser?.role;
 
-      if (from && !from.includes('/login') && !from.includes('/unauthorized')) {
+      if (from?.startsWith(`/${targetRole}/`)) {
         navigate(from, { replace: true });
       } else if (targetRole === 'admin') {
         navigate('/admin/dashboard', { replace: true });

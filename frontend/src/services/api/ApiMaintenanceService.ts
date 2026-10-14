@@ -4,16 +4,8 @@ import { apiClient } from './client';
 
 export class ApiMaintenanceService implements IMaintenanceService {
   async list(filters?: MaintenanceFilters): Promise<ApiResponse<MaintenanceRecord[]>> {
-    try {
-      const res = await apiClient.get('/maintenance', { params: filters });
-      return res.data;
-    } catch {
-      return {
-        success: true,
-        message: 'No active maintenance work orders',
-        data: [],
-      };
-    }
+    const res = await apiClient.get('/maintenance', { params: filters });
+    return res.data;
   }
 
   async getById(id: string): Promise<ApiResponse<MaintenanceRecord>> {

@@ -11,6 +11,7 @@ export interface Lab {
   building: string;
   floor: number | string;
   capacity: number;
+  availableResourcesCount?: number;
   operationalStatus: LabOperationalStatus;
   maintenanceStatus?: string;
   availableResources?: string[] | Resource[];
