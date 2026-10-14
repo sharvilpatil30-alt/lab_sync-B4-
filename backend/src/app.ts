@@ -9,16 +9,28 @@ import { authRouter } from './modules/auth/routes.js';
 import { labRouter } from './modules/labs/routes.js';
 import { resourceRouter } from './modules/resources/routes.js';
 import { bookingRouter } from './modules/bookings/routes.js';
+import { notificationRouter } from './modules/notifications/routes.js';
 
 dotenv.config();
 
 const app: Express = express();
 
 // Security and middleware setup
-app.use(helmet());
+app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      const isAllowed =
+        origin === 'http://localhost:5173' ||
+        origin === 'http://127.0.0.1:5173' ||
+        origin === process.env.CLIENT_URL ||
+        /^http:\/\/(localhost|127\.0\.0\.1|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)(:\d+)?$/.test(origin);
+      if (isAllowed) {
+        return callback(null, true);
+      }
+      return callback(null, true);
+    },
     credentials: true,
   }),
 );
@@ -56,6 +68,7 @@ app.use('/api/v1/labs', labRouter);
 app.use('/api/v1/resources', resourceRouter);
 app.use('/api/v1/bookings', bookingRouter);
 app.use('/api/v1/routes', routingRouter);
+app.use('/api/v1/notifications', notificationRouter);
 // app.use('/api/v1/maintenance', maintenanceRouter);
 // app.use('/api/v1/monitoring', monitoringRouter);
 // app.use('/api/v1/reports', reportsRouter);

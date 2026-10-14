@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { campusDb } from '../persistence/database.js';
 import { DFDOrchestrator } from '../ui-bff/orchestrator.js';
+import { bookingLockManager } from '../scheduling/lockManager.js';
 import { success, error } from '../../utils/apiResponse.js';
 import { authenticate, AuthenticatedRequest } from '../../middleware/authenticate.js';
 
@@ -43,9 +44,23 @@ bookingRouter.get('/:bookingId', authenticate, (req: AuthenticatedRequest, res: 
 });
 
 // POST /api/v1/bookings
-bookingRouter.post('/', authenticate, (req: AuthenticatedRequest, res: Response) => {
+bookingRouter.post('/', authenticate, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = req.user?.id || req.user?._id;
+    if (!userId) {
+      return error(res, 'Authentication required', [], 401);
+    }
+
+    // Ensure authoritative profile is registered with authenticated role
+    if (!campusDb.profiles.has(userId) && req.user) {
+      campusDb.profiles.set(userId, {
+        id: userId,
+        full_name: req.user.name || req.user.full_name || 'Campus User',
+        role: req.user.role || 'student',
+        created_at: new Date().toISOString(),
+      });
+    }
+
     const { resourceId, startTime, endTime, purpose, labId, idempotencyKey } = req.body;
 
     if (!labId && !resourceId) {
@@ -53,6 +68,12 @@ bookingRouter.post('/', authenticate, (req: AuthenticatedRequest, res: Response)
     }
     if (!startTime || !endTime) {
       return error(res, 'startTime and endTime are required', [], 400);
+    }
+
+    const sTime = new Date(startTime).getTime();
+    const eTime = new Date(endTime).getTime();
+    if (isNaN(sTime) || isNaN(eTime) || sTime >= eTime) {
+      return error(res, 'Invalid booking time window: startTime must be before endTime', [], 400);
     }
 
     let targetLabId = labId;
@@ -64,30 +85,45 @@ bookingRouter.post('/', authenticate, (req: AuthenticatedRequest, res: Response)
     // Resolve lab ID if code was provided (e.g. "D-08" -> "lab-d08")
     if (targetLabId) {
       const matched = Array.from(campusDb.labs.values()).find(
-        (l) => l.id === targetLabId || l.lab_code?.toLowerCase() === targetLabId.toLowerCase()
+        (l) => l.id.toLowerCase() === targetLabId.toLowerCase() ||
+               l.lab_code?.toLowerCase() === targetLabId.toLowerCase() ||
+               l.name.toLowerCase() === targetLabId.toLowerCase()
       );
       if (matched) targetLabId = matched.id;
     }
 
+    if (!targetLabId || !campusDb.labs.has(targetLabId)) {
+      return error(res, `Target lab '${labId || targetLabId}' not found`, [], 404);
+    }
+
     const key = idempotencyKey || `idemp-${userId}-${targetLabId}-${startTime}-${endTime}`;
 
-    const pipelineResult = DFDOrchestrator.executeBookingPipeline({
-      userId,
-      labId: targetLabId,
-      resourceId,
-      startAt: startTime,
-      endAt: endTime,
-      idempotencyKey: key,
+    // Execute through lock manager to prevent concurrent race conditions
+    const pipelineResult = await bookingLockManager.withLock(targetLabId, async () => {
+      return DFDOrchestrator.executeBookingPipeline({
+        userId,
+        labId: targetLabId,
+        resourceId,
+        startAt: startTime,
+        endAt: endTime,
+        idempotencyKey: key,
+      });
     });
 
     if (!pipelineResult.success) {
-      return error(res, pipelineResult.message, [], 422);
+      const status = pipelineResult.conflict ? 409 : 422;
+      return error(res, pipelineResult.message, [], status);
     }
 
     const isReplay = pipelineResult.message.includes('Idempotency Constraint');
+    const responsePayload = {
+      ...pipelineResult.booking,
+      cancelledStudentBookingsCount: pipelineResult.cancelledStudentBookingsCount || 0,
+    };
+
     return success(
       res,
-      pipelineResult.booking,
+      responsePayload,
       pipelineResult.message,
       isReplay ? 200 : 201
     );
@@ -109,7 +145,12 @@ bookingRouter.post('/:bookingId/cancel', authenticate, (req: AuthenticatedReques
   });
 
   if (!result.success) {
-    return error(res, result.error || 'Failed to cancel booking', [], 400);
+    const status = result.error?.includes('not found')
+      ? 404
+      : result.error?.includes('Not authorized')
+      ? 403
+      : 400;
+    return error(res, result.error || 'Failed to cancel booking', [], status);
   }
 
   return success(res, result.booking, 'Booking successfully cancelled');
@@ -128,7 +169,12 @@ bookingRouter.patch('/:bookingId/cancel', authenticate, (req: AuthenticatedReque
   });
 
   if (!result.success) {
-    return error(res, result.error || 'Failed to cancel booking', [], 400);
+    const status = result.error?.includes('not found')
+      ? 404
+      : result.error?.includes('Not authorized')
+      ? 403
+      : 400;
+    return error(res, result.error || 'Failed to cancel booking', [], status);
   }
 
   return success(res, result.booking, 'Booking successfully cancelled');

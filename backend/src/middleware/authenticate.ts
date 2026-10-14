@@ -1,18 +1,23 @@
 import 'dotenv/config';
 import { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
 import { createClient } from '@supabase/supabase-js';
 import { pool } from '../config/postgres.js';
+import { config } from '../config/env.js';
+import { campusDb } from '../modules/persistence/database.js';
 import { AppError } from '../utils/AppError.js';
 
 export interface AuthenticatedRequest extends Request {
   user?: any;
 }
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_ANON_KEY!,
-  { auth: { persistSession: false, autoRefreshToken: false } }
-);
+const supabase = (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY)
+  ? createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_ANON_KEY,
+      { auth: { persistSession: false, autoRefreshToken: false } }
+    )
+  : null;
 
 export async function authenticate(
   req: AuthenticatedRequest,
@@ -24,6 +29,45 @@ export async function authenticate(
 
     if (!token) {
       return next(new AppError('Authentication required', 401));
+    }
+
+    // 1. Verify backend-signed JWT token (for tests and local development)
+    if (process.env.NODE_ENV === 'test' || !supabase) {
+      try {
+        const decoded: any = jwt.verify(token, config.jwtSecret);
+        if (decoded && (decoded.id || decoded.userId || decoded.sub)) {
+          const userId = decoded.id || decoded.userId || decoded.sub;
+          let profile = campusDb.profiles.get(userId);
+          const effectiveRole = decoded.role || profile?.role || 'student';
+          const normalizedRole = effectiveRole === 'lab_admin' ? 'admin' : effectiveRole;
+
+          if (!profile) {
+            profile = {
+              id: userId,
+              full_name: decoded.name || 'Campus User',
+              role: normalizedRole,
+              created_at: new Date().toISOString(),
+            };
+            campusDb.profiles.set(userId, profile);
+          }
+
+          req.user = {
+            id: profile.id,
+            _id: profile.id,
+            name: decoded.name || profile.full_name,
+            email: decoded.email || `${normalizedRole}@campus.edu`,
+            role: normalizedRole,
+            department: 'Computer Science & Engineering',
+          };
+          return next();
+        }
+      } catch {
+        // Not a local backend JWT; proceed to Supabase verification below
+      }
+    }
+
+    if (!supabase) {
+      return next(new AppError('Invalid or expired session', 401));
     }
 
     const { data, error: authError } = await supabase.auth.getUser(token);
