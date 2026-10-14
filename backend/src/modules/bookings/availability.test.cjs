@@ -155,3 +155,4 @@ describe('Team C: Auto-update resource availability on book / cancel / return', 
     assert.equal(db.bookings.get('b-2').state, 'REQUESTED'); // not confirmed
   });
 });
+

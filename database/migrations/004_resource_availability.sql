@@ -155,3 +155,4 @@ BEGIN
   RETURN public.complete_booking(p_booking_id, p_actor_id, p_correlation_id);
 END;
 $$;
+
